@@ -30,9 +30,15 @@
         .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
         .error-input { color: #ef4444; }
 
-        /* Visibilidade dos Sets */
         .set-input-group { display: none; }
         .set-visible { display: inline-block !important; }
+
+        /* Estilização das novas Barras de Arrasto (Sliders) */
+        .slider-win { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #dcfce7; outline: none; margin-top: 15px;}
+        .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        
+        .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
+        .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -153,6 +159,31 @@
                 </div>
             </div>
 
+            <div class="form-section">
+                <h3 style="margin-top: 0;">⚔️ Saldo Tático (Agressividade)</h3>
+                <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 20px;">Avalie o volume das suas jogadas na escala de 0 a 10.</p>
+                
+                <div class="grid-2">
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                        <h4 style="color: #16a34a; margin: 0 0 15px 0;">🎾 Winners: <span id="win_val" style="font-size: 28px; color: #15803d; margin-left: 5px;">0</span></h4>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
+                            <span>0: Nenhum</span>
+                            <span>10: Chuva de Winner</span>
+                        </div>
+                        <input type="range" name="winners" id="inp_winners" min="0" max="10" value="0" class="slider-win" oninput="document.getElementById('win_val').innerText = this.value">
+                    </div>
+
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                        <h4 style="color: #dc2626; margin: 0 0 15px 0;">⚠️ Erros Não Forçados: <span id="err_val" style="font-size: 28px; color: #b91c1c; margin-left: 5px;">0</span></h4>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
+                            <span>0: Fui uma Parede</span>
+                            <span>10: Errei muito</span>
+                        </div>
+                        <input type="range" name="unforced_errors" id="inp_errors" min="0" max="10" value="0" class="slider-err" oninput="document.getElementById('err_val').innerText = this.value">
+                    </div>
+                </div>
+            </div>
+
             <div class="performance-container">
                 <div>
                     <h3>📈 Avaliação Técnica (0-10)</h3>
@@ -204,7 +235,6 @@
     </div>
 
     <script>
-        // --- LÓGICA DO PLACAR AUTOMÁTICO ---
         function calcularResultado() {
             const getVal = (id) => parseInt(document.getElementById(id).value) || 0;
             const numSets = parseInt(document.getElementById('set_format').value);
@@ -212,7 +242,6 @@
             let setsPlayer = 0;
             let setsOpp = 0;
 
-            // Verifica apenas os sets que estão visíveis e preenchidos
             for (let i = 1; i <= numSets; i++) {
                 let pVal = getVal(`p_s${i}`);
                 let oVal = getVal(`o_s${i}`);
@@ -245,7 +274,6 @@
             }
         }
 
-        // --- LÓGICA DE LAYOUT SIMPLES vs DUPLAS ---
         function toggleDoubles() {
             const format = document.getElementById('match_format').value;
             const doublesBox = document.getElementById('doubles-opponents');
@@ -290,7 +318,7 @@
                     pInput.value = ""; oInput.value = ""; 
                 }
             }
-            calcularResultado(); // Atualiza o resultado caso o formato zere algum placar
+            calcularResultado(); 
         }
 
         function toggleServeDetails() {
@@ -315,7 +343,6 @@
         window.onload = function() {
             updateSetInputs();
             
-            // Eventos para recalcular o placar sempre que alguém digitar
             document.querySelectorAll('.set-input-group').forEach(input => {
                 input.addEventListener('input', calcularResultado);
             });
@@ -357,7 +384,6 @@
                 updateBoxColor(input);
                 input.addEventListener('input', function() {
                     
-                    // LÓGICA UX: CORREÇÃO INTELIGENTE DE DIGITAÇÃO
                     if (this.value !== "") {
                         let cleanStr = this.value.replace(/^0+(?=\d)/, '');
                         let numVal = parseInt(cleanStr, 10);

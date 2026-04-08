@@ -84,7 +84,7 @@
             <div class="insight-card" style="background: var(--atp-blue); color: white; padding: 25px; border-radius: 15px; text-align: center;">
                 <span style="font-size: 12px; text-transform: uppercase; opacity: 0.7; font-weight: bold; letter-spacing: 1px;">Média Performance</span>
                 <h2 style="font-size: 42px; margin: 10px 0; color: var(--tennis-green);">
-                    {% set total_perf = matches|sum(attribute=23) %}
+                    {% set total_perf = matches|sum(attribute=25) %}
                     {% if matches|length > 0 %}
                         {{ "%.1f"|format(total_perf / matches|length) }}
                     {% else %} 0.0 {% endif %}
@@ -152,7 +152,7 @@
                         <span style="color: var(--text-slate); font-size: 14px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
                     </div>
                     
-                    {% set perf = match[23] %}
+                    {% set perf = match[25] %}
                     {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}
                     {% elif perf >= 8.0 %}{% set pc, pb, pt = '#047857', '#d1fae5', '#6ee7b7' %}
                     {% elif perf >= 7.0 %}{% set pc, pb, pt = '#4d7c0f', '#ecfccb', '#bef264' %}
@@ -169,6 +169,28 @@
                                 <canvas id="chart-{{ loop.index }}"></canvas>
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 15px;">
+                                
+                                <div class="stats-box">
+                                    <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); border-bottom: 2px solid #f59e0b; display: inline-block;">⚔️ Saldo Tático</h4>
+                                    <div style="display: flex; justify-content: space-between; margin-top: 10px; text-align: center;">
+                                        <div>
+                                            <div style="font-size: 11px; color: #64748b; font-weight: bold;">WINNERS</div>
+                                            <div style="font-size: 18px; font-weight: bold; color: #10b981;">{{ match[23] }}</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 11px; color: #64748b; font-weight: bold;">ERROS N.F.</div>
+                                            <div style="font-size: 18px; font-weight: bold; color: #ef4444;">{{ match[24] }}</div>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 11px; color: #64748b; font-weight: bold;">SALDO</div>
+                                            {% set saldo = match[23] - match[24] %}
+                                            <div style="font-size: 18px; font-weight: bold; color: {% if saldo > 0 %}#10b981{% elif saldo < 0 %}#ef4444{% else %}#64748b{% endif %};">
+                                                {% if saldo > 0 %}+{% endif %}{{ saldo }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="stats-box">
                                     <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); border-bottom: 2px solid var(--tennis-green); display: inline-block;">🎯 Saque</h4>
                                     <div style="display: flex; justify-content: space-between; margin-top: 10px;">
@@ -179,7 +201,7 @@
                                 </div>
                                 <div class="stats-box">
                                     <h4 style="margin: 0 0 5px 0; color: var(--atp-blue);">📝 Notas</h4>
-                                    <p style="font-size: 13px; color: #475569; margin: 0;"><i>{{ match[24] or "Sem observações." }}</i></p>
+                                    <p style="font-size: 13px; color: #475569; margin: 0;"><i>{{ match[26] or "Sem observações." }}</i></p>
                                 </div>
                             </div>
                         </div>
@@ -203,7 +225,8 @@
         window.onload = function() {
             // --- GRÁFICO DE EVOLUÇÃO ---
             const evoCtx = document.getElementById('evolutionChart').getContext('2d');
-            const perfData = [{% for match in matches[:10]|reverse %}{{ match[23] }},{% endfor %}];
+            // A performance agora está no índice 25
+            const perfData = [{% for match in matches[:10]|reverse %}{{ match[25] }},{% endfor %}];
             const perfLabels = perfData.map((_, i) => `J${i + 1}`);
 
             new Chart(evoCtx, {
@@ -235,6 +258,7 @@
                 data: {
                     labels: ['FH', 'BH', 'SAQ', 'DEV', 'SLI', 'VOL', 'SMA', 'DRO', 'FTW', 'EST'],
                     datasets: [{
+                        label: 'Nível Técnico',
                         data: [{{ match[10] }}, {{ match[11] }}, {{ match[12] }}, {{ match[16] }}, {{ match[17] }}, {{ match[18] }}, {{ match[19] }}, {{ match[20] }}, {{ match[21] }}, {{ match[22] }}],
                         backgroundColor: 'rgba(209, 255, 0, 0.2)',
                         borderColor: '#a3e635',
