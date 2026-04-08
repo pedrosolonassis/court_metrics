@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Nova Partida - Tennis Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .form-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--azul-piscina); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .rating-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .rating-box { padding: 15px; border-radius: 8px; display: flex; flex-direction: column; border: 2px solid transparent; transition: all 0.3s ease; }
+        
+        .adv-serve-box { padding: 10px; border-radius: 8px; text-align: center; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+
+        /* 🎨 CORES DINÂMICAS */
+        .box-neutral { background-color: #f3f4f6; border-color: #e5e7eb; } 
+        .box-red     { background-color: #fee2e2; border-color: #fca5a5; } 
+        .box-orange  { background-color: #ffedd5; border-color: #fdba74; } 
+        .box-lime    { background-color: #ecfccb; border-color: #bef264; } 
+        .box-emerald { background-color: #d1fae5; border-color: #6ee7b7; } 
+        .box-elite   { background-color: #cffafe; border-color: #67e8f9; } 
+
+        .rating-box label { margin: 0 0 5px 0; font-size: 14px; color: #333; font-weight: bold; }
+        .rating-box input { background: transparent; border: none; font-size: 22px; font-weight: 900; color: #1f2937; outline: none; }
+        .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
+        
+        .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
+        .error-input { color: #ef4444; }
+
+        /* Visibilidade dos Sets */
+        .set-input-group { display: none; }
+        .set-visible { display: inline-block !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🎾 Registrar Nova Partida</h1>
+        
+        <form action="/new_match" method="POST">
+            
+            <div class="form-section">
+                <h3>📋 Informações Gerais</h3>
+                <div class="grid-2">
+                    <div>
+                        <label>Formato do Jogo:</label>
+                        <select name="match_format" id="match_format" onchange="toggleDoubles()">
+                            <option value="Simples">Simples</option>
+                            <option value="Duplas">Duplas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Categoria:</label>
+                        <select name="categoria">
+                            <option value="1ª Classe">1ª Classe</option>
+                            <option value="2ª Classe">2ª Classe</option>
+                            <option value="3ª Classe">3ª Classe</option>
+                            <option value="4ª Classe">4ª Classe</option>
+                            <option value="5ª Classe">5ª Classe</option>
+                            <option value="Iniciante">Iniciante</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="doubles-opponents" style="display: none; margin-top: 15px; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px dashed #fca5a5;">
+                    <h4 style="margin: 0 0 10px 0; color: #7f1d1d;">👥 Dupla Adversária</h4>
+                    <div class="grid-2">
+                        <div>
+                            <label>Adversário 1:</label>
+                            <input type="text" id="inp_opp1" name="ignore_opp" placeholder="Nome do adversário 1">
+                        </div>
+                        <div>
+                            <label>Adversário 2 (Parceiro):</label>
+                            <input type="text" name="opp_partner" placeholder="Nome do adversário 2">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 15px;">
+                    <div id="singles-opp-div">
+                        <label>Adversário Principal:</label>
+                        <input type="text" id="inp_opp_single" name="opponent" required>
+                    </div>
+                    <div id="doubles-partner-div" style="display: none;">
+                        <label>Seu Parceiro:</label>
+                        <input type="text" name="partner" placeholder="Nome do seu parceiro">
+                    </div>
+
+                    <div>
+                        <label>Tipo de Jogo:</label>
+                        <select name="match_type">
+                            <option value="Ranking">Ranking</option>
+                            <option value="Torneio">Torneio</option>
+                            <option value="Amistoso">Amistoso</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Tipo de Quadra:</label>
+                        <select name="surface">
+                            <option value="Quadra Dura">Quadra Dura (Rápida)</option>
+                            <option value="Saibro">Saibro (Terra Batida)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label>Resultado:</label>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                            <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 13px; text-transform: uppercase;">
+                                Aguardando Placar...
+                            </div>
+                            <input type="hidden" name="result" id="result-hidden" value="Derrota">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>🔢 Informar Placar</h3>
+                <label>Formato dos Sets:</label>
+                <select id="set_format" onchange="updateSetInputs()" style="margin-bottom: 20px;">
+                    <option value="1">1 Set</option>
+                    <option value="3" selected>2 Sets + Super Tiebreak</option>
+                    <option value="3">3 Sets Completos</option>
+                    <option value="5">5 Sets (Grand Slam)</option>
+                </select>
+
+                <div class="letzplay-grid">
+                    <div class="score-row">
+                        <span>Você</span>
+                        <div class="set-inputs">
+                            <input type="number" name="set1_player" id="p_s1" placeholder="1º" class="set-input-group" min="0">
+                            <input type="number" name="set2_player" id="p_s2" placeholder="2º" class="set-input-group" min="0">
+                            <input type="number" name="set3_player" id="p_s3" placeholder="3º" class="set-input-group" min="0">
+                            <input type="number" name="set4_player" id="p_s4" placeholder="4º" class="set-input-group" min="0">
+                            <input type="number" name="set5_player" id="p_s5" placeholder="5º" class="set-input-group" min="0">
+                        </div>
+                    </div>
+                    <div class="score-row">
+                        <span>Adversário</span>
+                        <div class="set-inputs">
+                            <input type="number" name="set1_opp" id="o_s1" placeholder="1º" class="set-input-group" min="0">
+                            <input type="number" name="set2_opp" id="o_s2" placeholder="2º" class="set-input-group" min="0">
+                            <input type="number" name="set3_opp" id="o_s3" placeholder="3º" class="set-input-group" min="0">
+                            <input type="number" name="set4_opp" id="o_s4" placeholder="4º" class="set-input-group" min="0">
+                            <input type="number" name="set5_opp" id="o_s5" placeholder="5º" class="set-input-group" min="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="performance-container">
+                <div>
+                    <h3>📈 Avaliação Técnica (0-10)</h3>
+                    <div class="rating-cards">
+                        <div class="rating-box box-neutral"><label>Forehand</label><input type="number" name="forehand" id="inp-forehand" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Backhand</label><input type="number" name="backhand" id="inp-backhand" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="0" min="0" max="10" class="fund-input" onchange="toggleServeDetails()"></div>
+                        <div class="rating-box box-neutral"><label>Devolução</label><input type="number" name="return_serve" id="inp-return" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Slice</label><input type="number" name="slice" id="inp-slice" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Voleio</label><input type="number" name="volley" id="inp-volley" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Smash</label><input type="number" name="smash" id="inp-smash" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Dropshot</label><input type="number" name="dropshot" id="inp-drop" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Footwork</label><input type="number" name="footwork" id="inp-foot" value="0" min="0" max="10" class="fund-input"></div>
+                        <div class="rating-box box-neutral"><label>Estratégia</label><input type="number" name="strategy" id="inp-strat" value="0" min="0" max="10" class="fund-input"></div>
+                    </div>
+
+                    <div id="serve-details" style="display: none; margin-top: 15px; animation: fadeIn 0.3s ease-in-out;">
+                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1;">
+                            <h4 style="margin: 0 0 12px 0; color: #0f172a;">🎯 Estatísticas de Serviço</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                                <div class="adv-serve-box box-neutral">
+                                    <label style="font-size: 11px; font-weight: bold;">1º Serviço</label>
+                                    <input type="number" name="first_serve" value="0" min="0" max="10" class="serve-input dynamic-serve">
+                                </div>
+                                <div class="adv-serve-box box-neutral">
+                                    <label style="font-size: 11px; font-weight: bold;">2º Serviço</label>
+                                    <input type="number" name="second_serve" value="0" min="0" max="10" class="serve-input dynamic-serve">
+                                </div>
+                                <div style="background: #fee2e2; padding: 10px; border-radius: 8px; border: 2px solid #fca5a5; text-align: center;">
+                                    <label style="font-size: 11px; color: #ef4444; font-weight: bold;">D. Faltas</label>
+                                    <input type="number" name="double_faults" value="0" min="0" class="serve-input error-input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="liveRadarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <label>Descrição:</label>
+                <textarea name="notes" rows="3"></textarea>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Finalizar Registro</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // --- LÓGICA DO PLACAR AUTOMÁTICO ---
+        function calcularResultado() {
+            const getVal = (id) => parseInt(document.getElementById(id).value) || 0;
+            const numSets = parseInt(document.getElementById('set_format').value);
+            
+            let setsPlayer = 0;
+            let setsOpp = 0;
+
+            // Verifica apenas os sets que estão visíveis e preenchidos
+            for (let i = 1; i <= numSets; i++) {
+                let pVal = getVal(`p_s${i}`);
+                let oVal = getVal(`o_s${i}`);
+                
+                if (pVal > oVal) setsPlayer++;
+                else if (oVal > pVal) setsOpp++;
+            }
+
+            const badge = document.getElementById('status-badge');
+            const hiddenInput = document.getElementById('result-hidden');
+
+            if (setsPlayer > setsOpp) {
+                badge.innerText = "Vitória 🎉";
+                badge.style.background = "#dcfce7"; 
+                badge.style.color = "#15803d"; 
+                badge.style.borderColor = "#86efac";
+                hiddenInput.value = "Vitória";
+            } else if (setsOpp > setsPlayer) {
+                badge.innerText = "Derrota 🏳️";
+                badge.style.background = "#fee2e2"; 
+                badge.style.color = "#b91c1c"; 
+                badge.style.borderColor = "#fca5a5";
+                hiddenInput.value = "Derrota";
+            } else {
+                badge.innerText = "Empate / Em Jogo";
+                badge.style.background = "#f1f5f9"; 
+                badge.style.color = "#64748b"; 
+                badge.style.borderColor = "#e2e8f0";
+                hiddenInput.value = "Derrota";
+            }
+        }
+
+        // --- LÓGICA DE LAYOUT SIMPLES vs DUPLAS ---
+        function toggleDoubles() {
+            const format = document.getElementById('match_format').value;
+            const doublesBox = document.getElementById('doubles-opponents');
+            const singleOppDiv = document.getElementById('singles-opp-div');
+            const doublePartnerDiv = document.getElementById('doubles-partner-div');
+            
+            const inpSingleOpp = document.getElementById('inp_opp_single');
+            const inpDoubleOpp1 = document.getElementById('inp_opp1');
+
+            if (format === 'Duplas') {
+                doublesBox.style.display = 'block';
+                singleOppDiv.style.display = 'none';
+                doublePartnerDiv.style.display = 'block';
+                
+                inpSingleOpp.removeAttribute('required');
+                inpSingleOpp.name = "ignore_opp";
+                inpDoubleOpp1.name = "opponent";
+                inpDoubleOpp1.setAttribute('required', 'true');
+            } else {
+                doublesBox.style.display = 'none';
+                singleOppDiv.style.display = 'block';
+                doublePartnerDiv.style.display = 'none';
+
+                inpSingleOpp.setAttribute('required', 'true');
+                inpSingleOpp.name = "opponent";
+                inpDoubleOpp1.name = "ignore_opp";
+                inpDoubleOpp1.removeAttribute('required');
+            }
+        }
+
+        function updateSetInputs() {
+            const numSets = parseInt(document.getElementById('set_format').value);
+            for (let i = 1; i <= 5; i++) {
+                const pInput = document.getElementById(`p_s${i}`);
+                const oInput = document.getElementById(`o_s${i}`);
+                if (i <= numSets) {
+                    pInput.classList.add('set-visible');
+                    oInput.classList.add('set-visible');
+                } else {
+                    pInput.classList.remove('set-visible');
+                    oInput.classList.remove('set-visible');
+                    pInput.value = ""; oInput.value = ""; 
+                }
+            }
+            calcularResultado(); // Atualiza o resultado caso o formato zere algum placar
+        }
+
+        function toggleServeDetails() {
+            var serveVal = document.getElementById('inp-serve').value;
+            var serveMenu = document.getElementById('serve-details');
+            serveMenu.style.display = serveVal > 0 ? 'block' : 'none';
+        }
+
+        function updateBoxColor(inputElement) {
+            const val = parseInt(inputElement.value) || 0;
+            const box = inputElement.closest('.rating-box') || inputElement.closest('.adv-serve-box');
+            if (!box) return;
+            box.classList.remove('box-neutral', 'box-red', 'box-orange', 'box-lime', 'box-emerald', 'box-elite');
+            if (val === 0) box.classList.add('box-neutral');
+            else if (val <= 5) box.classList.add('box-red');
+            else if (val === 6) box.classList.add('box-orange');
+            else if (val === 7) box.classList.add('box-lime');
+            else if (val === 8) box.classList.add('box-emerald');
+            else if (val >= 9) box.classList.add('box-elite');
+        }
+
+        window.onload = function() {
+            updateSetInputs();
+            
+            // Eventos para recalcular o placar sempre que alguém digitar
+            document.querySelectorAll('.set-input-group').forEach(input => {
+                input.addEventListener('input', calcularResultado);
+            });
+
+            const ctx = document.getElementById('liveRadarChart').getContext('2d');
+            const liveChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
+                    datasets: [{
+                        label: 'Nível Técnico',
+                        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        backgroundColor: 'rgba(196, 255, 14, 0.2)',
+                        borderColor: '#a3e635',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#002855'
+                    }]
+                },
+                options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } } }
+            });
+
+            function updateRadar() {
+                liveChart.data.datasets[0].data = [
+                    document.getElementById('inp-forehand').value || 0,
+                    document.getElementById('inp-backhand').value || 0,
+                    document.getElementById('inp-serve').value || 0,
+                    document.getElementById('inp-return').value || 0,
+                    document.getElementById('inp-slice').value || 0,
+                    document.getElementById('inp-volley').value || 0,
+                    document.getElementById('inp-smash').value || 0,
+                    document.getElementById('inp-drop').value || 0,
+                    document.getElementById('inp-foot').value || 0,
+                    document.getElementById('inp-strat').value || 0
+                ];
+                liveChart.update();
+            }
+
+            document.querySelectorAll('.fund-input, .dynamic-serve').forEach(input => {
+                updateBoxColor(input);
+                input.addEventListener('input', function() {
+                    
+                    // LÓGICA UX: CORREÇÃO INTELIGENTE DE DIGITAÇÃO
+                    if (this.value !== "") {
+                        let cleanStr = this.value.replace(/^0+(?=\d)/, '');
+                        let numVal = parseInt(cleanStr, 10);
+                        
+                        if (numVal < 0) {
+                            this.value = 0;
+                        } else if (numVal > 10) {
+                            this.value = cleanStr.charAt(0);
+                        } else {
+                            this.value = cleanStr;
+                        }
+                    }
+
+                    if (this.classList.contains('fund-input')) updateRadar();
+                    updateBoxColor(this);
+                });
+            });
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+/* static/style.css */
+
+/* 1. Paleta de Cores baseada no Dashboard */
+:root {
+    --bg-fundo: #F5F7FA;       /* Fundo cinza bem claro/azulado */
+    --bg-card: #FFFFFF;        /* Fundo branco dos gráficos/cards */
+    --texto-escuro: #333333;   /* Cor do texto principal */
+    --texto-claro: #666666;    /* Cor para subtítulos e notas */
+    --verde-tenis: #8BC34A;    /* O verde das barras do gráfico */
+    --azul-piscina: #26A69A;   /* O azul-esverdeado das barras do gráfico */
+    --borda: #E0E0E0;          /* Linhas de divisão suaves */
+}
+
+/* 2. Estilo Geral da Página */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-fundo);
+    color: var(--texto-escuro);
+    margin: 0;
+    padding: 20px;
+}
+
+/* 3. Container Principal (Centraliza o conteúdo na tela) */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+h1, h2, h3 {
+    color: var(--texto-escuro);
+}
+
+/* 4. Botões e Links Estilizados */
+.btn {
+    display: inline-block;
+    background-color: var(--azul-piscina);
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: 0.3s;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn:hover {
+    background-color: var(--verde-tenis);
+}
+
+/* 5. Formulário (Estilo de Dashboard) */
+form {
+    background-color: var(--bg-card);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-top: 4px solid var(--azul-piscina);
+}
+
+label {
+    font-weight: bold;
+    color: var(--texto-escuro);
+    margin-top: 15px;
+    display: block;
+}
+
+input[type="text"], select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0 15px 0;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+/* 6. Lista de Jogos (Transformando em Cards) */
+ul {
+    list-style-type: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+li {
+    background-color: var(--bg-card);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-left: 5px solid var(--verde-tenis);
+    line-height: 1.6;
+}
+
+/* Intercalando a cor da borda lateral para dar um efeito visual bacana */
+li:nth-child(even) {
+    border-left: 5px solid var(--azul-piscina);
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: var(--borda);
+    margin: 30px 0;
+}
+
+/* 7. Grid de Placar (Estilo LetzPlay) */
+.letzplay-grid {
+    background-color: #F9FAFB;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.score-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.score-row span {
+    width: 100px;
+    font-weight: bold;
+    color: var(--texto-escuro);
+}
+
+.set-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.set-inputs input[type="number"] {
+    width: 50px;
+    text-align: center;
+    font-size: 16px;
+    padding: 8px;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    margin: 0; /* Remove a margem padrão para alinhar bonitinho */
+}
+
+/* Esconde as setinhas dentro do input de número para ficar mais limpo */
+.set-inputs input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}

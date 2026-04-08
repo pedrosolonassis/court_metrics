@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Tennis Tracker Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --atp-blue: #002855;
+            --tennis-green: #d1ff00;
+            --text-slate: #64748b;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
+        
+        .insight-card {
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .insight-card:hover { transform: translateY(-3px); }
+
+        .match-card { 
+            background: white; 
+            margin-bottom: 20px; 
+            padding: 20px; 
+            border-radius: 12px; 
+            border-left: 5px solid var(--atp-blue); 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .match-card:hover { transform: scale(1.01); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        
+        .badge-vitoria { color: #10b981; font-weight: bold; font-size: 18px; }
+        .badge-derrota { color: #ef4444; font-weight: bold; font-size: 18px; }
+
+        .perf-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: 900;
+            margin-top: 10px;
+            border: 1px solid transparent;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .stats-box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-main {
+            padding: 12px 25px;
+            background: var(--atp-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn-main:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+
+    <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+        <h1>🎾 Tennis Tracker Dashboard</h1>
+        <p style="color: var(--text-slate);">Sua jornada rumo ao próximo nível começa aqui.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 25px 0;">
+            
+            <div class="insight-card" style="background: var(--atp-blue); color: white; padding: 25px; border-radius: 15px; text-align: center;">
+                <span style="font-size: 12px; text-transform: uppercase; opacity: 0.7; font-weight: bold; letter-spacing: 1px;">Média Performance</span>
+                <h2 style="font-size: 42px; margin: 10px 0; color: var(--tennis-green);">
+                    {% set total_perf = matches|sum(attribute=23) %}
+                    {% if matches|length > 0 %}
+                        {{ "%.1f"|format(total_perf / matches|length) }}
+                    {% else %} 0.0 {% endif %}
+                </h2>
+                <span style="font-size: 11px;">Ranking Ponderado ATP</span>
+            </div>
+
+            <div class="insight-card" style="background: white; padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0;">
+                <span style="font-size: 12px; text-transform: uppercase; color: var(--text-slate); font-weight: bold;">Taxa de Vitória</span>
+                {% set wins = matches|selectattr(5, 'equalto', 'Vitória')|list|length %}
+                <h2 style="font-size: 42px; margin: 10px 0; color: #10b981;">
+                    {% if matches|length > 0 %}
+                        {{ ((wins / matches|length) * 100)|int }}%
+                    {% else %} 0% {% endif %}
+                </h2>
+                <div style="width: 100%; background: #f1f5f9; height: 10px; border-radius: 5px; overflow: hidden;">
+                    <div style="width: {{ (wins / matches|length * 100) if matches|length > 0 else 0 }}%; background: #10b981; height: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="insight-card" style="background: white; padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0;">
+                <span style="font-size: 12px; text-transform: uppercase; color: var(--text-slate); font-weight: bold;">Destaque da Rodada</span>
+                <h2 style="font-size: 26px; margin: 15px 0; color: var(--atp-blue); text-transform: uppercase;">
+                    {% if matches|length > 0 %}
+                        {% set last = matches[0] %}
+                        {% set stats = [(last[10], 'Forehand'), (last[11], 'Backhand'), (last[12], 'Saque'), (last[16], 'Devolução'), (last[17], 'Slice'), (last[18], 'Voleio'), (last[19], 'Smash'), (last[20], 'Dropshot'), (last[21], 'Footwork'), (last[22], 'Estratégia')] %}
+                        {{ (stats|sort(reverse=true))[0][1] }}
+                    {% else %} -- {% endif %}
+                </h2>
+                <span style="font-size: 11px; color: #10b981; font-weight: bold;">🚀 Melhor golpe do último jogo</span>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <a href="/new_match" class="btn-main">Registrar Nova Partida</a>
+        </div>
+
+        <div style="background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
+            <h3 style="margin-top: 0; color: var(--atp-blue); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📈 Tendência de Performance</h3>
+            <div style="height: 280px;">
+                <canvas id="evolutionChart"></canvas>
+            </div>
+        </div>
+
+        <h2 style="color: var(--atp-blue); border-left: 4px solid var(--tennis-green); padding-left: 15px;">Histórico Recente</h2>
+
+        {% if matches %}
+            <ul style="list-style: none; padding: 0;">
+            {% for match in matches %}
+                <li class="match-card" onclick="toggleDetails('details-{{ loop.index }}')">
+                    
+                    <div style="position: absolute; top: 20px; right: 20px; text-align: right;">
+                        <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">
+                            {{ match[5] }}
+                        </span><br>
+                        <span style="color: var(--atp-blue); font-size: 16px; font-weight: 800;">{{ match[6] }}</span>
+                    </div>
+
+                    <div style="line-height: 1.7;">
+                        {% if match[7] == 'Duplas' %}
+                            <strong style="color: var(--atp-blue); font-size: 17px;">👥 Você & {{ match[8] }} vs {{ match[1] }} & {{ match[9] }}</strong> <br>
+                        {% else %}
+                            <strong style="color: var(--atp-blue); font-size: 17px;">👤 Adversário: {{ match[1] }}</strong> <br>
+                        {% endif %}
+                        <span style="color: var(--text-slate); font-size: 14px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
+                    </div>
+                    
+                    {% set perf = match[23] %}
+                    {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}
+                    {% elif perf >= 8.0 %}{% set pc, pb, pt = '#047857', '#d1fae5', '#6ee7b7' %}
+                    {% elif perf >= 7.0 %}{% set pc, pb, pt = '#4d7c0f', '#ecfccb', '#bef264' %}
+                    {% elif perf >= 6.0 %}{% set pc, pb, pt = '#c2410c', '#ffedd5', '#fdba74' %}
+                    {% else %}{% set pc, pb, pt = '#b91c1c', '#fee2e2', '#fca5a5' %}{% endif %}
+
+                    <div class="perf-badge" style="background: {{ pb }}; color: {{ pc }}; border-color: {{ pt }};">
+                        <span style="font-size: 11px; text-transform: uppercase; opacity: 0.8;">Rating:</span> {{ "%.1f"|format(perf) }}
+                    </div>
+
+                    <div id="details-{{ loop.index }}" style="display: none; margin-top: 25px; border-top: 1px solid #f1f5f9; padding-top: 25px;">
+                        <div class="details-grid">
+                            <div style="background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                <canvas id="chart-{{ loop.index }}"></canvas>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <div class="stats-box">
+                                    <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); border-bottom: 2px solid var(--tennis-green); display: inline-block;">🎯 Saque</h4>
+                                    <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+                                        <div><div style="font-size: 10px; color: #64748b;">1º SERV</div><strong>{{ match[13] }}/10</strong></div>
+                                        <div><div style="font-size: 10px; color: #64748b;">2º SERV</div><strong>{{ match[14] }}/10</strong></div>
+                                        <div><div style="font-size: 10px; color: #ef4444;">D. FALTAS</div><strong style="color: #ef4444;">{{ match[15] }}</strong></div>
+                                    </div>
+                                </div>
+                                <div class="stats-box">
+                                    <h4 style="margin: 0 0 5px 0; color: var(--atp-blue);">📝 Notas</h4>
+                                    <p style="font-size: 13px; color: #475569; margin: 0;"><i>{{ match[24] or "Sem observações." }}</i></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <div style="background: white; padding: 40px; text-align: center; border-radius: 15px; color: var(--text-slate); border: 1px dashed #cbd5e1;">
+                <p>Nenhuma partida registrada. Hora de entrar em quadra!</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleDetails(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+        }
+
+        window.onload = function() {
+            // --- GRÁFICO DE EVOLUÇÃO ---
+            const evoCtx = document.getElementById('evolutionChart').getContext('2d');
+            const perfData = [{% for match in matches[:10]|reverse %}{{ match[23] }},{% endfor %}];
+            const perfLabels = perfData.map((_, i) => `J${i + 1}`);
+
+            new Chart(evoCtx, {
+                type: 'line',
+                data: {
+                    labels: perfLabels,
+                    datasets: [{
+                        data: perfData,
+                        borderColor: '#002855',
+                        backgroundColor: 'rgba(209, 255, 0, 0.1)',
+                        borderWidth: 4,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#d1ff00'
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } }, x: { grid: { display: false } } }
+                }
+            });
+
+            // --- GRÁFICOS DE RADAR ---
+            {% for match in matches %}
+            new Chart(document.getElementById('chart-{{ loop.index }}'), {
+                type: 'radar',
+                data: {
+                    labels: ['FH', 'BH', 'SAQ', 'DEV', 'SLI', 'VOL', 'SMA', 'DRO', 'FTW', 'EST'],
+                    datasets: [{
+                        data: [{{ match[10] }}, {{ match[11] }}, {{ match[12] }}, {{ match[16] }}, {{ match[17] }}, {{ match[18] }}, {{ match[19] }}, {{ match[20] }}, {{ match[21] }}, {{ match[22] }}],
+                        backgroundColor: 'rgba(209, 255, 0, 0.2)',
+                        borderColor: '#a3e635',
+                        borderWidth: 2,
+                        pointRadius: 2
+                    }]
+                },
+                options: { 
+                    scales: { r: { min: 0, max: 10, ticks: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+            {% endfor %}
+        }
+    </script>
+</body>
+</html>
