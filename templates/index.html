@@ -14,77 +14,88 @@
 
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
         
-        .insight-card {
-            transition: transform 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
+        .insight-card { transition: transform 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .insight-card:hover { transform: translateY(-3px); }
 
         .match-card { 
-            background: white; 
-            margin-bottom: 20px; 
-            padding: 20px; 
-            border-radius: 12px; 
-            border-left: 5px solid var(--atp-blue); 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            position: relative;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            background: white; margin-bottom: 20px; padding: 20px; border-radius: 12px; 
+            border-left: 5px solid var(--atp-blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative; cursor: pointer; transition: all 0.2s ease;
         }
         .match-card:hover { transform: scale(1.01); box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         
         .badge-vitoria { color: #10b981; font-weight: bold; font-size: 18px; }
         .badge-derrota { color: #ef4444; font-weight: bold; font-size: 18px; }
 
-        .perf-badge {
-            display: inline-block;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 20px;
-            font-weight: 900;
-            margin-top: 10px;
-            border: 1px solid transparent;
-        }
+        .perf-badge { display: inline-block; padding: 8px 15px; border-radius: 6px; font-size: 20px; font-weight: 900; margin-top: 10px; border: 1px solid transparent; }
         
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 20px;
-            align-items: start;
-        }
+        .details-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
+        .stats-box { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
 
-        .stats-box {
-            background: #f8fafc;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .btn-main {
-            padding: 12px 25px;
-            background: var(--atp-blue);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            display: inline-block;
-            transition: opacity 0.2s;
-        }
+        .btn-main { padding: 12px 25px; background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px;}
         .btn-main:hover { opacity: 0.9; }
+
+        .filter-bar { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+        .filter-group { flex: 1; min-width: 160px; }
+        .filter-label { font-size: 12px; font-weight: bold; color: var(--text-slate); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background-color: #f8fafc; color: var(--atp-blue); font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
-        <h1>🎾 Tennis Tracker Dashboard</h1>
-        <p style="color: var(--text-slate);">Sua jornada rumo ao próximo nível começa aqui.</p>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;">
+            <div>
+                <h1 style="margin: 0 0 5px 0;">🎾 Tennis Tracker</h1>
+                <p style="color: var(--text-slate); margin: 0;">Sua jornada rumo ao próximo nível começa aqui.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/new_match" class="btn-main">➕ Registrar Partida</a>
+                <a href="/export" class="btn-main" style="background: #10b981;">📊 Exportar CSV</a>
+            </div>
+        </div>
+
+        <form method="GET" action="/" class="filter-bar">
+            <div class="filter-group">
+                <label class="filter-label">Superfície</label>
+                <select name="surface" class="filter-select">
+                    <option value="">Todas as Quadras</option>
+                    <option value="Quadra Dura" {% if filters.surface == 'Quadra Dura' %}selected{% endif %}>Quadra Dura (Rápida)</option>
+                    <option value="Saibro" {% if filters.surface == 'Saibro' %}selected{% endif %}>Saibro (Terra Batida)</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Tipo de Jogo</label>
+                <select name="match_type" class="filter-select">
+                    <option value="">Todos os Tipos</option>
+                    <option value="Ranking" {% if filters.match_type == 'Ranking' %}selected{% endif %}>Ranking</option>
+                    <option value="Torneio" {% if filters.match_type == 'Torneio' %}selected{% endif %}>Torneio</option>
+                    <option value="Amistoso" {% if filters.match_type == 'Amistoso' %}selected{% endif %}>Amistoso</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">Formato</label>
+                <select name="match_format" class="filter-select">
+                    <option value="">Simples & Duplas</option>
+                    <option value="Simples" {% if filters.match_format == 'Simples' %}selected{% endif %}>Simples</option>
+                    <option value="Duplas" {% if filters.match_format == 'Duplas' %}selected{% endif %}>Duplas</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn-main">🔍 Filtrar</button>
+                <a href="/" class="btn-main" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; text-align: center;">Limpar</a>
+            </div>
+        </form>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 25px 0;">
-            
             <div class="insight-card" style="background: var(--atp-blue); color: white; padding: 25px; border-radius: 15px; text-align: center;">
                 <span style="font-size: 12px; text-transform: uppercase; opacity: 0.7; font-weight: bold; letter-spacing: 1px;">Média Performance</span>
                 <h2 style="font-size: 42px; margin: 10px 0; color: var(--tennis-green);">
-                    {% set total_perf = matches|sum(attribute=25) %}
+                    {% set total_perf = matches|sum(attribute=24) %}
                     {% if matches|length > 0 %}
                         {{ "%.1f"|format(total_perf / matches|length) }}
                     {% else %} 0.0 {% endif %}
@@ -118,12 +129,13 @@
             </div>
         </div>
 
-        <div style="margin-bottom: 30px;">
-            <a href="/new_match" class="btn-main">Registrar Nova Partida</a>
-        </div>
-
         <div style="background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
-            <h3 style="margin-top: 0; color: var(--atp-blue); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📈 Tendência de Performance</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: var(--atp-blue); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📈 Tendência de Performance</h3>
+                <span style="font-size: 12px; color: var(--text-slate); background: #f8fafc; padding: 4px 10px; border-radius: 20px;">
+                    Exibindo: {{ matches|length }} Partidas
+                </span>
+            </div>
             <div style="height: 280px;">
                 <canvas id="evolutionChart"></canvas>
             </div>
@@ -152,7 +164,7 @@
                         <span style="color: var(--text-slate); font-size: 14px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
                     </div>
                     
-                    {% set perf = match[25] %}
+                    {% set perf = match[24] %}
                     {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}
                     {% elif perf >= 8.0 %}{% set pc, pb, pt = '#047857', '#d1fae5', '#6ee7b7' %}
                     {% elif perf >= 7.0 %}{% set pc, pb, pt = '#4d7c0f', '#ecfccb', '#bef264' %}
@@ -171,23 +183,20 @@
                             <div style="display: flex; flex-direction: column; gap: 15px;">
                                 
                                 <div class="stats-box">
-                                    <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); border-bottom: 2px solid #f59e0b; display: inline-block;">⚔️ Saldo Tático</h4>
-                                    <div style="display: flex; justify-content: space-between; margin-top: 10px; text-align: center;">
-                                        <div>
-                                            <div style="font-size: 11px; color: #64748b; font-weight: bold;">WINNERS</div>
-                                            <div style="font-size: 18px; font-weight: bold; color: #10b981;">{{ match[23] }}</div>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 11px; color: #64748b; font-weight: bold;">ERROS N.F.</div>
-                                            <div style="font-size: 18px; font-weight: bold; color: #ef4444;">{{ match[24] }}</div>
-                                        </div>
-                                        <div>
-                                            <div style="font-size: 11px; color: #64748b; font-weight: bold;">SALDO</div>
-                                            {% set saldo = match[23] - match[24] %}
-                                            <div style="font-size: 18px; font-weight: bold; color: {% if saldo > 0 %}#10b981{% elif saldo < 0 %}#ef4444{% else %}#64748b{% endif %};">
-                                                {% if saldo > 0 %}+{% endif %}{{ saldo }}
-                                            </div>
-                                        </div>
+                                    <h4 style="margin: 0 0 15px 0; color: var(--atp-blue); border-bottom: 2px solid #f59e0b; display: inline-block;">🔥 Agressividade</h4>
+                                    
+                                    {% set agr = match[23] %}
+                                    {% set agr_color = '#3b82f6' if agr < 35 else ('#f59e0b' if agr <= 65 else '#ef4444') %}
+                                    {% set agr_label = 'Defensivo' if agr < 35 else ('Equilibrado' if agr <= 65 else 'Agressivo') %}
+                                    
+                                    <div style="width: 100%; background: #e2e8f0; border-radius: 4px; height: 12px; position: relative;">
+                                        <div style="width: {{ agr }}%; background: {{ agr_color }}; height: 100%; border-radius: 4px;"></div>
+                                        <div style="position: absolute; top: -6px; left: calc({{ agr }}% - 12px); background: white; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #002855; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                                        <span style="font-size: 14px; font-weight: bold; color: #64748b; text-transform: uppercase;">Estilo: {{ agr_label }}</span>
+                                        <span style="font-size: 24px; font-weight: 900; color: {{ agr_color }};">{{ agr }}%</span>
                                     </div>
                                 </div>
 
@@ -201,7 +210,7 @@
                                 </div>
                                 <div class="stats-box">
                                     <h4 style="margin: 0 0 5px 0; color: var(--atp-blue);">📝 Notas</h4>
-                                    <p style="font-size: 13px; color: #475569; margin: 0;"><i>{{ match[26] or "Sem observações." }}</i></p>
+                                    <p style="font-size: 13px; color: #475569; margin: 0;"><i>{{ match[25] or "Sem observações." }}</i></p>
                                 </div>
                             </div>
                         </div>
@@ -211,7 +220,8 @@
             </ul>
         {% else %}
             <div style="background: white; padding: 40px; text-align: center; border-radius: 15px; color: var(--text-slate); border: 1px dashed #cbd5e1;">
-                <p>Nenhuma partida registrada. Hora de entrar em quadra!</p>
+                <p style="font-size: 18px; margin-bottom: 10px;">Nenhuma partida encontrada com esses filtros.</p>
+                <a href="/" class="btn-main" style="background: #e2e8f0; color: #475569;">Limpar Filtros</a>
             </div>
         {% endif %}
     </div>
@@ -223,10 +233,8 @@
         }
 
         window.onload = function() {
-            // --- GRÁFICO DE EVOLUÇÃO ---
             const evoCtx = document.getElementById('evolutionChart').getContext('2d');
-            // A performance agora está no índice 25
-            const perfData = [{% for match in matches[:10]|reverse %}{{ match[25] }},{% endfor %}];
+            const perfData = [{% for match in matches[:10]|reverse %}{{ match[24] }},{% endfor %}];
             const perfLabels = perfData.map((_, i) => `J${i + 1}`);
 
             new Chart(evoCtx, {
@@ -251,7 +259,6 @@
                 }
             });
 
-            // --- GRÁFICOS DE RADAR ---
             {% for match in matches %}
             new Chart(document.getElementById('chart-{{ loop.index }}'), {
                 type: 'radar',
