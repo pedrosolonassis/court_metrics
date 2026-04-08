@@ -1,5 +1,7 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect
+import csv
+import io
+from flask import Flask, render_template, request, redirect, Response
 
 app = Flask(__name__)
 
@@ -31,8 +33,8 @@ def create_db():
         dropshot INTEGER,
         footwork INTEGER,
         strategy INTEGER,
-        winners INTEGER,         /* NOVA COLUNA */
-        unforced_errors INTEGER, /* NOVA COLUNA */
+        winners INTEGER,         /* CORRIGIDO: Retornou para winners */
+        unforced_errors INTEGER, /* CORRIGIDO: Retornou para erros não forçados */
         performance_rating REAL,
         notes TEXT
     )
@@ -46,10 +48,40 @@ create_db()
 def home():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches ORDER BY id DESC")
+    
+    # Capturando os filtros da URL
+    f_surface = request.args.get("surface", "")
+    f_type = request.args.get("match_type", "")
+    f_format = request.args.get("match_format", "")
+    
+    # Montando a consulta SQL dinamicamente
+    query = "SELECT * FROM matches WHERE 1=1"
+    params = []
+    
+    if f_surface:
+        query += " AND surface = ?"
+        params.append(f_surface)
+    if f_type:
+        query += " AND match_type = ?"
+        params.append(f_type)
+    if f_format:
+        query += " AND match_format = ?"
+        params.append(f_format)
+        
+    query += " ORDER BY id DESC"
+    
+    c.execute(query, params)
     matches = c.fetchall()
     conn.close()
-    return render_template("index.html", matches=matches)
+    
+    # Passando os filtros atuais de volta para o HTML
+    filters = {
+        "surface": f_surface,
+        "match_type": f_type,
+        "match_format": f_format
+    }
+    
+    return render_template("index.html", matches=matches, filters=filters)
 
 @app.route("/new_match", methods=["GET", "POST"])
 def new_match():
@@ -78,11 +110,11 @@ def new_match():
         notes = {f: int(request.form.get(f, 0)) for f in f_names}
         notes_list = [notes[f] for f in f_names]
 
-        # COLETANDO OS DADOS TÁTICOS
+        # CORRIGIDO: Voltando a coletar Winners e Erros
         winners = int(request.form.get("winners", 0))
         unforced_errors = int(request.form.get("unforced_errors", 0))
 
-        # CÁLCULO PONDERADO INTACTO (0 a 10)
+        # Cálculo Final Ponderado
         primarios = [notes['forehand'], notes['backhand'], notes['serve']]
         v_prim = [n for n in primarios if n > 0]
         m_prim = sum(v_prim)/len(v_prim) if v_prim else 0
@@ -114,6 +146,32 @@ def new_match():
         return redirect("/")
     
     return render_template("new_match.html")
+
+# --- ROTA DE EXPORTAÇÃO CSV ---
+@app.route("/export")
+def export_csv():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches ORDER BY id DESC")
+    matches = c.fetchall()
+    
+    # Pegando os nomes das colunas
+    column_names = [description[0] for description in c.description]
+    conn.close()
+
+    # Criando o arquivo CSV na memória
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';') # Ponto e vírgula evita problemas no Excel pt-BR
+    
+    writer.writerow(column_names)
+    writer.writerows(matches)
+    
+    # Preparando a resposta para forçar o download
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
