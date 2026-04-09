@@ -324,5 +324,46 @@ def compare(id1, id2):
         return render_template("compare.html", m1=match1, m2=match2)
     return redirect("/")
 
+# --- ROTAS DE DOSSIÊ DE ADVERSÁRIOS (H2H) ---
+@app.route("/adversarios")
+def adversarios():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    # AJUSTE 3: Se for duplas, junta os nomes com " & ". Se for simples, usa só o oponente.
+    c.execute("""
+        SELECT 
+            CASE WHEN match_format = 'Duplas' THEN opponent || ' & ' || opp_partner ELSE opponent END as rival, 
+            COUNT(id) as total_jogos,
+            SUM(CASE WHEN result = 'Vitória' THEN 1 ELSE 0 END) as vitorias
+        FROM matches 
+        GROUP BY rival 
+        ORDER BY total_jogos DESC
+    """)
+    opponents_data = c.fetchall()
+    conn.close()
+    return render_template("adversarios.html", opponents=opponents_data)
+
+@app.route("/h2h/<path:opponent>")
+def h2h(opponent):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    
+    # AJUSTE 3: Busca a entidade rival usando a mesma lógica de junção
+    c.execute("""
+        SELECT * FROM matches 
+        WHERE CASE WHEN match_format = 'Duplas' THEN opponent || ' & ' || opp_partner ELSE opponent END = ? 
+        ORDER BY match_date DESC
+    """, (opponent,))
+    matches = c.fetchall()
+    
+    c.execute("SELECT AVG(performance_rating), AVG(winners), AVG(unforced_errors) FROM matches")
+    career_avg = c.fetchone()
+    conn.close()
+    
+    if not matches:
+        return redirect("/adversarios")
+        
+    return render_template("h2h_detail.html", matches=matches, opponent=opponent, career_avg=career_avg)
+
 if __name__ == "__main__":
     app.run(debug=True)

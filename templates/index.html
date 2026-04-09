@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,6 @@
         .insight-card { transition: transform 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .insight-card:hover { transform: translateY(-3px); }
 
-        /* Cartões agora organizados em Grid flexível */
         .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         
         .match-card { 
@@ -31,15 +30,37 @@
         .btn-main { background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px; height: 42px; padding: 0 20px;}
         .btn-main:hover { opacity: 0.9; }
 
-        /* Estilos da Central de Fundamentos */
-        .fundamentos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: 15px; }
-        .fundamento-card { background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 15px; text-align: center; text-decoration: none; color: inherit; transition: 0.2s; display: block; }
-        .fundamento-card:hover { border-color: var(--atp-blue); box-shadow: 0 4px 10px rgba(0,0,0,0.05); transform: translateY(-3px); }
-        .fund-nome { font-size: 11px; font-weight: bold; color: var(--text-slate); text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .fund-nota { font-size: 24px; font-weight: 900; color: var(--atp-blue); }
-        .fund-warning { border-color: #fca5a5; background: #fef2f2; }
-        .fund-warning .fund-nome { color: #dc2626; }
-        .fund-warning .fund-nota { color: #b91c1c; }
+        .chart-filter { font-size: 12px; color: var(--text-slate); background: #f8fafc; padding: 4px 12px; border-radius: 20px; border: 1px solid #cbd5e1; outline: none; cursor: pointer; font-family: inherit; font-weight: bold;}
+        .chart-filter:hover { border-color: var(--atp-blue); }
+
+        /* Estilos Base da Central de Fundamentos */
+        .fundamentos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        .fundamento-card { background: white; border: 2px solid #cbd5e1; border-radius: 12px; padding: 15px 10px; text-align: center; text-decoration: none; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
+        .fundamento-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+        .fund-nome { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: var(--text-slate); }
+        .fund-nota { font-size: 26px; font-weight: 900; margin-bottom: 4px; }
+        .fund-status { font-size: 10px; font-weight: bold; text-transform: uppercase; }
+
+        /* Cores Dinâmicas dos Fundamentos (Gamificação) */
+        .fund-red { background-color: #fef2f2; border-color: #fca5a5; }
+        .fund-red .fund-nota { color: #b91c1c; }
+        .fund-red .fund-status { color: #dc2626; }
+
+        .fund-orange { background-color: #fff7ed; border-color: #fdba74; }
+        .fund-orange .fund-nota { color: #c2410c; }
+        .fund-orange .fund-status { color: #ea580c; }
+
+        .fund-lime { background-color: #f7fee7; border-color: #bef264; }
+        .fund-lime .fund-nota { color: #4d7c0f; }
+        .fund-lime .fund-status { color: #65a30d; }
+
+        .fund-emerald { background-color: #ecfdf5; border-color: #6ee7b7; }
+        .fund-emerald .fund-nota { color: #047857; }
+        .fund-emerald .fund-status { color: #059669; }
+
+        .fund-elite { background-color: #ecfeff; border-color: #67e8f9; }
+        .fund-elite .fund-nota { color: #0369a1; }
+        .fund-elite .fund-status { color: #0891b2; }
     </style>
 </head>
 <body>
@@ -52,6 +73,7 @@
                 <p style="color: var(--text-slate); margin: 0;">Sua jornada rumo ao próximo nível começa aqui.</p>
             </div>
             <div style="display: flex; gap: 10px;">
+                <a href="/adversarios" class="btn-main" style="background: #e2e8f0; color: var(--atp-blue); border: 1px solid #cbd5e1;">👥 Adversários</a>
                 <a href="/new_match" class="btn-main">➕ Registrar Partida</a>
                 <a href="/history" class="btn-main" style="background: #f1f5f9; color: var(--atp-blue); border: 1px solid #cbd5e1;">📚 Ver Histórico</a>
             </div>
@@ -90,11 +112,16 @@
         </div>
 
         <div style="background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: var(--atp-blue); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">📈 Tendência de Performance</h3>
-                <span style="font-size: 12px; color: var(--text-slate); background: #f8fafc; padding: 4px 10px; border-radius: 20px;">
-                    Exibindo: {{ matches[:10]|length }} Partidas
-                </span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; color: var(--atp-blue); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">
+                    📈 Médias das Performances
+                </h3>
+                <select id="chartFilter" class="chart-filter" style="width: auto; padding: 6px 15px; border-radius: 8px;" onchange="updateEvolutionChart(this.value)">
+                    <option value="3">Últimas 3 Partidas</option>
+                    <option value="5">Últimas 5 Partidas</option>
+                    <option value="10">Últimas 10 Partidas</option>
+                    <option value="15" selected>Últimas 15 Partidas</option>
+                </select>
             </div>
             <div style="height: 280px;">
                 <canvas id="evolutionChart"></canvas>
@@ -103,31 +130,25 @@
 
         {% if matches|length > 0 %}
         <div style="background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">🎾 Central de Fundamentos</h3>
-                <span style="font-size: 12px; color: var(--text-slate); background: #f8fafc; padding: 4px 10px; border-radius: 20px;">Médias da Carreira</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">🎾 Central de Fundamentos</h3>
+                
+                <select id="fundFilter" class="chart-filter" style="width: auto; padding: 6px 15px; border-radius: 8px;" onchange="updateFundamentals(this.value)">
+                    <option value="3">Últimas 3 Partidas</option>
+                    <option value="5">Últimas 5 Partidas</option>
+                    <option value="10">Últimas 10 Partidas</option>
+                    <option value="15">Últimas 15 Partidas</option>
+                    <option value="0" selected>Média da Carreira</option>
+                </select>
             </div>
             
             {% set f_names = ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'] %}
-            {% set indices = [10, 11, 12, 16, 17, 18, 19, 20, 21, 22] %}
-            {% set medias = [] %}
-            
-            {% for idx in indices %}
-                {% set total = matches|sum(attribute=idx) %}
-                {% set avg = (total / matches|length)|round(1) %}
-                {% set _ = medias.append(avg) %}
-            {% endfor %}
-            
-            {% set pior_media = medias|min %}
-
             <div class="fundamentos-grid">
                 {% for i in range(10) %}
-                    <a href="/fundamento/{{ f_names[i]|lower }}" class="fundamento-card {% if medias[i] == pior_media %}fund-warning{% endif %}">
+                    <a href="/fundamento/{{ f_names[i] }}" id="fund-card-{{ i }}" class="fundamento-card">
                         <span class="fund-nome">{{ f_names[i] }}</span>
-                        <span class="fund-nota">{{ "%.1f"|format(medias[i]) }}</span>
-                        {% if medias[i] == pior_media %}
-                            <div style="font-size: 10px; color: #dc2626; margin-top: 5px; font-weight: bold;">⚠️ Focar Treino</div>
-                        {% endif %}
+                        <span class="fund-nota" id="fund-val-{{ i }}">0.0</span>
+                        <div class="fund-status" id="fund-label-{{ i }}">Aguardando...</div>
                     </a>
                 {% endfor %}
             </div>
@@ -156,10 +177,10 @@
 
                         <div style="line-height: 1.7; padding-right: 90px;">
                             {% if match[7] == 'Duplas' %}
-                                <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px;">👥 Você & {{ match[8] }}<br>vs {{ match[1] }} & {{ match[9] }}</strong>
-                            {% else %}
-                                <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px;">👤 vs {{ match[1] }}</strong>
-                            {% endif %}
+                             <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px;">👥 vs {{ match[1] }} & {{ match[9] }}</strong>
+                             {% else %}
+                             <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px;">👤 vs {{ match[1] }}</strong>
+                             {% endif %}
                             <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
                         </div>
                         
@@ -194,18 +215,26 @@
     </div>
 
     <script>
-        window.onload = function() {
-            // GRÁFICO DE EVOLUÇÃO
-            const evoCtx = document.getElementById('evolutionChart').getContext('2d');
-            const perfData = [{% for match in matches[:10]|reverse %}{{ match[25] }},{% endfor %}];
-            const perfLabels = perfData.map((_, i) => `J${i + 1}`);
+        // === VARIÁVEIS GLOBAIS ===
+        const allPerfData = [{% for match in matches[:15]|reverse %}{{ match[25] }}{% if not loop.last %},{% endif %}{% endfor %}];
+        const allPerfLabels = [{% for match in matches[:15]|reverse %}'{{ match[27][8:10] }}/{{ match[27][5:7] }}'{% if not loop.last %},{% endif %}{% endfor %}];
+        
+        // Exportando a matriz de fundamentos (10 índices) de TODOS os jogos
+        const allFundData = [
+            {% for m in matches %}
+                [{{ m[10] }}, {{ m[11] }}, {{ m[12] }}, {{ m[16] }}, {{ m[17] }}, {{ m[18] }}, {{ m[19] }}, {{ m[20] }}, {{ m[21] }}, {{ m[22] }}]{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
 
-            new Chart(evoCtx, {
+        window.onload = function() {
+            // 1. Inicializa o Gráfico de Evolução
+            const evoCtx = document.getElementById('evolutionChart').getContext('2d');
+            window.evoChart = new Chart(evoCtx, {
                 type: 'line',
                 data: {
-                    labels: perfLabels,
+                    labels: allPerfLabels,
                     datasets: [{
-                        data: perfData,
+                        data: allPerfData,
                         borderColor: '#002855',
                         backgroundColor: 'rgba(209, 255, 0, 0.1)',
                         borderWidth: 4,
@@ -221,7 +250,77 @@
                     scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } }, x: { grid: { display: false } } }
                 }
             });
+
+            // Dispara as funções para ler o filtro selecionado (por padrão 15 no gráfico e 0 na carreira)
+            updateEvolutionChart(document.getElementById('chartFilter').value);
+            updateFundamentals(document.getElementById('fundFilter').value);
         }
+
+        // 2. Função de Filtro Dinâmico do Gráfico
+        window.updateEvolutionChart = function(limitStr) {
+            const limit = parseInt(limitStr);
+            const slicedData = allPerfData.slice(-limit);
+            const slicedLabels = allPerfLabels.slice(-limit);
+            
+            if (window.evoChart) {
+                window.evoChart.data.labels = slicedLabels;
+                window.evoChart.data.datasets[0].data = slicedData;
+                window.evoChart.update();
+            }
+        };
+
+        // 3. Função de Filtro e Gamificação (Cores) dos Fundamentos
+        window.updateFundamentals = function(limitStr) {
+            let limit = parseInt(limitStr);
+            
+            // Se o limite for 0 (Carreira toda) ou maior que os jogos que temos, usa o total
+            if (limit === 0 || limit > allFundData.length) {
+                limit = allFundData.length;
+            }
+            if (limit === 0) return; // Evita erro se o banco estiver vazio
+
+            // Soma os 10 fundamentos baseados apenas na fatia selecionada (0 até limit)
+            let sums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            for(let i = 0; i < limit; i++) {
+                for(let j = 0; j < 10; j++) {
+                    sums[j] += allFundData[i][j];
+                }
+            }
+
+            // Calcula a média e aplica a gamificação
+            for(let j = 0; j < 10; j++) {
+                let avg = sums[j] / limit;
+                let card = document.getElementById('fund-card-' + j);
+                let valEl = document.getElementById('fund-val-' + j);
+                let labelEl = document.getElementById('fund-label-' + j);
+
+                valEl.innerText = avg.toFixed(1);
+
+                // Limpa as classes de cor antigas
+                card.className = "fundamento-card";
+                
+                let colorClass = "";
+                let textLabel = "";
+                let icon = "";
+
+                // Lógica exata que você pediu
+                if (avg < 6.0) {
+                    colorClass = "fund-red"; textLabel = "Precisa de Treino"; icon = "⚠️ ";
+                } else if (avg < 7.0) {
+                    colorClass = "fund-orange"; textLabel = "Precisa de Atenção"; icon = "👀 ";
+                } else if (avg < 8.0) {
+                    colorClass = "fund-lime"; textLabel = "Pode Melhorar"; icon = "📈 ";
+                } else if (avg < 9.0) {
+                    colorClass = "fund-emerald"; textLabel = "Consistente"; icon = "✅ ";
+                } else {
+                    colorClass = "fund-elite"; textLabel = "Espetacular"; icon = "🔥 ";
+                }
+
+                // Aplica a nova cor e o texto motivacional
+                card.classList.add(colorClass);
+                labelEl.innerText = icon + textLabel;
+            }
+        };
     </script>
 </body>
 </html>

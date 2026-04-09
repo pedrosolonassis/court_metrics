@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Adversários - Tennis Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root { --atp-blue: #002855; --text-slate: #64748b; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; padding: 20px;}
+        .rival-card { background: white; padding: 25px; border-radius: 12px; border-left: 5px solid var(--atp-blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; margin-bottom: 15px;}
+        .rival-card:hover { transform: translateX(5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        .win-rate { font-size: 32px; font-weight: 900; }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 800px; margin: 0 auto;">
+        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
+        <h1 style="color: var(--atp-blue); margin-top: 20px;">👥 Dossiê de Adversários</h1>
+        <p style="color: var(--text-slate); margin-bottom: 30px;">Selecione um oponente para ver o Head-to-Head detalhado.</p>
+
+        {% for opp in opponents %}
+            {% set win_pct = ((opp[2] / opp[1]) * 100)|int %}
+            <a href="/h2h/{{ opp[0] }}" class="rival-card">
+                <div>
+                    <h2 style="margin: 0 0 5px 0; color: var(--atp-blue);">{{ opp[0] }}</h2>
+                    <span style="color: var(--text-slate); font-size: 14px; font-weight: bold;">{{ opp[1] }} Partidas Jogadas</span>
+                </div>
+                <div style="text-align: right;">
+                    <div class="win-rate" style="color: {% if win_pct >= 50 %}#10b981{% else %}#ef4444{% endif %};">{{ win_pct }}%</div>
+                    <span style="font-size: 11px; color: var(--text-slate); font-weight: bold; text-transform: uppercase;">Taxa de Vitória</span>
+                </div>
+            </a>
+        {% else %}
+            <p>Nenhum adversário registrado ainda.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
