@@ -6,12 +6,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --atp-blue: #002855;
-            --tennis-green: #d1ff00;
-            --text-slate: #64748b;
-        }
-
+        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; }
         
         .insight-card { transition: transform 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -30,15 +25,17 @@
         .perf-badge { display: inline-block; padding: 8px 15px; border-radius: 6px; font-size: 20px; font-weight: 900; margin-top: 10px; border: 1px solid transparent; }
         
         .details-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; align-items: start; }
-        .stats-box { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .stats-box { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 5px; }
 
-        .btn-main { padding: 12px 25px; background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px;}
+        .btn-main { background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px;}
         .btn-main:hover { opacity: 0.9; }
 
+        /* AJUSTE: Altura cravada em 42px e box-sizing border-box para tudo ficar idêntico */
         .filter-bar { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
         .filter-group { flex: 1; min-width: 160px; }
         .filter-label { font-size: 12px; font-weight: bold; color: var(--text-slate); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
-        .filter-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background-color: #f8fafc; color: var(--atp-blue); font-weight: 600; }
+        .filter-select { width: 100%; height: 42px; display: block; padding: 0 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background-color: #f8fafc; color: var(--atp-blue); font-weight: 600; box-sizing: border-box; font-family: inherit; }
+        .filter-btn { height: 42px; padding: 0 20px; box-sizing: border-box; margin: 0; border: 1px solid transparent; }
     </style>
 </head>
 <body>
@@ -51,8 +48,8 @@
                 <p style="color: var(--text-slate); margin: 0;">Sua jornada rumo ao próximo nível começa aqui.</p>
             </div>
             <div style="display: flex; gap: 10px;">
-                <a href="/new_match" class="btn-main">➕ Registrar Partida</a>
-                <a href="/export" class="btn-main" style="background: #10b981;">📊 Exportar CSV</a>
+                <a href="/new_match" class="btn-main filter-btn">➕ Registrar Partida</a>
+                <a href="/export" class="btn-main filter-btn" style="background: #10b981;">📊 Exportar CSV</a>
             </div>
         </div>
 
@@ -86,8 +83,8 @@
             </div>
 
             <div style="display: flex; gap: 10px;">
-                <button type="submit" class="btn-main">🔍 Filtrar</button>
-                <a href="/" class="btn-main" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; text-align: center;">Limpar</a>
+                <button type="submit" class="btn-main filter-btn">🔍 Filtrar</button>
+                <a href="/" class="btn-main filter-btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Limpar</a>
             </div>
         </form>
 
@@ -149,6 +146,9 @@
                 <li class="match-card" onclick="toggleDetails('details-{{ loop.index }}')">
                     
                     <div style="position: absolute; top: 20px; right: 20px; text-align: right;">
+                        <div style="font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">
+                            📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }}
+                        </div>
                         <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">
                             {{ match[5] }}
                         </span><br>
@@ -177,11 +177,21 @@
 
                     <div id="details-{{ loop.index }}" style="display: none; margin-top: 25px; border-top: 1px solid #f1f5f9; padding-top: 25px;">
                         <div class="details-grid">
-                            <div style="background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9;">
-                                <canvas id="chart-{{ loop.index }}"></canvas>
-                            </div>
+                            
                             <div style="display: flex; flex-direction: column; gap: 15px;">
-                                
+                                <div style="background: #fff; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                    <canvas id="chart-{{ loop.index }}"></canvas>
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <a href="/edit/{{ match[0] }}" class="btn-main filter-btn" style="background: #f59e0b; color: white; flex: 1; font-size: 13px;">✏️ Editar</a>
+                                    
+                                    <form action="/delete/{{ match[0] }}" method="POST" style="flex: 1; margin: 0;" onsubmit="return confirm('Tem certeza que deseja excluir esta partida? Isso não pode ser desfeito.');">
+                                        <button type="submit" class="btn-main filter-btn" style="background: #ef4444; width: 100%; font-size: 13px;">🗑️ Excluir</button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
                                 <div class="stats-box">
                                     <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); border-bottom: 2px solid #f59e0b; display: inline-block;">⚔️ Saldo Tático</h4>
                                     <div style="display: flex; justify-content: space-between; margin-top: 10px; text-align: center;">
@@ -216,16 +226,8 @@
                                     <p style="font-size: 13px; color: #475569; margin: 0;"><i>{{ match[26] or "Sem observações." }}</i></p>
                                 </div>
                             </div>
-                        </div>
 
-                        <div style="display: flex; gap: 15px; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                            <a href="/edit/{{ match[0] }}" class="btn-main" style="background: #f59e0b; color: white; flex: 1; text-align: center; font-size: 14px;">✏️ Editar Partida</a>
-                            
-                            <form action="/delete/{{ match[0] }}" method="POST" style="flex: 1; margin: 0;" onsubmit="return confirm('Tem certeza que deseja excluir esta partida? Isso não pode ser desfeito.');">
-                                <button type="submit" class="btn-main" style="background: #ef4444; width: 100%; border: none; cursor: pointer; font-size: 14px;">🗑️ Excluir</button>
-                            </form>
                         </div>
-
                     </div>
                 </li>
             {% endfor %}
@@ -233,7 +235,7 @@
         {% else %}
             <div style="background: white; padding: 40px; text-align: center; border-radius: 15px; color: var(--text-slate); border: 1px dashed #cbd5e1;">
                 <p style="font-size: 18px; margin-bottom: 10px;">Nenhuma partida encontrada.</p>
-                <a href="/" class="btn-main" style="background: #e2e8f0; color: #475569;">Limpar Filtros</a>
+                <a href="/" class="btn-main filter-btn" style="background: #e2e8f0; color: #475569;">Limpar Filtros</a>
             </div>
         {% endif %}
     </div>
@@ -241,14 +243,12 @@
     <script>
         function toggleDetails(id) {
             const el = document.getElementById(id);
-            // Previne a propagação para evitar abrir/fechar quando clica nos botões internos
             if(event.target.tagName.toLowerCase() !== 'button' && event.target.tagName.toLowerCase() !== 'a'){
                 el.style.display = (el.style.display === 'none') ? 'block' : 'none';
             }
         }
 
         window.onload = function() {
-            // --- GRÁFICO DE EVOLUÇÃO ---
             const evoCtx = document.getElementById('evolutionChart').getContext('2d');
             const perfData = [{% for match in matches[:10]|reverse %}{{ match[25] }},{% endfor %}];
             const perfLabels = perfData.map((_, i) => `J${i + 1}`);
@@ -275,7 +275,6 @@
                 }
             });
 
-            // --- GRÁFICOS DE RADAR ---
             {% for match in matches %}
             new Chart(document.getElementById('chart-{{ loop.index }}'), {
                 type: 'radar',

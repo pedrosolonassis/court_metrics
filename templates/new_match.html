@@ -11,10 +11,8 @@
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .rating-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .rating-box { padding: 15px; border-radius: 8px; display: flex; flex-direction: column; border: 2px solid transparent; transition: all 0.3s ease; }
-        
         .adv-serve-box { padding: 10px; border-radius: 8px; text-align: center; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s ease; }
 
-        /* 🎨 CORES DINÂMICAS */
         .box-neutral { background-color: #f3f4f6; border-color: #e5e7eb; } 
         .box-red     { background-color: #fee2e2; border-color: #fca5a5; } 
         .box-orange  { background-color: #ffedd5; border-color: #fdba74; } 
@@ -24,16 +22,21 @@
 
         .rating-box label { margin: 0 0 5px 0; font-size: 14px; color: #333; font-weight: bold; }
         .rating-box input { background: transparent; border: none; font-size: 22px; font-weight: 900; color: #1f2937; outline: none; }
-        .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        
+        /* AJUSTE: Margem enorme embaixo do performance-container para afastar da descrição */
+        .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; margin-bottom: 40px; }
+        
         .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
         
         .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
         .error-input { color: #ef4444; }
-
         .set-input-group { display: none; }
         .set-visible { display: inline-block !important; }
 
-        /* Estilização das novas Barras de Arrasto (Sliders) */
+        /* AJUSTE: Classe Global para Forçar Altura idêntica em Textos, Datas e Selects */
+        .form-control { width: 100%; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #f8fafc; color: #002855; font-weight: 600; box-sizing: border-box; outline: none; font-family: inherit; font-size: 14px; }
+        .form-control:focus { border-color: #002855; }
+
         .slider-win { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #dcfce7; outline: none; margin-top: 15px;}
         .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
         
@@ -55,14 +58,14 @@
                 <div class="grid-2">
                     <div>
                         <label>Formato do Jogo:</label>
-                        <select name="match_format" id="match_format" onchange="toggleDoubles()">
+                        <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
                             <option value="Simples">Simples</option>
                             <option value="Duplas">Duplas</option>
                         </select>
                     </div>
                     <div>
                         <label>Categoria:</label>
-                        <select name="categoria">
+                        <select name="categoria" class="form-control">
                             <option value="1ª Classe">1ª Classe</option>
                             <option value="2ª Classe">2ª Classe</option>
                             <option value="3ª Classe">3ª Classe</option>
@@ -78,11 +81,11 @@
                     <div class="grid-2">
                         <div>
                             <label>Adversário 1:</label>
-                            <input type="text" id="inp_opp1" name="ignore_opp" placeholder="Nome do adversário 1">
+                            <input type="text" id="inp_opp1" name="ignore_opp" class="form-control" placeholder="Nome do adversário 1">
                         </div>
                         <div>
                             <label>Adversário 2 (Parceiro):</label>
-                            <input type="text" name="opp_partner" placeholder="Nome do adversário 2">
+                            <input type="text" name="opp_partner" class="form-control" placeholder="Nome do adversário 2">
                         </div>
                     </div>
                 </div>
@@ -90,16 +93,16 @@
                 <div class="grid-2" style="margin-top: 15px;">
                     <div id="singles-opp-div">
                         <label>Adversário Principal:</label>
-                        <input type="text" id="inp_opp_single" name="opponent" required>
+                        <input type="text" id="inp_opp_single" name="opponent" class="form-control" required>
                     </div>
                     <div id="doubles-partner-div" style="display: none;">
                         <label>Seu Parceiro:</label>
-                        <input type="text" name="partner" placeholder="Nome do seu parceiro">
+                        <input type="text" name="partner" class="form-control" placeholder="Nome do seu parceiro">
                     </div>
 
                     <div>
                         <label>Tipo de Jogo:</label>
-                        <select name="match_type">
+                        <select name="match_type" class="form-control">
                             <option value="Ranking">Ranking</option>
                             <option value="Torneio">Torneio</option>
                             <option value="Amistoso">Amistoso</option>
@@ -107,33 +110,40 @@
                     </div>
                     <div>
                         <label>Tipo de Quadra:</label>
-                        <select name="surface">
+                        <select name="surface" class="form-control">
                             <option value="Quadra Dura">Quadra Dura (Rápida)</option>
                             <option value="Saibro">Saibro (Terra Batida)</option>
                         </select>
                     </div>
                     
                     <div>
-                        <label>Resultado:</label>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                            <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 13px; text-transform: uppercase;">
-                                Aguardando Placar...
-                            </div>
-                            <input type="hidden" name="result" id="result-hidden" value="Derrota">
-                        </div>
+                        <label>Data da Partida:</label>
+                        <input type="date" name="match_date" id="match_date" class="form-control" required>
                     </div>
                 </div>
             </div>
 
             <div class="form-section">
                 <h3>🔢 Informar Placar</h3>
-                <label>Formato dos Sets:</label>
-                <select id="set_format" onchange="updateSetInputs()" style="margin-bottom: 20px;">
-                    <option value="1">1 Set</option>
-                    <option value="3" selected>2 Sets + Super Tiebreak</option>
-                    <option value="3">3 Sets Completos</option>
-                    <option value="5">5 Sets (Grand Slam)</option>
-                </select>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                    <div style="flex: 1; max-width: 300px;">
+                        <label>Formato dos Sets:</label>
+                        <select id="set_format" class="form-control" onchange="updateSetInputs()" style="margin-bottom: 0;">
+                            <option value="1">1 Set</option>
+                            <option value="3" selected>2 Sets + Super Tiebreak</option>
+                            <option value="3">3 Sets Completos</option>
+                            <option value="5">5 Sets (Grand Slam)</option>
+                        </select>
+                    </div>
+                    <div style="text-align: right;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 13px;">Resultado Automático:</label>
+                        <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 13px; text-transform: uppercase; height: 42px; box-sizing: border-box; display: flex; align-items: center;">
+                            Aguardando Placar...
+                        </div>
+                        <input type="hidden" name="result" id="result-hidden" value="Derrota">
+                    </div>
+                </div>
 
                 <div class="letzplay-grid">
                     <div class="score-row">
@@ -174,7 +184,7 @@
                     </div>
 
                     <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
-                        <h4 style="color: #dc2626; margin: 0 0 15px 0;">⚠️ Erros Não Forçados: <span id="err_val" style="font-size: 28px; color: #b91c1c; margin-left: 5px;">0</span></h4>
+                        <h4 style="color: #dc2626; margin: 0 0 15px 0;">⚠️ Erros N.F.: <span id="err_val" style="font-size: 28px; color: #b91c1c; margin-left: 5px;">0</span></h4>
                         <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
                             <span>0: Fui uma Parede</span>
                             <span>10: Errei muito</span>
@@ -227,9 +237,9 @@
             </div>
 
             <div class="form-section">
-                <label>Descrição:</label>
-                <textarea name="notes" rows="3"></textarea>
-                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Finalizar Registro</button>
+                <label style="font-weight: bold; color: #002855;">📝 Descrição da Partida:</label>
+                <textarea name="notes" rows="3" class="form-control" style="height: auto; padding: 15px; margin-top: 10px;"></textarea>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 15px; height: 42px; font-size: 16px;">Finalizar Registro</button>
             </div>
         </form>
     </div>
@@ -239,38 +249,22 @@
             const getVal = (id) => parseInt(document.getElementById(id).value) || 0;
             const numSets = parseInt(document.getElementById('set_format').value);
             
-            let setsPlayer = 0;
-            let setsOpp = 0;
-
+            let setsPlayer = 0; let setsOpp = 0;
             for (let i = 1; i <= numSets; i++) {
                 let pVal = getVal(`p_s${i}`);
                 let oVal = getVal(`o_s${i}`);
-                
-                if (pVal > oVal) setsPlayer++;
-                else if (oVal > pVal) setsOpp++;
+                if (pVal > oVal) setsPlayer++; else if (oVal > pVal) setsOpp++;
             }
 
             const badge = document.getElementById('status-badge');
             const hiddenInput = document.getElementById('result-hidden');
 
             if (setsPlayer > setsOpp) {
-                badge.innerText = "Vitória 🎉";
-                badge.style.background = "#dcfce7"; 
-                badge.style.color = "#15803d"; 
-                badge.style.borderColor = "#86efac";
-                hiddenInput.value = "Vitória";
+                badge.innerText = "Vitória 🎉"; badge.style.background = "#dcfce7"; badge.style.color = "#15803d"; badge.style.borderColor = "#86efac"; hiddenInput.value = "Vitória";
             } else if (setsOpp > setsPlayer) {
-                badge.innerText = "Derrota 🏳️";
-                badge.style.background = "#fee2e2"; 
-                badge.style.color = "#b91c1c"; 
-                badge.style.borderColor = "#fca5a5";
-                hiddenInput.value = "Derrota";
+                badge.innerText = "Derrota 🏳️"; badge.style.background = "#fee2e2"; badge.style.color = "#b91c1c"; badge.style.borderColor = "#fca5a5"; hiddenInput.value = "Derrota";
             } else {
-                badge.innerText = "Empate / Em Jogo";
-                badge.style.background = "#f1f5f9"; 
-                badge.style.color = "#64748b"; 
-                badge.style.borderColor = "#e2e8f0";
-                hiddenInput.value = "Derrota";
+                badge.innerText = "Empate / Em Jogo"; badge.style.background = "#f1f5f9"; badge.style.color = "#64748b"; badge.style.borderColor = "#e2e8f0"; hiddenInput.value = "Derrota";
             }
         }
 
@@ -279,28 +273,17 @@
             const doublesBox = document.getElementById('doubles-opponents');
             const singleOppDiv = document.getElementById('singles-opp-div');
             const doublePartnerDiv = document.getElementById('doubles-partner-div');
-            
             const inpSingleOpp = document.getElementById('inp_opp_single');
             const inpDoubleOpp1 = document.getElementById('inp_opp1');
 
             if (format === 'Duplas') {
-                doublesBox.style.display = 'block';
-                singleOppDiv.style.display = 'none';
-                doublePartnerDiv.style.display = 'block';
-                
-                inpSingleOpp.removeAttribute('required');
-                inpSingleOpp.name = "ignore_opp";
-                inpDoubleOpp1.name = "opponent";
-                inpDoubleOpp1.setAttribute('required', 'true');
+                doublesBox.style.display = 'block'; singleOppDiv.style.display = 'none'; doublePartnerDiv.style.display = 'block';
+                inpSingleOpp.removeAttribute('required'); inpSingleOpp.name = "ignore_opp";
+                inpDoubleOpp1.name = "opponent"; inpDoubleOpp1.setAttribute('required', 'true');
             } else {
-                doublesBox.style.display = 'none';
-                singleOppDiv.style.display = 'block';
-                doublePartnerDiv.style.display = 'none';
-
-                inpSingleOpp.setAttribute('required', 'true');
-                inpSingleOpp.name = "opponent";
-                inpDoubleOpp1.name = "ignore_opp";
-                inpDoubleOpp1.removeAttribute('required');
+                doublesBox.style.display = 'none'; singleOppDiv.style.display = 'block'; doublePartnerDiv.style.display = 'none';
+                inpSingleOpp.setAttribute('required', 'true'); inpSingleOpp.name = "opponent";
+                inpDoubleOpp1.name = "ignore_opp"; inpDoubleOpp1.removeAttribute('required');
             }
         }
 
@@ -309,13 +292,10 @@
             for (let i = 1; i <= 5; i++) {
                 const pInput = document.getElementById(`p_s${i}`);
                 const oInput = document.getElementById(`o_s${i}`);
-                if (i <= numSets) {
-                    pInput.classList.add('set-visible');
-                    oInput.classList.add('set-visible');
-                } else {
-                    pInput.classList.remove('set-visible');
-                    oInput.classList.remove('set-visible');
-                    pInput.value = ""; oInput.value = ""; 
+                if (i <= numSets) { 
+                    pInput.classList.add('set-visible'); oInput.classList.add('set-visible');
+                } else { 
+                    pInput.classList.remove('set-visible'); oInput.classList.remove('set-visible'); pInput.value = ""; oInput.value = ""; 
                 }
             }
             calcularResultado(); 
@@ -323,8 +303,7 @@
 
         function toggleServeDetails() {
             var serveVal = document.getElementById('inp-serve').value;
-            var serveMenu = document.getElementById('serve-details');
-            serveMenu.style.display = serveVal > 0 ? 'block' : 'none';
+            document.getElementById('serve-details').style.display = serveVal > 0 ? 'block' : 'none';
         }
 
         function updateBoxColor(inputElement) {
@@ -341,11 +320,11 @@
         }
 
         window.onload = function() {
-            updateSetInputs();
             
-            document.querySelectorAll('.set-input-group').forEach(input => {
-                input.addEventListener('input', calcularResultado);
-            });
+            document.getElementById('match_date').valueAsDate = new Date();
+
+            updateSetInputs();
+            document.querySelectorAll('.set-input-group').forEach(input => { input.addEventListener('input', calcularResultado); });
 
             const ctx = document.getElementById('liveRadarChart').getContext('2d');
             const liveChart = new Chart(ctx, {
@@ -355,10 +334,7 @@
                     datasets: [{
                         label: 'Nível Técnico',
                         data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        backgroundColor: 'rgba(196, 255, 14, 0.2)',
-                        borderColor: '#a3e635',
-                        borderWidth: 2,
-                        pointBackgroundColor: '#002855'
+                        backgroundColor: 'rgba(196, 255, 14, 0.2)', borderColor: '#a3e635', borderWidth: 2, pointBackgroundColor: '#002855'
                     }]
                 },
                 options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } } }
@@ -366,16 +342,11 @@
 
             function updateRadar() {
                 liveChart.data.datasets[0].data = [
-                    document.getElementById('inp-forehand').value || 0,
-                    document.getElementById('inp-backhand').value || 0,
-                    document.getElementById('inp-serve').value || 0,
-                    document.getElementById('inp-return').value || 0,
-                    document.getElementById('inp-slice').value || 0,
-                    document.getElementById('inp-volley').value || 0,
-                    document.getElementById('inp-smash').value || 0,
-                    document.getElementById('inp-drop').value || 0,
-                    document.getElementById('inp-foot').value || 0,
-                    document.getElementById('inp-strat').value || 0
+                    document.getElementById('inp-forehand').value || 0, document.getElementById('inp-backhand').value || 0,
+                    document.getElementById('inp-serve').value || 0, document.getElementById('inp-return').value || 0,
+                    document.getElementById('inp-slice').value || 0, document.getElementById('inp-volley').value || 0,
+                    document.getElementById('inp-smash').value || 0, document.getElementById('inp-drop').value || 0,
+                    document.getElementById('inp-foot').value || 0, document.getElementById('inp-strat').value || 0
                 ];
                 liveChart.update();
             }
@@ -383,20 +354,13 @@
             document.querySelectorAll('.fund-input, .dynamic-serve').forEach(input => {
                 updateBoxColor(input);
                 input.addEventListener('input', function() {
-                    
                     if (this.value !== "") {
                         let cleanStr = this.value.replace(/^0+(?=\d)/, '');
                         let numVal = parseInt(cleanStr, 10);
-                        
-                        if (numVal < 0) {
-                            this.value = 0;
-                        } else if (numVal > 10) {
-                            this.value = cleanStr.charAt(0);
-                        } else {
-                            this.value = cleanStr;
-                        }
+                        if (numVal < 0) this.value = 0;
+                        else if (numVal > 10) this.value = cleanStr.charAt(0);
+                        else this.value = cleanStr;
                     }
-
                     if (this.classList.contains('fund-input')) updateRadar();
                     updateBoxColor(this);
                 });
