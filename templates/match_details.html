@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes da Partida - Tennis Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; padding-bottom: 50px; }
+        
+        .header-section { background: white; padding: 30px; border-radius: 12px; border-top: 5px solid var(--atp-blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .content-section { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        
+        .badge-vitoria { background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .badge-derrota { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .btn-action { padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 14px; transition: opacity 0.2s; display: inline-block; cursor: pointer; border: none; }
+        .btn-action:hover { opacity: 0.9; }
+
+        /* Barra de Agressividade */
+        .aggression-bar { width: 100%; height: 24px; border-radius: 12px; background: #e2e8f0; display: flex; overflow: hidden; margin-top: 15px; }
+        .win-fill { background: #10b981; display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; color: white; font-weight: bold; font-size: 12px; transition: width 1s ease-in-out;}
+        .err-fill { background: #ef4444; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: white; font-weight: bold; font-size: 12px; transition: width 1s ease-in-out;}
+        
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: stretch; }
+        .serve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
+        
+        .notes-text { font-size: 16px; color: #334155; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; background: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+
+    <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
+        
+        <div style="margin-bottom: 20px;">
+            <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
+        </div>
+
+        <div class="header-section">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+                <div>
+                    <div style="color: #94a3b8; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">
+                        📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] }} • {{ match[3] }}
+                    </div>
+                    <h1 style="margin: 0 0 10px 0; color: var(--atp-blue); font-size: 32px;">
+                        {% if match[7] == 'Duplas' %}
+                            Você & {{ match[8] }} <br><span style="color: #64748b; font-size: 24px;">vs</span> {{ match[1] }} & {{ match[9] }}
+                        {% else %}
+                            <span style="color: #64748b; font-size: 24px;">vs</span> {{ match[1] }}
+                        {% endif %}
+                    </h1>
+                    <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
+                        <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">{{ match[5] }}</span>
+                        <span style="font-size: 28px; font-weight: 900; color: var(--atp-blue); letter-spacing: 2px;">{{ match[6] }}</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <a href="/edit/{{ match[0] }}" class="btn-action" style="background: #f59e0b; color: white;">✏️ Editar Partida</a>
+                    <form action="/delete/{{ match[0] }}" method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja excluir este relatório?');">
+                        <button type="submit" class="btn-action" style="background: #ef4444; color: white;">🗑️ Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <h3 style="margin: 0; color: var(--atp-blue);">⚔️ Balanço Tático (Agressividade)</h3>
+                <div style="font-size: 22px; font-weight: 900; color: {% if (match[23] - match[24]) > 0 %}#10b981{% elif (match[23] - match[24]) < 0 %}#ef4444{% else %}#64748b{% endif %};">
+                    Saldo: {% if (match[23] - match[24]) > 0 %}+{% endif %}{{ match[23] - match[24] }}
+                </div>
+            </div>
+            
+            {% set total_shots = match[23] + match[24] %}
+            {% set win_pct = (match[23] / total_shots * 100)|round if total_shots > 0 else 50 %}
+            {% set err_pct = (match[24] / total_shots * 100)|round if total_shots > 0 else 50 %}
+            
+            <div class="aggression-bar">
+                {% if total_shots > 0 %}
+                    <div class="win-fill" style="width: {{ win_pct }}%;">{{ match[23] }} W</div>
+                    <div class="err-fill" style="width: {{ err_pct }}%;">{{ match[24] }} UE</div>
+                {% else %}
+                    <div style="width: 100%; text-align: center; color: #94a3b8; font-size: 12px; line-height: 24px; font-weight: bold;">SEM DADOS TÁTICOS</div>
+                {% endif %}
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-slate); margin-top: 8px; font-weight: bold;">
+                <span>WINNERS</span>
+                <span>ERROS NÃO FORÇADOS</span>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            
+            <div class="content-section" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0; color: var(--atp-blue);">📈 Raio-X Técnico</h3>
+                    <div style="background: #f1f5f9; padding: 5px 12px; border-radius: 8px; font-weight: bold; color: var(--atp-blue);">
+                        Rating: <span style="color: #65a30d; font-size: 18px;">{{ "%.1f"|format(match[25]) }}</span>
+                    </div>
+                </div>
+                <div style="height: 300px; display: flex; justify-content: center;">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="content-section" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                <h3 style="margin: 0 0 20px 0; color: var(--atp-blue);">🎯 Eficiência de Serviço</h3>
+                
+                <div class="serve-grid" style="flex: 1; align-items: center;">
+                    <div>
+                        <div style="position: relative; height: 120px; width: 120px; margin: 0 auto;">
+                            <canvas id="serve1Chart"></canvas>
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #002855;">
+                                {{ match[13] }}<span style="font-size: 12px; color: #94a3b8;">/10</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 12px; font-weight: bold; color: var(--text-slate); margin-top: 10px;">1º SERVIÇO</p>
+                    </div>
+                    
+                    <div>
+                        <div style="position: relative; height: 120px; width: 120px; margin: 0 auto;">
+                            <canvas id="serve2Chart"></canvas>
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #002855;">
+                                {{ match[14] }}<span style="font-size: 12px; color: #94a3b8;">/10</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 12px; font-weight: bold; color: var(--text-slate); margin-top: 10px;">2º SERVIÇO</p>
+                    </div>
+                </div>
+
+                <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px;">
+                    <span style="font-size: 13px; font-weight: bold; color: #b91c1c; text-transform: uppercase;">Duplas Faltas</span>
+                    <div style="font-size: 24px; font-weight: 900; color: #dc2626;">{{ match[15] }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section" style="margin-top: 25px;">
+            <h3 style="margin: 0 0 15px 0; color: var(--atp-blue);">📝 Diário do Treinador (Notas)</h3>
+            <div class="notes-text">{% if match[26] %}{{ match[26] }}{% else %}<span style="color: #94a3b8; font-style: italic;">Nenhuma observação foi registrada para esta partida.</span>{% endif %}</div>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = function() {
+            // 1. Radar Chart
+            const ctxRadar = document.getElementById('radarChart').getContext('2d');
+            new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
+                    datasets: [{
+                        label: 'Desempenho',
+                        data: [{{ match[10] }}, {{ match[11] }}, {{ match[12] }}, {{ match[16] }}, {{ match[17] }}, {{ match[18] }}, {{ match[19] }}, {{ match[20] }}, {{ match[21] }}, {{ match[22] }}],
+                        backgroundColor: 'rgba(196, 255, 14, 0.2)', borderColor: '#a3e635', borderWidth: 2, pointBackgroundColor: '#002855', pointRadius: 4
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 10, ticks: { display: false } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 2. Donut Chart (1º Saque) - Baseado em nota 10
+            const ctxServe1 = document.getElementById('serve1Chart').getContext('2d');
+            new Chart(ctxServe1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Acertos', 'Erros'],
+                    datasets: [{
+                        data: [{{ match[13] }}, {{ 10 - match[13] }}],
+                        backgroundColor: ['#0ea5e9', '#e2e8f0'],
+                        borderWidth: 0,
+                        cutout: '75%' // Espessura da rosca
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+
+            // 3. Donut Chart (2º Saque)
+            const ctxServe2 = document.getElementById('serve2Chart').getContext('2d');
+            new Chart(ctxServe2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Acertos', 'Erros'],
+                    datasets: [{
+                        data: [{{ match[14] }}, {{ 10 - match[14] }}],
+                        backgroundColor: ['#f59e0b', '#e2e8f0'],
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+            });
+        };
+    </script>
+</body>
+</html>
