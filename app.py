@@ -243,5 +243,18 @@ def export_csv():
         headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
     )
 
+# --- ROTA DE DETALHES DA PARTIDA (PÁGINA COMPLETA) ---
+@app.route("/match/<int:id>")
+def match_details(id):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches WHERE id = ?", (id,))
+    match = c.fetchone()
+    conn.close()
+    
+    if match:
+        return render_template("match_details.html", match=match)
+    return redirect("/")
+
 if __name__ == "__main__":
     app.run(debug=True)
