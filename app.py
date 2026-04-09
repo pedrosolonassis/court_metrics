@@ -2,6 +2,7 @@ import sqlite3
 import csv
 import io
 from flask import Flask, render_template, request, redirect, Response
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -33,10 +34,11 @@ def create_db():
         dropshot INTEGER,
         footwork INTEGER,
         strategy INTEGER,
-        winners INTEGER,         /* CORRIGIDO: Retornou para winners */
-        unforced_errors INTEGER, /* CORRIGIDO: Retornou para erros não forçados */
+        winners INTEGER,
+        unforced_errors INTEGER,
         performance_rating REAL,
-        notes TEXT
+        notes TEXT,
+        match_date TEXT /* NOVA COLUNA: ÍNDICE 27 */
     )
     """)
     conn.commit()
@@ -49,12 +51,10 @@ def home():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
-    # Capturando os filtros da URL
     f_surface = request.args.get("surface", "")
     f_type = request.args.get("match_type", "")
     f_format = request.args.get("match_format", "")
     
-    # Montando a consulta SQL dinamicamente
     query = "SELECT * FROM matches WHERE 1=1"
     params = []
     
@@ -68,13 +68,12 @@ def home():
         query += " AND match_format = ?"
         params.append(f_format)
         
-    query += " ORDER BY id DESC"
+    query += " ORDER BY match_date DESC, id DESC"
     
     c.execute(query, params)
     matches = c.fetchall()
     conn.close()
     
-    # Passando os filtros atuais de volta para o HTML
     filters = {
         "surface": f_surface,
         "match_type": f_type,
@@ -94,6 +93,7 @@ def new_match():
         match_format = request.form.get("match_format", "Simples")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")
+        match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
         s1_p, s1_o = request.form.get("set1_player", "0"), request.form.get("set1_opp", "0")
         s2_p, s2_o = request.form.get("set2_player", "0"), request.form.get("set2_opp", "0")
@@ -110,11 +110,9 @@ def new_match():
         notes = {f: int(request.form.get(f, 0)) for f in f_names}
         notes_list = [notes[f] for f in f_names]
 
-        # CORRIGIDO: Voltando a coletar Winners e Erros
         winners = int(request.form.get("winners", 0))
         unforced_errors = int(request.form.get("unforced_errors", 0))
 
-        # Cálculo Final Ponderado
         primarios = [notes['forehand'], notes['backhand'], notes['serve']]
         v_prim = [n for n in primarios if n > 0]
         m_prim = sum(v_prim)/len(v_prim) if v_prim else 0
@@ -136,10 +134,10 @@ def new_match():
         INSERT INTO matches (opponent, categoria, match_type, surface, result, score, 
         match_format, partner, opp_partner, forehand, backhand, serve, first_serve, 
         second_serve, double_faults, return_serve, slice, volley, smash, dropshot, 
-        footwork, strategy, winners, unforced_errors, performance_rating, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        footwork, strategy, winners, unforced_errors, performance_rating, notes, match_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (opponent, categoria, match_type, surface, result, score, match_format, 
-              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", "")))
+              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date))
         
         conn.commit()
         conn.close()
@@ -147,50 +145,12 @@ def new_match():
     
     return render_template("new_match.html")
 
-# --- ROTA DE EXPORTAÇÃO CSV ---
-@app.route("/export")
-def export_csv():
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("SELECT * FROM matches ORDER BY id DESC")
-    matches = c.fetchall()
-    
-    # Pegando os nomes das colunas
-    column_names = [description[0] for description in c.description]
-    conn.close()
-
-    # Criando o arquivo CSV na memória
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=';') # Ponto e vírgula evita problemas no Excel pt-BR
-    
-    writer.writerow(column_names)
-    writer.writerows(matches)
-    
-    # Preparando a resposta para forçar o download
-    return Response(
-        output.getvalue(),
-        mimetype="text/csv",
-        headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
-    )
-
-# --- ROTA DE EXCLUSÃO ---
-@app.route("/delete/<int:id>", methods=["POST"])
-def delete_match(id):
-    conn = sqlite3.connect("database.db")
-    c = conn.cursor()
-    c.execute("DELETE FROM matches WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
-    return redirect("/")
-
-# --- ROTA DE EDIÇÃO ---
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit_match(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
     if request.method == "POST":
-        # Copiamos exatamente a mesma lógica do new_match para calcular tudo de novo
         opponent = request.form["opponent"]
         categoria = request.form["categoria"]
         match_type = request.form["match_type"]
@@ -199,6 +159,7 @@ def edit_match(id):
         match_format = request.form.get("match_format", "Simples")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")
+        match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
         s1_p, s1_o = request.form.get("set1_player", "0"), request.form.get("set1_opp", "0")
         s2_p, s2_o = request.form.get("set2_player", "0"), request.form.get("set2_opp", "0")
@@ -233,27 +194,54 @@ def edit_match(id):
         perf = (m_prim * 0.5) + (m_sec * 0.3) + (m_esp * 0.2)
         perf = round(perf, 1)
 
-        # A diferença aqui é o UPDATE em vez de INSERT
         c.execute("""
         UPDATE matches SET 
         opponent=?, categoria=?, match_type=?, surface=?, result=?, score=?, 
         match_format=?, partner=?, opp_partner=?, forehand=?, backhand=?, serve=?, first_serve=?, 
         second_serve=?, double_faults=?, return_serve=?, slice=?, volley=?, smash=?, dropshot=?, 
-        footwork=?, strategy=?, winners=?, unforced_errors=?, performance_rating=?, notes=?
+        footwork=?, strategy=?, winners=?, unforced_errors=?, performance_rating=?, notes=?, match_date=?
         WHERE id=?
         """, (opponent, categoria, match_type, surface, result, score, match_format, 
-              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), id))
+              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, id))
         
         conn.commit()
         conn.close()
         return redirect("/")
     
     else:
-        # Se for GET, busca os dados da partida para preencher a tela de edição
         c.execute("SELECT * FROM matches WHERE id = ?", (id,))
         match = c.fetchone()
         conn.close()
         return render_template("edit_match.html", match=match)
+
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete_match(id):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM matches WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect("/")
+
+@app.route("/export")
+def export_csv():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches ORDER BY match_date DESC")
+    matches = c.fetchall()
+    column_names = [description[0] for description in c.description]
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
+    writer.writerow(column_names)
+    writer.writerows(matches)
+    
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)

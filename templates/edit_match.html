@@ -6,15 +6,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .form-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid #f59e0b; /* Laranja para indicar edição */ }
+        .form-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid #f59e0b; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .rating-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .rating-box { padding: 15px; border-radius: 8px; display: flex; flex-direction: column; border: 2px solid transparent; transition: all 0.3s ease; }
-        
         .adv-serve-box { padding: 10px; border-radius: 8px; text-align: center; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s ease; }
 
-        /* 🎨 CORES DINÂMICAS */
         .box-neutral { background-color: #f3f4f6; border-color: #e5e7eb; } 
         .box-red     { background-color: #fee2e2; border-color: #fca5a5; } 
         .box-orange  { background-color: #ffedd5; border-color: #fdba74; } 
@@ -24,23 +22,22 @@
 
         .rating-box label { margin: 0 0 5px 0; font-size: 14px; color: #333; font-weight: bold; }
         .rating-box input { background: transparent; border: none; font-size: 22px; font-weight: 900; color: #1f2937; outline: none; }
-        .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-        .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
         
+        .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; margin-bottom: 40px; }
+        
+        .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
         .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
         .error-input { color: #ef4444; }
-
         .set-input-group { display: none; }
         .set-visible { display: inline-block !important; }
 
-        /* Sliders Táticos */
+        .form-control { width: 100%; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #f8fafc; color: #002855; font-weight: 600; box-sizing: border-box; outline: none; font-family: inherit; font-size: 14px; }
+        .form-control:focus { border-color: #002855; }
+        
         .slider-win { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #dcfce7; outline: none; margin-top: 15px;}
         .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
-        
         .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
         .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -55,14 +52,14 @@
                 <div class="grid-2">
                     <div>
                         <label>Formato do Jogo:</label>
-                        <select name="match_format" id="match_format" onchange="toggleDoubles()">
+                        <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
                             <option value="Simples">Simples</option>
                             <option value="Duplas">Duplas</option>
                         </select>
                     </div>
                     <div>
                         <label>Categoria:</label>
-                        <select name="categoria" id="categoria">
+                        <select name="categoria" id="categoria" class="form-control">
                             <option value="1ª Classe">1ª Classe</option>
                             <option value="2ª Classe">2ª Classe</option>
                             <option value="3ª Classe">3ª Classe</option>
@@ -78,11 +75,11 @@
                     <div class="grid-2">
                         <div>
                             <label>Adversário 1:</label>
-                            <input type="text" id="inp_opp1" name="ignore_opp" placeholder="Nome do adversário 1">
+                            <input type="text" id="inp_opp1" name="ignore_opp" class="form-control" placeholder="Nome do adversário 1">
                         </div>
                         <div>
                             <label>Adversário 2 (Parceiro):</label>
-                            <input type="text" name="opp_partner" id="opp_partner" placeholder="Nome do adversário 2">
+                            <input type="text" name="opp_partner" id="opp_partner" class="form-control" placeholder="Nome do adversário 2">
                         </div>
                     </div>
                 </div>
@@ -90,16 +87,16 @@
                 <div class="grid-2" style="margin-top: 15px;">
                     <div id="singles-opp-div">
                         <label>Adversário Principal:</label>
-                        <input type="text" id="inp_opp_single" name="opponent" required>
+                        <input type="text" id="inp_opp_single" name="opponent" class="form-control" required>
                     </div>
                     <div id="doubles-partner-div" style="display: none;">
                         <label>Seu Parceiro:</label>
-                        <input type="text" name="partner" id="partner" placeholder="Nome do seu parceiro">
+                        <input type="text" name="partner" id="partner" class="form-control" placeholder="Nome do seu parceiro">
                     </div>
 
                     <div>
                         <label>Tipo de Jogo:</label>
-                        <select name="match_type" id="match_type">
+                        <select name="match_type" id="match_type" class="form-control">
                             <option value="Ranking">Ranking</option>
                             <option value="Torneio">Torneio</option>
                             <option value="Amistoso">Amistoso</option>
@@ -107,33 +104,40 @@
                     </div>
                     <div>
                         <label>Tipo de Quadra:</label>
-                        <select name="surface" id="surface">
+                        <select name="surface" id="surface" class="form-control">
                             <option value="Quadra Dura">Quadra Dura (Rápida)</option>
                             <option value="Saibro">Saibro (Terra Batida)</option>
                         </select>
                     </div>
                     
                     <div>
-                        <label>Resultado:</label>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-                            <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 13px; text-transform: uppercase;">
-                                Aguardando Placar...
-                            </div>
-                            <input type="hidden" name="result" id="result-hidden" value="Derrota">
-                        </div>
+                        <label>Data da Partida:</label>
+                        <input type="date" name="match_date" id="match_date" class="form-control" required>
                     </div>
                 </div>
             </div>
 
             <div class="form-section">
                 <h3>🔢 Informar Placar</h3>
-                <label>Formato dos Sets:</label>
-                <select id="set_format" onchange="updateSetInputs()" style="margin-bottom: 20px;">
-                    <option value="1">1 Set</option>
-                    <option value="3" selected>2 Sets + Super Tiebreak</option>
-                    <option value="3">3 Sets Completos</option>
-                    <option value="5">5 Sets (Grand Slam)</option>
-                </select>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                    <div style="flex: 1; max-width: 300px;">
+                        <label>Formato dos Sets:</label>
+                        <select id="set_format" class="form-control" onchange="updateSetInputs()" style="margin-bottom: 0;">
+                            <option value="1">1 Set</option>
+                            <option value="3" selected>2 Sets + Super Tiebreak</option>
+                            <option value="3">3 Sets Completos</option>
+                            <option value="5">5 Sets (Grand Slam)</option>
+                        </select>
+                    </div>
+                    <div style="text-align: right;">
+                        <label style="display: block; margin-bottom: 5px; font-size: 13px;">Resultado Automático:</label>
+                        <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 13px; text-transform: uppercase; height: 42px; box-sizing: border-box; display: flex; align-items: center;">
+                            Aguardando Placar...
+                        </div>
+                        <input type="hidden" name="result" id="result-hidden" value="Derrota">
+                    </div>
+                </div>
 
                 <div class="letzplay-grid">
                     <div class="score-row">
@@ -227,11 +231,11 @@
             </div>
 
             <div class="form-section">
-                <label>Descrição:</label>
-                <textarea name="notes" id="inp_notes" rows="3"></textarea>
+                <label style="font-weight: bold; color: #002855;">📝 Descrição da Partida:</label>
+                <textarea name="notes" id="inp_notes" rows="3" class="form-control" style="height: auto; padding: 15px; margin-top: 10px;"></textarea>
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <a href="/" class="btn" style="flex: 1; text-align: center; background-color: #94a3b8; text-decoration: none;">Cancelar</a>
-                    <button type="submit" class="btn" style="flex: 2; background-color: #f59e0b;">Salvar Edições</button>
+                    <a href="/" class="btn-main filter-btn" style="flex: 1; text-align: center; background-color: #94a3b8; text-decoration: none;">Cancelar</a>
+                    <button type="submit" class="btn-main filter-btn" style="flex: 2; background-color: #f59e0b;">Salvar Edições</button>
                 </div>
             </div>
         </form>
@@ -313,8 +317,6 @@
         }
 
         window.onload = function() {
-            
-            // --- GRÁFICO ---
             const ctx = document.getElementById('liveRadarChart').getContext('2d');
             const liveChart = new Chart(ctx, {
                 type: 'radar',
@@ -340,7 +342,6 @@
                 liveChart.update();
             }
 
-            // EVENT LISTENERS BÁSICOS
             document.querySelectorAll('.set-input-group').forEach(input => { input.addEventListener('input', calcularResultado); });
 
             document.querySelectorAll('.fund-input, .dynamic-serve').forEach(input => {
@@ -357,11 +358,8 @@
                 });
             });
 
-            // =========================================================
-            // AUTOPREENCHIMENTO DOS DADOS PARA EDIÇÃO (JINJA)
-            // =========================================================
             {% if match %}
-                // 1. Dados Básicos
+                document.getElementById('match_date').value = "{{ match[27] }}";
                 document.getElementById('match_format').value = "{{ match[7] }}";
                 document.getElementById('categoria').value = "{{ match[2] }}";
                 document.getElementById('match_type').value = "{{ match[3] }}";
@@ -373,7 +371,6 @@
                 document.getElementById('opp_partner').value = "{{ match[9] }}";
                 document.getElementById('inp_notes').value = "{{ match[26] }}";
 
-                // 2. Fundamentos Técnicos
                 document.getElementById('inp-forehand').value = "{{ match[10] }}";
                 document.getElementById('inp-backhand').value = "{{ match[11] }}";
                 document.getElementById('inp-serve').value = "{{ match[12] }}";
@@ -388,13 +385,11 @@
                 document.getElementById('inp-foot').value = "{{ match[21] }}";
                 document.getElementById('inp-strat').value = "{{ match[22] }}";
                 
-                // 3. Agressividade
                 document.getElementById('inp_winners').value = "{{ match[23] }}";
                 document.getElementById('inp_errors').value = "{{ match[24] }}";
                 document.getElementById('win_val').innerText = "{{ match[23] }}";
                 document.getElementById('err_val').innerText = "{{ match[24] }}";
 
-                // 4. Preenchimento Dinâmico do Placar
                 const scoreStr = "{{ match[6] }}";
                 if(scoreStr) {
                     const sets = scoreStr.split(" ");
@@ -403,16 +398,12 @@
                             const parts = set.split("/");
                             const pInput = document.getElementById(`p_s${index+1}`);
                             const oInput = document.getElementById(`o_s${index+1}`);
-                            if(pInput && oInput) { 
-                                pInput.value = parts[0]; 
-                                oInput.value = parts[1]; 
-                            }
+                            if(pInput && oInput) { pInput.value = parts[0]; oInput.value = parts[1]; }
                         }
                     });
                     document.getElementById('set_format').value = sets.length >= 3 ? "3" : "1";
                 }
 
-                // 5. Acionar gatilhos visuais para atualizar as cores e gráficos com os dados inseridos
                 updateSetInputs();
                 toggleDoubles();
                 toggleServeDetails();
