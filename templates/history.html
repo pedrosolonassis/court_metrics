@@ -87,12 +87,12 @@
                     </div>
 
                     <div style="line-height: 1.7; padding-right: 90px;">
-                        {% if match[7] == 'Duplas' %}
-                            <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px;">👥 Você & {{ match[8] }}<br>vs {{ match[1] }} & {{ match[9] }}</strong>
-                        {% else %}
-                            <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px;">👤 vs {{ match[1] }}</strong>
-                        {% endif %}
-                        <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
+                            {% if match[7] == 'Duplas' %}
+                             <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px;">👥 vs {{ match[1] }} & {{ match[9] }}</strong>
+                             {% else %}
+                             <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px;">👤 vs {{ match[1] }}</strong>
+                             {% endif %}
+                            <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
                     </div>
                     
                     {% set perf = match[25] %}
