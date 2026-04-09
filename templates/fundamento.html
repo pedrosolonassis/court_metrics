@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Evolução do Fundamento - Tennis Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; padding-bottom: 40px;}
+        
+        .kpi-card { background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; text-align: center; flex: 1; }
+        .kpi-title { font-size: 12px; text-transform: uppercase; color: var(--text-slate); font-weight: bold; margin-bottom: 10px; display: block;}
+        .kpi-val { font-size: 42px; font-weight: 900; color: var(--atp-blue); margin: 0; }
+        
+        .tip-box { background: #f8fafc; border-left: 5px solid #f59e0b; padding: 25px; border-radius: 0 12px 12px 0; margin-top: 30px; }
+    </style>
+</head>
+<body>
+
+    {% set map = {'Forehand': 10, 'Backhand': 11, 'Saque': 12, 'Devolução': 16, 'Slice': 17, 'Voleio': 18, 'Smash': 19, 'Dropshot': 20, 'Footwork': 21, 'Estratégia': 22} %}
+    {% set idx = map.get(nome, 10) %}
+    
+    {% set valores = [] %}
+    {% for m in matches %}
+        {% set _ = valores.append(m[idx]) %}
+    {% endfor %}
+    
+    {% set media = (valores|sum / valores|length)|round(1) if valores else 0 %}
+    {% set maxima = valores|max if valores else 0 %}
+    {% set minima = valores|min if valores else 0 %}
+
+    {% set dicas = {
+        'Forehand': 'O peso do seu jogo agressivo depende da confiança aqui. Bata na bola subindo, use o top spin pesado para empurrar o adversário para trás da linha e ditar o ritmo do ponto.',
+        'Backhand': 'Mantenha o contato na frente do corpo. Se for o seu lado mais fraco de ataque, foque em consistência e profundidade ao invés de buscar a paralela perfeita.',
+        'Saque': 'O saque dita o tom do ponto. Um bom primeiro serviço tira a pressão do resto do seu jogo. Foque em porcentagem e colocação (kick e slice) antes da força bruta.',
+        'Devolução': 'Fique ativo nas pontas dos pés. Contra saques fortes, encurte o movimento (bloqueio); contra saques fracos (2º serviço), dê um passo à frente e tome o controle.',
+        'Slice': 'Use o slice não apenas como recurso de defesa para se salvar, mas como uma variação tática incômoda. Uma bola baixa e rasante quebra o ritmo do adversário e te dá tempo para preparar o forehand.',
+        'Voleio': 'Movimente-se para a frente para interceptar, não espere a bola chegar. Mantenha a cabeça da raquete alta. Voleio firme é sobre bloqueio de precisão, não sobre "dar uma raquetada".',
+        'Smash': 'Aponte para a bola com a mão não-dominante e ajuste os pés rapidamente com passos laterais. Confiança é a chave: não deixe a bola cair muito antes do contato.',
+        'Dropshot': 'A surpresa é mais letal que a perfeição absoluta. Use essa variação quando o adversário estiver confortavelmente recuado na linha de base. Mascare o movimento!',
+        'Footwork': 'O tênis moderno se joga com as pernas. Passinhos de ajuste contínuos garantem que você chegue inteiro na bola, o que é vital para fugir da esquerda e bater de direita (inside-out).',
+        'Estratégia': 'Estratégia é adaptação. Se o plano A de dominar da base não funcionar, não insista no erro. Identifique o ponto fraco do outro lado e explore isso com paciência.'
+    } %}
+
+    <div class="container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+        
+        <div style="margin-bottom: 20px;">
+            <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
+            <div style="background: var(--atp-blue); color: var(--tennis-green); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px;">🎾</div>
+            <div>
+                <h1 style="margin: 0 0 5px 0; color: var(--atp-blue);">Análise: {{ nome }}</h1>
+                <p style="color: var(--text-slate); margin: 0;">Evolução técnica ao longo do tempo.</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
+            <div class="kpi-card">
+                <span class="kpi-title">Média Histórica</span>
+                <p class="kpi-val">{{ "%.1f"|format(media) }}</p>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title" style="color: #15803d;">Maior Nota</span>
+                <p class="kpi-val" style="color: #16a34a;">{{ maxima }}</p>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title" style="color: #b91c1c;">Menor Nota</span>
+                <p class="kpi-val" style="color: #ef4444;">{{ minima }}</p>
+            </div>
+        </div>
+
+        <div style="background: white; padding: 30px; border-radius: 15px; border: 1px solid #e2e8f0;">
+            <h3 style="margin: 0 0 20px 0; color: var(--atp-blue); text-transform: uppercase; font-size: 14px;">📈 Gráfico de Evolução ({{ nome }})</h3>
+            <div style="height: 350px;">
+                <canvas id="fundChart"></canvas>
+            </div>
+        </div>
+
+        <div class="tip-box">
+            <h3 style="margin: 0 0 10px 0; color: #b45309; display: flex; align-items: center; gap: 10px;">
+                <span>💡</span> Insight Tático do Treinador
+            </h3>
+            <p style="color: #475569; line-height: 1.7; margin: 0; font-size: 15px;">
+                {{ dicas.get(nome, "Mantenha o foco no treinamento constante e na repetição consciente dos movimentos para consolidar a memória muscular.") }}
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = function() {
+            Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
+            const ctx = document.getElementById('fundChart').getContext('2d');
+            
+            // Puxando os dados ordenados cronologicamente do Python/Jinja
+            const fundData = [{% for m in matches %}{{ m[idx] }},{% endfor %}];
+            const labels = [{% for m in matches %}'J{{ loop.index }}',{% endfor %}];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Nota: {{ nome }}',
+                        data: fundData,
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        borderWidth: 4,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#0284c7',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { min: 0, max: 10, ticks: { stepSize: 1 }, grid: { borderDash: [5, 5] } },
+                        x: { grid: { display: false } } 
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

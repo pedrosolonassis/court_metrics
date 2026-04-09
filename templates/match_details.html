@@ -2,31 +2,42 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Detalhes da Partida - Tennis Tracker</title>
+    <title>Relatório Analítico - Tennis Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; padding-bottom: 50px; }
+        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; --text-main: #1e293b; --bg-main: #f1f5f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-main); padding-bottom: 50px; color: var(--text-main); }
         
-        .header-section { background: white; padding: 30px; border-radius: 12px; border-top: 5px solid var(--atp-blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .content-section { background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .header-section { background: white; padding: 25px 35px; border-radius: 16px; border-top: 5px solid var(--atp-blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .content-section { background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         
-        .badge-vitoria { background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .badge-derrota { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .badge-vitoria { background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .badge-derrota { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
 
-        .btn-action { padding: 10px 20px; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 14px; transition: opacity 0.2s; display: inline-block; cursor: pointer; border: none; }
-        .btn-action:hover { opacity: 0.9; }
+        .btn-main { background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px;}
+        .btn-main:hover { opacity: 0.9; }
 
         /* Barra de Agressividade */
-        .aggression-bar { width: 100%; height: 24px; border-radius: 12px; background: #e2e8f0; display: flex; overflow: hidden; margin-top: 15px; }
-        .win-fill { background: #10b981; display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; color: white; font-weight: bold; font-size: 12px; transition: width 1s ease-in-out;}
-        .err-fill { background: #ef4444; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: white; font-weight: bold; font-size: 12px; transition: width 1s ease-in-out;}
+        .aggression-bar { width: 100%; height: 28px; border-radius: 14px; background: #e2e8f0; display: flex; overflow: hidden; margin-top: 15px; }
+        .win-fill { background: #10b981; display: flex; align-items: center; justify-content: flex-start; padding-left: 15px; color: white; font-weight: bold; font-size: 12px;}
+        .err-fill { background: #ef4444; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; color: white; font-weight: bold; font-size: 12px;}
         
-        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: stretch; }
+        .grid-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 25px; align-items: stretch; }
+        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+
         .serve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
         
-        .notes-text { font-size: 16px; color: #334155; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; background: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #cbd5e1; }
+        .notes-text { font-size: 16px; color: #475569; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; background: #f8fafc; padding: 25px; border-radius: 12px; border-left: 4px solid #cbd5e1; }
+
+        /* Placar Padrão ATP */
+        .atp-score-container { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; border-top: 2px solid #f1f5f9; padding-top: 20px; }
+        .atp-score-row { display: flex; justify-content: space-between; align-items: center; }
+        .atp-score-player { font-size: 18px; font-weight: 700; color: var(--atp-blue); }
+        .atp-score-partner { font-size: 14px; font-weight: 400; color: #64748b; margin-left: 5px; }
+        .atp-score-sets { display: flex; gap: 5px; }
+        .atp-set-box { width: 34px; height: 34px; border-radius: 6px; font-size: 20px; font-weight: 900; color: #94a3b8; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; }
+        .atp-set-win { color: #15803d; background: #dcfce7; border-color: #86efac; }
     </style>
 </head>
 <body>
@@ -39,27 +50,47 @@
 
         <div class="header-section">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
-                <div>
-                    <div style="color: #94a3b8; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 8px;">
-                        📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] }} • {{ match[3] }}
+                <div style="flex: 1; max-width: 600px;">
+                    <div style="color: #94a3b8; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+                        📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] }} • {{ match[3] }} • Categoria: {{ match[2] }}
+                        <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}" style="padding: 4px 12px; font-size: 11px;">{{ match[5] }}</span>
                     </div>
-                    <h1 style="margin: 0 0 10px 0; color: var(--atp-blue); font-size: 32px;">
-                        {% if match[7] == 'Duplas' %}
-                            Você & {{ match[8] }} <br><span style="color: #64748b; font-size: 24px;">vs</span> {{ match[1] }} & {{ match[9] }}
-                        {% else %}
-                            <span style="color: #64748b; font-size: 24px;">vs</span> {{ match[1] }}
-                        {% endif %}
-                    </h1>
-                    <div style="display: flex; align-items: center; gap: 15px; margin-top: 15px;">
-                        <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">{{ match[5] }}</span>
-                        <span style="font-size: 28px; font-weight: 900; color: var(--atp-blue); letter-spacing: 2px;">{{ match[6] }}</span>
+
+                    <div class="atp-score-container">
+                        <div class="atp-score-row">
+                            <span class="atp-score-player">Você {% if match[7] == 'Duplas' %}<span class="atp-score-partner">& {{ match[8] }}</span>{% endif %}</span>
+                            <div class="atp-score-sets">
+                                {% set score_string = match[6] %}
+                                {% set sets = score_string.split(' ') %}
+                                {% for set in sets %}
+                                    {% if set and '/' in set and set|trim != '/' and set|trim != '0/0' %}
+                                        {% set parts = set.split('/') %}
+                                        <div class="atp-set-box {% if parts[0]|trim|int > parts[1]|trim|int %}atp-set-win{% endif %}">{{ parts[0] }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="atp-score-row">
+                            <span class="atp-score-player">{% if match[7] == 'Duplas' %}{{ match[1] }} & {{ match[9] }}{% else %}{{ match[1] }}{% endif %}</span>
+                            <div class="atp-score-sets">
+                                {% for set in sets %}
+                                    {% if set and '/' in set and set|trim != '/' and set|trim != '0/0' %}
+                                        {% set parts = set.split('/') %}
+                                        <div class="atp-set-box {% if parts[1]|trim|int > parts[0]|trim|int %}atp-set-win{% endif %}">{{ parts[1] }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px;">
-                    <a href="/edit/{{ match[0] }}" class="btn-action" style="background: #f59e0b; color: white;">✏️ Editar Partida</a>
-                    <form action="/delete/{{ match[0] }}" method="POST" style="margin: 0;" onsubmit="return confirm('Tem certeza que deseja excluir este relatório?');">
-                        <button type="submit" class="btn-action" style="background: #ef4444; color: white;">🗑️ Excluir</button>
+                <div style="display: flex; flex-direction: column; gap: 12px; width: 170px;">
+                    <a href="/select_compare/{{ match[0] }}" class="btn-main" style="background: var(--atp-blue); width: 100%; height: 42px; text-decoration: none; border: 1px solid #cbd5e1;">⚖️ Comparar</a>
+                    
+                    <a href="/edit/{{ match[0] }}" class="btn-main" style="background: #f59e0b; width: 100%; height: 42px; text-decoration: none;">✏️ Editar Partida</a>
+                    
+                    <form action="/delete/{{ match[0] }}" method="POST" style="margin: 0; padding: 0; background: transparent; border: none; box-shadow: none; width: 100%;" onsubmit="return confirm('Tem certeza que deseja excluir este relatório analítico?');">
+                        <button type="submit" class="btn-main" style="background: #ef4444; width: 100%; height: 42px; border: none; cursor: pointer;">🗑️ Excluir Partida</button>
                     </form>
                 </div>
             </div>
@@ -67,8 +98,8 @@
 
         <div class="content-section">
             <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <h3 style="margin: 0; color: var(--atp-blue);">⚔️ Balanço Tático (Agressividade)</h3>
-                <div style="font-size: 22px; font-weight: 900; color: {% if (match[23] - match[24]) > 0 %}#10b981{% elif (match[23] - match[24]) < 0 %}#ef4444{% else %}#64748b{% endif %};">
+                <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">⚔️ Balanço Tático</h3>
+                <div style="font-size: 26px; font-weight: 900; color: {% if (match[23] - match[24]) > 0 %}#10b981{% elif (match[23] - match[24]) < 0 %}#ef4444{% else %}#64748b{% endif %};">
                     Saldo: {% if (match[23] - match[24]) > 0 %}+{% endif %}{{ match[23] - match[24] }}
                 </div>
             </div>
@@ -82,90 +113,150 @@
                     <div class="win-fill" style="width: {{ win_pct }}%;">{{ match[23] }} W</div>
                     <div class="err-fill" style="width: {{ err_pct }}%;">{{ match[24] }} UE</div>
                 {% else %}
-                    <div style="width: 100%; text-align: center; color: #94a3b8; font-size: 12px; line-height: 24px; font-weight: bold;">SEM DADOS TÁTICOS</div>
+                    <div style="width: 100%; text-align: center; color: #94a3b8; font-size: 12px; line-height: 28px; font-weight: bold;">SEM DADOS DE AGRESSIVIDADE</div>
                 {% endif %}
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-slate); margin-top: 8px; font-weight: bold;">
-                <span>WINNERS</span>
-                <span>ERROS NÃO FORÇADOS</span>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-slate); margin-top: 8px; font-weight: bold; text-transform: uppercase;">
+                <span>Winners (Pontos Vencidos Ativamente)</span>
+                <span>Erros Não Forçados (Pontos Cedidos Gratuitamente)</span>
             </div>
+
+            {% if total_shots > 0 or match[13] > 0 or match[25] > 0 %}
+                <div style="margin-top: 25px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: flex; gap: 15px; align-items: center;">
+                    <span style="font-size: 32px;">💡</span>
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; color: var(--atp-blue);">Resumo da Inteligência</h4>
+                        <p style="font-size: 14px; color: #475569; margin: 0; line-height: 1.6;">
+                            {% set golpes = [(match[10], 'Forehand'), (match[11], 'Backhand'), (match[12], 'Saque'), (match[16], 'Devolução'), (match[17], 'Slice'), (match[18], 'Voleio'), (match[19], 'Smash'), (match[20], 'Dropshot'), (match[21], 'Footwork'), (match[22], 'Estratégia')] %}
+                            {% set sorted_golpes = golpes|sort(attribute='0', reverse=true) %}
+                            {% set melhor_golpe = sorted_golpes[0] %}
+                            {% set pior_golpe = sorted_golpes[-1] %}
+                            {% set saldo = match[23] - match[24] %}
+
+                            {% if match[5] == 'Vitória' %}
+                                Vitória crucial baseada em solidez tática. 
+                                {% if saldo > 0 %}
+                                    Seu Saldo Tático positivo (+{{ saldo }}) foi a fundação do jogo agressivo. 
+                                {% else %}
+                                    Apesar do Saldo Tático negativo ({{ saldo }}), seu aproveitamento foi decisivo.
+                                {% endif %}
+                            {% else %}
+                                Derrota que exige análise tática. 
+                                {% if saldo < -3 %}
+                                    O alto volume de Erros Não Forçados (Saldo: {{ saldo }}) custou o controle dos pontos.
+                                {% else %}
+                                    Faltou agressividade para quebrar a defesa adversária.
+                                {% endif %}
+                            {% endif %}
+
+                            Com uma nota geral de <strong>{{ "%.1f"|format(match[25]) }}</strong>, o destaque técnico foi seu <strong>{{ melhor_golpe[1] }}</strong> (Nota {{ melhor_golpe[0] }}), enquanto o <strong>{{ pior_golpe[1] }}</strong> (Nota {{ pior_golpe[0] }}) apontou onde sua performance pode melhorar no próximo treino.
+
+                            {% if match[13] >= 7 %}🚀 Seu 1º Serviço (Nota {{ match[13] }}/10) foi uma arma ofensiva hoje!{% endif %}
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
         </div>
 
         <div class="grid-layout">
-            
             <div class="content-section" style="margin-bottom: 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: var(--atp-blue);">📈 Raio-X Técnico</h3>
-                    <div style="background: #f1f5f9; padding: 5px 12px; border-radius: 8px; font-weight: bold; color: var(--atp-blue);">
-                        Rating: <span style="color: #65a30d; font-size: 18px;">{{ "%.1f"|format(match[25]) }}</span>
+                    <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase;">📈 Raio-X Técnico</h3>
+                    <div style="background: #ecfccb; padding: 6px 15px; border-radius: 12px; font-weight: bold; color: #4d7c0f; font-size: 13px;">
+                        Rating ATP: <span style="color: #65a30d; font-size: 18px; font-weight: 900;">{{ "%.1f"|format(match[25]) }}</span>
                     </div>
                 </div>
-                <div style="height: 300px; display: flex; justify-content: center;">
-                    <canvas id="radarChart"></canvas>
+                
+                <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                    <div style="height: 280px; flex: 1.5; min-width: 280px; display: flex; justify-content: center;">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+
+                    {% set golpes = [(match[10], 'Forehand'), (match[11], 'Backhand'), (match[12], 'Saque'), (match[16], 'Devolução'), (match[17], 'Slice'), (match[18], 'Voleio'), (match[19], 'Smash'), (match[20], 'Dropshot'), (match[21], 'Footwork'), (match[22], 'Estratégia')] %}
+                    {% set sorted_golpes = golpes|sort(attribute='0', reverse=true) %}
+                    {% set melhor_golpe = sorted_golpes[0] %}
+                    {% set pior_golpe = sorted_golpes[-1] %}
+
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 200px;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #15803d; text-transform: uppercase; letter-spacing: 1px;">🟢 Melhor Golpe</span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 5px;">
+                                <span style="font-size: 20px; font-weight: bold; color: var(--atp-blue);">{{ melhor_golpe[1] }}</span>
+                                <span style="font-size: 26px; font-weight: 900; color: #16a34a;">{{ melhor_golpe[0] }}</span>
+                            </div>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #b91c1c; text-transform: uppercase; letter-spacing: 1px;">🔴 Ponto de Melhoria</span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 5px;">
+                                <span style="font-size: 20px; font-weight: bold; color: var(--atp-blue);">{{ pior_golpe[1] }}</span>
+                                <span style="font-size: 26px; font-weight: 900; color: #ef4444;">{{ pior_golpe[0] }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="content-section" style="margin-bottom: 0; display: flex; flex-direction: column;">
-                <h3 style="margin: 0 0 20px 0; color: var(--atp-blue);">🎯 Eficiência de Serviço</h3>
+                <h3 style="margin: 0 0 20px 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase;">🎯 Eficiência de Serviço</h3>
                 
-                <div class="serve-grid" style="flex: 1; align-items: center;">
+                <div class="serve-grid" style="flex: 1; align-items: center; justify-items: center;">
                     <div>
-                        <div style="position: relative; height: 120px; width: 120px; margin: 0 auto;">
+                        <div style="position: relative; height: 130px; width: 130px; margin: 0 auto;">
                             <canvas id="serve1Chart"></canvas>
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #002855;">
-                                {{ match[13] }}<span style="font-size: 12px; color: #94a3b8;">/10</span>
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #002855; flex-direction: column;">
+                                {{ match[13] }}<span style="font-size: 12px; color: #94a3b8; font-weight: normal; margin-top: -3px;">/10 Acertos</span>
                             </div>
                         </div>
-                        <p style="font-size: 12px; font-weight: bold; color: var(--text-slate); margin-top: 10px;">1º SERVIÇO</p>
+                        <p style="font-size: 12px; font-weight: bold; color: var(--text-slate); margin-top: 10px; text-transform: uppercase;">1º Serviço (Nota)</p>
                     </div>
                     
                     <div>
-                        <div style="position: relative; height: 120px; width: 120px; margin: 0 auto;">
+                        <div style="position: relative; height: 130px; width: 130px; margin: 0 auto;">
                             <canvas id="serve2Chart"></canvas>
-                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; color: #002855;">
-                                {{ match[14] }}<span style="font-size: 12px; color: #94a3b8;">/10</span>
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; color: #002855; flex-direction: column;">
+                                {{ match[14] }}<span style="font-size: 12px; color: #94a3b8; font-weight: normal; margin-top: -3px;">/10 Acertos</span>
                             </div>
                         </div>
-                        <p style="font-size: 12px; font-weight: bold; color: var(--text-slate); margin-top: 10px;">2º SERVIÇO</p>
+                        <p style="font-size: 12px; font-weight: bold; color: var(--text-slate); margin-top: 10px; text-transform: uppercase;">2º Serviço (Nota)</p>
                     </div>
                 </div>
 
-                <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 15px; border-radius: 8px; text-align: center; margin-top: 20px;">
-                    <span style="font-size: 13px; font-weight: bold; color: #b91c1c; text-transform: uppercase;">Duplas Faltas</span>
-                    <div style="font-size: 24px; font-weight: 900; color: #dc2626;">{{ match[15] }}</div>
+                <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 15px; border-radius: 10px; text-align: center; margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 13px; font-weight: bold; color: #b91c1c; text-transform: uppercase; letter-spacing: 1px;">⚠️ Duplas Faltas</span>
+                    <div style="font-size: 28px; font-weight: 900; color: #dc2626;">{{ match[15] }}</div>
                 </div>
             </div>
         </div>
 
         <div class="content-section" style="margin-top: 25px;">
-            <h3 style="margin: 0 0 15px 0; color: var(--atp-blue);">📝 Diário do Treinador (Notas)</h3>
-            <div class="notes-text">{% if match[26] %}{{ match[26] }}{% else %}<span style="color: #94a3b8; font-style: italic;">Nenhuma observação foi registrada para esta partida.</span>{% endif %}</div>
+            <h3 style="margin: 0 0 18px 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">📝 Diário do Treinador (Notas)</h3>
+            <div class="notes-text">{% if match[26] %}{{ match[26] }}{% else %}<span style="color: #94a3b8; font-style: italic;">Nenhuma observação detalhada foi registrada para esta partida. Use o botão "Editar Partida" no topo para adicionar notas.</span>{% endif %}</div>
         </div>
 
     </div>
 
     <script>
         window.onload = function() {
-            // 1. Radar Chart
+            Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
+
             const ctxRadar = document.getElementById('radarChart').getContext('2d');
             new Chart(ctxRadar, {
                 type: 'radar',
                 data: {
                     labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
                     datasets: [{
-                        label: 'Desempenho',
+                        label: 'Nível Técnico',
                         data: [{{ match[10] }}, {{ match[11] }}, {{ match[12] }}, {{ match[16] }}, {{ match[17] }}, {{ match[18] }}, {{ match[19] }}, {{ match[20] }}, {{ match[21] }}, {{ match[22] }}],
-                        backgroundColor: 'rgba(196, 255, 14, 0.2)', borderColor: '#a3e635', borderWidth: 2, pointBackgroundColor: '#002855', pointRadius: 4
+                        backgroundColor: 'rgba(196, 255, 14, 0.15)', borderColor: '#a3e635', borderWidth: 3, pointBackgroundColor: '#002855', pointRadius: 4, pointHoverRadius: 6
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    scales: { r: { min: 0, max: 10, ticks: { display: false } } },
+                    scales: { r: { min: 0, max: 10, ticks: { display: false, stepSize: 2 }, grid: { color: '#e2e8f0' }, angleLines: { color: '#e2e8f0' }, pointLabels: { font: { size: 10 }, color: '#64748b' } } },
                     plugins: { legend: { display: false } }
                 }
             });
 
-            // 2. Donut Chart (1º Saque) - Baseado em nota 10
             const ctxServe1 = document.getElementById('serve1Chart').getContext('2d');
             new Chart(ctxServe1, {
                 type: 'doughnut',
@@ -173,15 +264,14 @@
                     labels: ['Acertos', 'Erros'],
                     datasets: [{
                         data: [{{ match[13] }}, {{ 10 - match[13] }}],
-                        backgroundColor: ['#0ea5e9', '#e2e8f0'],
+                        backgroundColor: ['#0ea5e9', '#f1f5f9'],
                         borderWidth: 0,
-                        cutout: '75%' // Espessura da rosca
+                        cutout: '80%' // Espessura da rosca
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                options: { responsive: true, maintainAspectRatio: false, animation: { animateScale: true, animateRotate: true }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
             });
 
-            // 3. Donut Chart (2º Saque)
             const ctxServe2 = document.getElementById('serve2Chart').getContext('2d');
             new Chart(ctxServe2, {
                 type: 'doughnut',
@@ -189,12 +279,12 @@
                     labels: ['Acertos', 'Erros'],
                     datasets: [{
                         data: [{{ match[14] }}, {{ 10 - match[14] }}],
-                        backgroundColor: ['#f59e0b', '#e2e8f0'],
+                        backgroundColor: ['#f59e0b', '#f1f5f9'],
                         borderWidth: 0,
-                        cutout: '75%'
+                        cutout: '80%'
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+                options: { responsive: true, maintainAspectRatio: false, animation: { animateScale: true, animateRotate: true }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
             });
         };
     </script>

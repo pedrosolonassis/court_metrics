@@ -38,6 +38,9 @@
         .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
         .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
         .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        
+        .btn-main { padding: 12px 25px; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px; color: white;}
+        .btn-main:hover { opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -234,8 +237,8 @@
                 <label style="font-weight: bold; color: #002855;">📝 Descrição da Partida:</label>
                 <textarea name="notes" id="inp_notes" rows="3" class="form-control" style="height: auto; padding: 15px; margin-top: 10px;"></textarea>
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <a href="/" class="btn-main filter-btn" style="flex: 1; text-align: center; background-color: #94a3b8; text-decoration: none;">Cancelar</a>
-                    <button type="submit" class="btn-main filter-btn" style="flex: 2; background-color: #f59e0b;">Salvar Edições</button>
+                    <a href="/match/{{ match[0] }}" class="btn-main" style="flex: 1; background-color: #94a3b8; text-decoration: none;">Cancelar</a>
+                    <button type="submit" class="btn-main" style="flex: 2; background-color: #f59e0b;">Salvar Edições</button>
                 </div>
             </div>
         </form>
@@ -284,15 +287,24 @@
             }
         }
 
+        // Lógica ATUALIZADA: Torna as caixas required apenas se o set for válido
         function updateSetInputs() {
             const numSets = parseInt(document.getElementById('set_format').value);
             for (let i = 1; i <= 5; i++) {
                 const pInput = document.getElementById(`p_s${i}`);
                 const oInput = document.getElementById(`o_s${i}`);
                 if (i <= numSets) { 
-                    pInput.classList.add('set-visible'); oInput.classList.add('set-visible');
+                    pInput.classList.add('set-visible'); 
+                    oInput.classList.add('set-visible');
+                    pInput.setAttribute('required', 'true');
+                    oInput.setAttribute('required', 'true');
                 } else { 
-                    pInput.classList.remove('set-visible'); oInput.classList.remove('set-visible'); pInput.value = ""; oInput.value = ""; 
+                    pInput.classList.remove('set-visible'); 
+                    oInput.classList.remove('set-visible'); 
+                    pInput.removeAttribute('required');
+                    oInput.removeAttribute('required');
+                    pInput.value = ""; 
+                    oInput.value = ""; 
                 }
             }
             calcularResultado(); 
@@ -390,18 +402,22 @@
                 document.getElementById('win_val').innerText = "{{ match[23] }}";
                 document.getElementById('err_val').innerText = "{{ match[24] }}";
 
+                // Carrega inteligentemente apenas os sets jogados
                 const scoreStr = "{{ match[6] }}";
                 if(scoreStr) {
                     const sets = scoreStr.split(" ");
+                    let validSets = 0;
                     sets.forEach((set, index) => {
                         if(set.includes("/")) {
+                            validSets++;
                             const parts = set.split("/");
                             const pInput = document.getElementById(`p_s${index+1}`);
                             const oInput = document.getElementById(`o_s${index+1}`);
                             if(pInput && oInput) { pInput.value = parts[0]; oInput.value = parts[1]; }
                         }
                     });
-                    document.getElementById('set_format').value = sets.length >= 3 ? "3" : "1";
+                    // Define o select baseando-se no que foi realmente jogado
+                    document.getElementById('set_format').value = validSets > 1 ? "3" : "1";
                 }
 
                 updateSetInputs();

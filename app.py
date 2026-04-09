@@ -38,7 +38,7 @@ def create_db():
         unforced_errors INTEGER,
         performance_rating REAL,
         notes TEXT,
-        match_date TEXT /* NOVA COLUNA: ÍNDICE 27 */
+        match_date TEXT
     )
     """)
     conn.commit()
@@ -46,8 +46,22 @@ def create_db():
 
 create_db()
 
+# --- ROTA DA HOME: LIMPA E RÁPIDA ---
 @app.route("/")
 def home():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    
+    # Busca todos os jogos sem filtros para calcular as médias gerais do Dashboard
+    c.execute("SELECT * FROM matches ORDER BY match_date DESC, id DESC")
+    matches = c.fetchall()
+    conn.close()
+    
+    return render_template("index.html", matches=matches)
+
+# --- NOVA ROTA: HISTÓRICO COMPLETO COM FILTROS ---
+@app.route("/history")
+def history():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
@@ -80,7 +94,17 @@ def home():
         "match_format": f_format
     }
     
-    return render_template("index.html", matches=matches, filters=filters)
+    return render_template("history.html", matches=matches, filters=filters)
+
+# --- NOVA ROTA: DETALHES DO FUNDAMENTO ---
+@app.route("/fundamento/<nome>")
+def fundamento(nome):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches ORDER BY match_date ASC") # Crescente para ver evolução
+    matches = c.fetchall()
+    conn.close()
+    return render_template("fundamento.html", matches=matches, nome=nome)
 
 @app.route("/new_match", methods=["GET", "POST"])
 def new_match():
@@ -95,13 +119,20 @@ def new_match():
         opp_partner = request.form.get("opp_partner", "")
         match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
+        # Capturando até o 5º Set
         s1_p, s1_o = request.form.get("set1_player", "0"), request.form.get("set1_opp", "0")
         s2_p, s2_o = request.form.get("set2_player", "0"), request.form.get("set2_opp", "0")
         s3_p, s3_o = request.form.get("set3_player", ""), request.form.get("set3_opp", "")
+        s4_p, s4_o = request.form.get("set4_player", ""), request.form.get("set4_opp", "")
+        s5_p, s5_o = request.form.get("set5_player", ""), request.form.get("set5_opp", "")
         
         score = f"{s1_p}/{s1_o} {s2_p}/{s2_o}"
         if s3_p and s3_o:
             score += f" {s3_p}/{s3_o}"
+        if s4_p and s4_o:
+            score += f" {s4_p}/{s4_o}"
+        if s5_p and s5_o:
+            score += f" {s5_p}/{s5_o}"
 
         f_names = ["forehand", "backhand", "serve", "first_serve", "second_serve", 
                    "double_faults", "return_serve", "slice", "volley", "smash", 
@@ -161,13 +192,20 @@ def edit_match(id):
         opp_partner = request.form.get("opp_partner", "")
         match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
+        # Capturando até o 5º Set
         s1_p, s1_o = request.form.get("set1_player", "0"), request.form.get("set1_opp", "0")
         s2_p, s2_o = request.form.get("set2_player", "0"), request.form.get("set2_opp", "0")
         s3_p, s3_o = request.form.get("set3_player", ""), request.form.get("set3_opp", "")
+        s4_p, s4_o = request.form.get("set4_player", ""), request.form.get("set4_opp", "")
+        s5_p, s5_o = request.form.get("set5_player", ""), request.form.get("set5_opp", "")
         
         score = f"{s1_p}/{s1_o} {s2_p}/{s2_o}"
         if s3_p and s3_o:
             score += f" {s3_p}/{s3_o}"
+        if s4_p and s4_o:
+            score += f" {s4_p}/{s4_o}"
+        if s5_p and s5_o:
+            score += f" {s5_p}/{s5_o}"
 
         f_names = ["forehand", "backhand", "serve", "first_serve", "second_serve", 
                    "double_faults", "return_serve", "slice", "volley", "smash", 
@@ -223,6 +261,18 @@ def delete_match(id):
     conn.close()
     return redirect("/")
 
+@app.route("/match/<int:id>")
+def match_details(id):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches WHERE id = ?", (id,))
+    match = c.fetchone()
+    conn.close()
+    
+    if match:
+        return render_template("match_details.html", match=match)
+    return redirect("/")
+
 @app.route("/export")
 def export_csv():
     conn = sqlite3.connect("database.db")
@@ -243,17 +293,35 @@ def export_csv():
         headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
     )
 
-# --- ROTA DE DETALHES DA PARTIDA (PÁGINA COMPLETA) ---
-@app.route("/match/<int:id>")
-def match_details(id):
+# --- ROTAS DE COMPARAÇÃO DE PARTIDAS ---
+@app.route("/select_compare/<int:id>")
+def select_compare(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
+    # Pega o jogo principal
     c.execute("SELECT * FROM matches WHERE id = ?", (id,))
-    match = c.fetchone()
+    base_match = c.fetchone()
+    # Pega todos os outros jogos para escolher
+    c.execute("SELECT * FROM matches WHERE id != ? ORDER BY match_date DESC", (id,))
+    other_matches = c.fetchall()
     conn.close()
     
-    if match:
-        return render_template("match_details.html", match=match)
+    if base_match:
+        return render_template("select_compare.html", base_match=base_match, matches=other_matches)
+    return redirect("/")
+
+@app.route("/compare/<int:id1>/<int:id2>")
+def compare(id1, id2):
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches WHERE id = ?", (id1,))
+    match1 = c.fetchone()
+    c.execute("SELECT * FROM matches WHERE id = ?", (id2,))
+    match2 = c.fetchone()
+    conn.close()
+    
+    if match1 and match2:
+        return render_template("compare.html", m1=match1, m2=match2)
     return redirect("/")
 
 if __name__ == "__main__":
