@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tennis Tracker{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root { 
+            --atp-blue: #002855; 
+            --tennis-green: #d1ff00; 
+            --text-slate: #64748b;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --sidebar-text: #94a3b8;
+            --sidebar-active: #38bdf8;
+        }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; display: flex; min-height: 100vh; }
+        
+        /* --- ESTILOS DO MENU LATERAL (SIDEBAR) --- */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s; z-index: 100;}
+        .sidebar-logo { padding: 30px 20px; display: flex; align-items: center; gap: 15px; font-size: 22px; font-weight: 900; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo i { color: var(--sidebar-active); font-size: 28px; }
+        
+        .nav-menu { flex: 1; padding: 20px 0; display: flex; flex-direction: column; gap: 5px; }
+        .nav-item { padding: 12px 25px; display: flex; align-items: center; gap: 15px; color: var(--sidebar-text); text-decoration: none; font-weight: 600; font-size: 15px; transition: 0.2s; border-left: 4px solid transparent; }
+        .nav-item:hover { background-color: var(--sidebar-hover); color: white; }
+        .nav-item i { font-size: 22px; }
+        .nav-item.active { background-color: var(--sidebar-hover); color: white; border-left-color: var(--sidebar-active); }
+        .nav-item.active i { color: var(--sidebar-active); }
+        
+        .nav-title { font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 900; letter-spacing: 1px; padding: 15px 25px 5px 25px; margin-top: 10px;}
+
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .logout-btn { display: flex; align-items: center; gap: 10px; justify-content: center; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; width: 100%; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.2s;}
+        .logout-btn:hover { background-color: #ef4444; color: white; }
+
+        /* --- ÁREA PRINCIPAL DE CONTEÚDO --- */
+        .main-content { flex: 1; margin-left: 260px; padding: 30px 40px; box-sizing: border-box; width: calc(100% - 260px); }
+        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-profile { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; cursor: pointer; }
+        .user-avatar { width: 35px; height: 35px; background: var(--atp-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <i class='bx bx-tennis-ball'></i>
+            Tracker Pro
+        </div>
+
+        <div class="nav-menu">
+            <div class="nav-title">Principal</div>
+            <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
+                <i class='bx bx-home-alt-2'></i> Dashboard
+            </a>
+            <a href="/new_match" class="nav-item {% if request.path == '/new_match' %}active{% endif %}">
+                <i class='bx bx-plus-circle'></i> Nova Partida
+            </a>
+            <a href="/history" class="nav-item {% if request.path == '/history' %}active{% endif %}">
+                <i class='bx bx-library'></i> Meu Histórico
+            </a>
+
+            <div class="nav-title">Inteligência</div>
+            <a href="/insights" class="nav-item {% if request.path == '/insights' %}active{% endif %}">
+                <i class='bx bx-pie-chart-alt-2'></i> Estatísticas
+            </a>
+            <a href="/adversarios" class="nav-item {% if request.path == '/adversarios' or '/h2h/' in request.path %}active{% endif %}">
+                <i class='bx bx-target-lock'></i> Dossiê H2H
+            </a>
+
+            <div class="nav-title">Sistema</div>
+            <a href="/export" class="nav-item">
+                <i class='bx bx-cloud-download'></i> Exportar CSV
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <a href="#" class="logout-btn">
+                <i class='bx bx-log-out'></i> Sair da Conta
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1 style="margin: 0; color: var(--atp-blue); font-size: 24px;">{% block page_title %}Visão Geral{% endblock %}</h1>
+                <span style="color: var(--text-slate); font-size: 14px;">{% block page_subtitle %}Acompanhe sua evolução na quadra.{% endblock %}</span>
+            </div>
+            <div class="user-profile">
+                <div style="text-align: right;">
+                    <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">Atleta Pro</div>
+                    <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
+                </div>
+                <div class="user-avatar">A</div>
+            </div>
+        </header>
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

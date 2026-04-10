@@ -1,537 +1,535 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Nova Partida - Tennis Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --atp-blue: #002855; --text-slate: #64748b; }
-        .form-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--atp-blue); }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        .rating-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .rating-box { padding: 15px; border-radius: 8px; display: flex; flex-direction: column; border: 2px solid transparent; transition: all 0.3s ease; }
-        .adv-serve-box { padding: 10px; border-radius: 8px; text-align: center; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+{% extends 'base.html' %}
 
-        .box-neutral { background-color: #f3f4f6; border-color: #e5e7eb; } 
-        .box-red     { background-color: #fee2e2; border-color: #fca5a5; } 
-        .box-orange  { background-color: #ffedd5; border-color: #fdba74; } 
-        .box-lime    { background-color: #ecfccb; border-color: #bef264; } 
-        .box-emerald { background-color: #d1fae5; border-color: #6ee7b7; } 
-        .box-elite   { background-color: #cffafe; border-color: #67e8f9; } 
+{% block title %}Nova Partida - Tennis Tracker{% endblock %}
+{% block page_title %}Registrar Nova Partida{% endblock %}
+{% block page_subtitle %}Insira os dados do jogo, placar e sua autoavaliação técnica.{% endblock %}
 
-        .rating-box label { margin: 0 0 5px 0; font-size: 14px; color: #333; font-weight: bold; }
-        .rating-box input { background: transparent; border: none; font-size: 22px; font-weight: 900; color: #1f2937; outline: none; }
-        
-        .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; margin-bottom: 40px; }
-        .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
-        
-        .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
-        .error-input { color: #ef4444; }
+{% block extra_css %}
+<style>
+    .form-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--atp-blue); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+    .rating-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .rating-box { padding: 15px; border-radius: 8px; display: flex; flex-direction: column; border: 2px solid transparent; transition: all 0.3s ease; }
+    .adv-serve-box { padding: 10px; border-radius: 8px; text-align: center; border: 2px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s ease; }
 
-        .form-control { width: 100%; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #f8fafc; color: #002855; font-weight: 600; box-sizing: border-box; outline: none; font-family: inherit; font-size: 14px; }
-        .form-control:focus { border-color: #002855; }
+    .box-neutral { background-color: #f3f4f6; border-color: #e5e7eb; } 
+    .box-red     { background-color: #fee2e2; border-color: #fca5a5; } 
+    .box-orange  { background-color: #ffedd5; border-color: #fdba74; } 
+    .box-lime    { background-color: #ecfccb; border-color: #bef264; } 
+    .box-emerald { background-color: #d1fae5; border-color: #6ee7b7; } 
+    .box-elite   { background-color: #cffafe; border-color: #67e8f9; } 
 
-        .slider-win { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #dcfce7; outline: none; margin-top: 15px;}
-        .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
-        
-        .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
-        .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+    .rating-box label { margin: 0 0 5px 0; font-size: 14px; color: #333; font-weight: bold; }
+    .rating-box input { background: transparent; border: none; font-size: 22px; font-weight: 900; color: #1f2937; outline: none; }
+    
+    .performance-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; margin-bottom: 40px; }
+    .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
+    
+    .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
+    .error-input { color: #ef4444; }
 
-        /* CSS PLACAR VERTICAL (Estilo LetzPlay) */
-        .score-input { width: 50px; height: 50px; text-align: center; font-size: 22px; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.2s; background: white;}
-        .score-input:focus { border-color: var(--atp-blue); box-shadow: 0 0 0 3px rgba(0,40,85,0.1); }
-        .tb-input { width: 36px; height: 36px; text-align: center; font-size: 14px; font-weight: bold; border: 1px solid #f97316; background: white; color: #ea580c; border-radius: 6px; outline: none; transition: 0.2s;}
-        .tb-input:focus { border-color: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
-        .player-row { display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 15px 0; }
-        .player-row:last-child { border-bottom: none; }
-        .player-info { flex: 0 0 180px; display: flex; align-items: center; gap: 10px; }
+    .form-control { width: 100%; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #f8fafc; color: #002855; font-weight: 600; box-sizing: border-box; outline: none; font-family: inherit; font-size: 14px; }
+    .form-control:focus { border-color: #002855; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-</head>
-<body>
+    .slider-win { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #dcfce7; outline: none; margin-top: 15px;}
+    .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+    
+    .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
+    .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
 
-    <div class="container" style="max-width: 1000px; margin: 0 auto; padding: 20px;">
-        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
-        <h1 style="color: #002855; margin-top: 15px;">🎾 Registrar Nova Partida</h1>
-        
-        <form action="/new_match" method="POST">
-            
-            <div class="form-section">
-                <h3 style="margin-top: 0; color: #002855;">📋 Informações Gerais</h3>
-                <div class="grid-2">
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">FORMATO DO JOGO:</label>
-                        <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
-                            <option value="Simples">Simples</option>
-                            <option value="Duplas">Duplas</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
-                        <select name="categoria" class="form-control">
-                            <option value="1ª Classe">1ª Classe</option>
-                            <option value="2ª Classe">2ª Classe</option>
-                            <option value="3ª Classe">3ª Classe</option>
-                            <option value="4ª Classe">4ª Classe</option>
-                            <option value="5ª Classe">5ª Classe</option>
-                            <option value="Iniciante">Iniciante</option>
-                        </select>
-                    </div>
-                </div>
+    /* CSS PLACAR VERTICAL (Estilo LetzPlay) */
+    .score-input { width: 50px; height: 50px; text-align: center; font-size: 22px; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.2s; background: white;}
+    .score-input:focus { border-color: var(--atp-blue); box-shadow: 0 0 0 3px rgba(0,40,85,0.1); }
+    .tb-input { width: 36px; height: 36px; text-align: center; font-size: 14px; font-weight: bold; border: 1px solid #f97316; background: white; color: #ea580c; border-radius: 6px; outline: none; transition: 0.2s;}
+    .tb-input:focus { border-color: #d97706; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+    .player-row { display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding: 15px 0; }
+    .player-row:last-child { border-bottom: none; }
+    .player-info { flex: 0 0 180px; display: flex; align-items: center; gap: 10px; }
+    
+    .btn-main { background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px; padding: 0 20px; }
+    .btn-main:hover { opacity: 0.9; }
 
-                <div id="doubles-opponents" style="display: none; margin-top: 15px; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px dashed #fca5a5;">
-                    <h4 style="margin: 0 0 10px 0; color: #7f1d1d;">👥 Dupla Adversária</h4>
-                    <div class="grid-2">
-                        <div>
-                            <label style="font-size: 12px; font-weight: bold;">Adversário 1:</label>
-                            <input type="text" id="inp_opp1" name="ignore_opp" class="form-control" placeholder="Nome do adversário 1">
-                        </div>
-                        <div>
-                            <label style="font-size: 12px; font-weight: bold;">Adversário 2 (Parceiro):</label>
-                            <input type="text" name="opp_partner" class="form-control" placeholder="Nome do adversário 2">
-                        </div>
-                    </div>
-                </div>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+{% endblock %}
 
-                <div class="grid-2" style="margin-top: 15px;">
-                    <div id="singles-opp-div">
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">ADVERSÁRIO PRINCIPAL:</label>
-                        <input type="text" id="inp_opp_single" name="opponent" class="form-control" required>
-                    </div>
-                    <div id="doubles-partner-div" style="display: none;">
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">SEU PARCEIRO:</label>
-                        <input type="text" name="partner" class="form-control" placeholder="Nome do seu parceiro">
-                    </div>
-
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE JOGO:</label>
-                        <select name="match_type" class="form-control">
-                            <option value="Ranking">Ranking</option>
-                            <option value="Torneio">Torneio</option>
-                            <option value="Amistoso">Amistoso</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
-                        <select name="surface" class="form-control">
-                            <option value="Quadra Dura">Quadra Dura (Rápida)</option>
-                            <option value="Saibro">Saibro (Terra Batida)</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">DATA DA PARTIDA:</label>
-                        <input type="date" name="match_date" id="match_date" class="form-control" required>
-                    </div>
-                </div>
+{% block content %}
+<form action="/new_match" method="POST" style="max-width: 1000px;">
+    
+    <div class="form-section">
+        <h3 style="margin-top: 0; color: #002855;">📋 Informações Gerais</h3>
+        <div class="grid-2">
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">FORMATO DO JOGO:</label>
+                <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
+                    <option value="Simples">Simples</option>
+                    <option value="Duplas">Duplas</option>
+                </select>
             </div>
-
-            <div class="form-section">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 style="margin: 0; color: #002855;">🔢 Formato e Placar</h3>
-                    
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <label style="margin: 0; font-size: 13px; font-weight: bold; color: #64748b;">RESULTADO:</label>
-                        <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; height: 36px; box-sizing: border-box;">
-                            AGUARDANDO...
-                        </div>
-                        <input type="hidden" name="result" id="result-hidden" value="Derrota">
-                    </div>
-                </div>
-                
-                <div class="grid-2" style="margin-bottom: 20px;">
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE SETS:</label>
-                        <select id="set_model" name="match_format" class="form-control" onchange="renderScoreInputs()">
-                            <option value="" selected disabled>Escolha o modelo de sets...</option>
-                            <option value="1 Set">1 Set</option>
-                            <option value="2 Sets + Super Tiebreak">2 Sets + Super Tiebreak</option>
-                            <option value="3 Sets">3 Sets Completos</option>
-                            <option value="4 Sets + Super Tiebreak">4 Sets + Super Tiebreak</option>
-                            <option value="5 Sets">5 Sets (Grand Slam)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE GAMES:</label>
-                        <select id="game_model" name="game_format" class="form-control" onchange="renderScoreInputs()">
-                            <option value="" selected disabled>Escolha o modelo de games...</option>
-                            <option value="4">4 games (com tie-break no 4x4)</option>
-                            <option value="5">5 games (com tie-break no 5x5)</option>
-                            <option value="6">6 games (com tie-break no 6x6)</option>
-                            <option value="7">7 games (com tie-break no 7x7)</option>
-                            <option value="8">8 games (com tie-break no 8x8)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
-                    
-                    <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
-                        <div style="flex: 0 0 180px; font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
-                        <div id="set_headers" style="display: flex; gap: 20px; flex: 1;"></div>
-                    </div>
-
-                    <div class="player-row">
-                        <div class="player-info">
-                            <div style="width: 35px; height: 35px; background: var(--atp-blue); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;">👤</div>
-                            <div>
-                                <div style="font-weight: bold; color: var(--atp-blue); font-size: 14px;">Você</div>
-                                <div style="font-size: 11px; color: #94a3b8;">Jogador 1</div>
-                            </div>
-                        </div>
-                        <div id="p_inputs" style="display: flex; gap: 20px; flex: 1;"></div>
-                    </div>
-
-                    <div class="player-row">
-                        <div class="player-info">
-                            <div style="width: 35px; height: 35px; background: #ef4444; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;">🆚</div>
-                            <div>
-                                <div style="font-weight: bold; color: var(--atp-blue); font-size: 14px;" id="opp_label">Adversário</div>
-                                <div style="font-size: 11px; color: #94a3b8;">Oponente</div>
-                            </div>
-                        </div>
-                        <div id="o_inputs" style="display: flex; gap: 20px; flex: 1;"></div>
-                    </div>
-
-                    <input type="hidden" id="final_score" name="final_score">
-                </div>
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
+                <select name="categoria" class="form-control">
+                    <option value="1ª Classe">1ª Classe</option>
+                    <option value="2ª Classe">2ª Classe</option>
+                    <option value="3ª Classe">3ª Classe</option>
+                    <option value="4ª Classe">4ª Classe</option>
+                    <option value="5ª Classe">5ª Classe</option>
+                    <option value="Iniciante">Iniciante</option>
+                </select>
             </div>
+        </div>
 
-            <div class="form-section">
-                <h3 style="margin-top: 0; color: #002855;">⚔️ Saldo Tático (Agressividade)</h3>
-                <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 20px;">Avalie o volume das suas jogadas na escala de 0 a 10.</p>
-                
-                <div class="grid-2">
-                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
-                        <h4 style="color: #16a34a; margin: 0 0 15px 0;">🎾 Winners: <span id="win_val" style="font-size: 28px; color: #15803d; margin-left: 5px;">0</span></h4>
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
-                            <span>0: Nenhum</span>
-                            <span>10: Chuva de Winner</span>
-                        </div>
-                        <input type="range" name="winners" id="inp_winners" min="0" max="10" value="0" class="slider-win" oninput="document.getElementById('win_val').innerText = this.value">
-                    </div>
-
-                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
-                        <h4 style="color: #dc2626; margin: 0 0 15px 0;">⚠️ Erros N.F.: <span id="err_val" style="font-size: 28px; color: #b91c1c; margin-left: 5px;">0</span></h4>
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
-                            <span>0: Fui uma Parede</span>
-                            <span>10: Errei muito</span>
-                        </div>
-                        <input type="range" name="unforced_errors" id="inp_errors" min="0" max="10" value="0" class="slider-err" oninput="document.getElementById('err_val').innerText = this.value">
-                    </div>
-                </div>
-            </div>
-
-            <div class="performance-container">
+        <div id="doubles-opponents" style="display: none; margin-top: 15px; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px dashed #fca5a5;">
+            <h4 style="margin: 0 0 10px 0; color: #7f1d1d;">👥 Dupla Adversária</h4>
+            <div class="grid-2">
                 <div>
-                    <h3 style="margin-top: 0; color: #002855;">📈 Avaliação Técnica (0-10)</h3>
-                    <div class="rating-cards">
-                        <div class="rating-box box-neutral"><label>Forehand</label><input type="number" name="forehand" id="inp-forehand" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Backhand</label><input type="number" name="backhand" id="inp-backhand" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="0" min="0" max="10" class="fund-input" onchange="toggleServeDetails()"></div>
-                        <div class="rating-box box-neutral"><label>Devolução</label><input type="number" name="return_serve" id="inp-return" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Slice</label><input type="number" name="slice" id="inp-slice" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Voleio</label><input type="number" name="volley" id="inp-volley" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Smash</label><input type="number" name="smash" id="inp-smash" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Dropshot</label><input type="number" name="dropshot" id="inp-drop" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Footwork</label><input type="number" name="footwork" id="inp-foot" value="0" min="0" max="10" class="fund-input"></div>
-                        <div class="rating-box box-neutral"><label>Estratégia</label><input type="number" name="strategy" id="inp-strat" value="0" min="0" max="10" class="fund-input"></div>
-                    </div>
-
-                    <div id="serve-details" style="display: none; margin-top: 15px; animation: fadeIn 0.3s ease-in-out;">
-                        <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1;">
-                            <h4 style="margin: 0 0 12px 0; color: #0f172a;">🎯 Estatísticas de Serviço</h4>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                                <div class="adv-serve-box box-neutral">
-                                    <label style="font-size: 11px; font-weight: bold;">1º Serviço</label>
-                                    <input type="number" name="first_serve" value="0" min="0" max="10" class="serve-input dynamic-serve">
-                                </div>
-                                <div class="adv-serve-box box-neutral">
-                                    <label style="font-size: 11px; font-weight: bold;">2º Serviço</label>
-                                    <input type="number" name="second_serve" value="0" min="0" max="10" class="serve-input dynamic-serve">
-                                </div>
-                                <div style="background: #fee2e2; padding: 10px; border-radius: 8px; border: 2px solid #fca5a5; text-align: center;">
-                                    <label style="font-size: 11px; color: #ef4444; font-weight: bold;">D. Faltas</label>
-                                    <input type="number" name="double_faults" value="0" min="0" class="serve-input error-input">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <label style="font-size: 12px; font-weight: bold;">Adversário 1:</label>
+                    <input type="text" id="inp_opp1" name="ignore_opp" class="form-control" placeholder="Nome do adversário 1">
                 </div>
-
-                <div class="chart-container">
-                    <canvas id="liveRadarChart"></canvas>
+                <div>
+                    <label style="font-size: 12px; font-weight: bold;">Adversário 2 (Parceiro):</label>
+                    <input type="text" name="opp_partner" class="form-control" placeholder="Nome do adversário 2">
                 </div>
             </div>
+        </div>
 
-            <div class="form-section">
-                <label style="font-weight: bold; color: #002855;">📝 Descrição da Partida:</label>
-                <textarea name="notes" rows="3" class="form-control" style="height: auto; padding: 15px; margin-top: 10px;"></textarea>
-                <button type="submit" class="btn-main" style="width: 100%; margin-top: 15px; height: 50px; font-size: 16px; background: #10b981; border: none; cursor: pointer;">Salvar Relatório de Partida</button>
+        <div class="grid-2" style="margin-top: 15px;">
+            <div id="singles-opp-div">
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">ADVERSÁRIO PRINCIPAL:</label>
+                <input type="text" id="inp_opp_single" name="opponent" class="form-control" required>
             </div>
-        </form>
+            <div id="doubles-partner-div" style="display: none;">
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">SEU PARCEIRO:</label>
+                <input type="text" name="partner" class="form-control" placeholder="Nome do seu parceiro">
+            </div>
+
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE JOGO:</label>
+                <select name="match_type" class="form-control">
+                    <option value="Ranking">Ranking</option>
+                    <option value="Torneio">Torneio</option>
+                    <option value="Amistoso">Amistoso</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
+                <select name="surface" class="form-control">
+                    <option value="Quadra Dura">Quadra Dura (Rápida)</option>
+                    <option value="Saibro">Saibro (Terra Batida)</option>
+                </select>
+            </div>
+            
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">DATA DA PARTIDA:</label>
+                <input type="date" name="match_date" id="match_date" class="form-control" required>
+            </div>
+        </div>
     </div>
 
-    <script>
-        // === LÓGICA VERTICAL DO PLACAR LETZPLAY ===
-        function renderScoreInputs() {
-            const setModel = document.getElementById('set_model').value;
-            const gameModel = document.getElementById('game_model').value;
-            const scoreArea = document.getElementById('dynamic_score_area');
+    <div class="form-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #002855;">🔢 Formato e Placar</h3>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label style="margin: 0; font-size: 13px; font-weight: bold; color: #64748b;">RESULTADO:</label>
+                <div id="status-badge" style="padding: 8px 15px; border-radius: 20px; font-weight: bold; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; height: 36px; box-sizing: border-box;">
+                    AGUARDANDO...
+                </div>
+                <input type="hidden" name="result" id="result-hidden" value="Derrota">
+            </div>
+        </div>
+        
+        <div class="grid-2" style="margin-bottom: 20px;">
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE SETS:</label>
+                <select id="set_model" name="match_format" class="form-control" onchange="renderScoreInputs()">
+                    <option value="" selected disabled>Escolha o modelo de sets...</option>
+                    <option value="1 Set">1 Set</option>
+                    <option value="2 Sets + Super Tiebreak">2 Sets + Super Tiebreak</option>
+                    <option value="3 Sets">3 Sets Completos</option>
+                    <option value="4 Sets + Super Tiebreak">4 Sets + Super Tiebreak</option>
+                    <option value="5 Sets">5 Sets (Grand Slam)</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE GAMES:</label>
+                <select id="game_model" name="game_format" class="form-control" onchange="renderScoreInputs()">
+                    <option value="" selected disabled>Escolha o modelo de games...</option>
+                    <option value="4">4 games (com tie-break no 4x4)</option>
+                    <option value="5">5 games (com tie-break no 5x5)</option>
+                    <option value="6">6 games (com tie-break no 6x6)</option>
+                    <option value="7">7 games (com tie-break no 7x7)</option>
+                    <option value="8">8 games (com tie-break no 8x8)</option>
+                </select>
+            </div>
+        </div>
 
-            if(!setModel || !gameModel) {
-                scoreArea.style.display = 'none';
+        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            
+            <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+                <div style="flex: 0 0 180px; font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
+                <div id="set_headers" style="display: flex; gap: 20px; flex: 1;"></div>
+            </div>
+
+            <div class="player-row">
+                <div class="player-info">
+                    <div style="width: 35px; height: 35px; background: var(--atp-blue); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;">👤</div>
+                    <div>
+                        <div style="font-weight: bold; color: var(--atp-blue); font-size: 14px;">Você</div>
+                        <div style="font-size: 11px; color: #94a3b8;">Jogador 1</div>
+                    </div>
+                </div>
+                <div id="p_inputs" style="display: flex; gap: 20px; flex: 1;"></div>
+            </div>
+
+            <div class="player-row">
+                <div class="player-info">
+                    <div style="width: 35px; height: 35px; background: #ef4444; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;">🆚</div>
+                    <div>
+                        <div style="font-weight: bold; color: var(--atp-blue); font-size: 14px;" id="opp_label">Adversário</div>
+                        <div style="font-size: 11px; color: #94a3b8;">Oponente</div>
+                    </div>
+                </div>
+                <div id="o_inputs" style="display: flex; gap: 20px; flex: 1;"></div>
+            </div>
+
+            <input type="hidden" id="final_score" name="final_score">
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 style="margin-top: 0; color: #002855;">⚔️ Saldo Tático (Agressividade)</h3>
+        <p style="font-size: 13px; color: #64748b; margin-top: -10px; margin-bottom: 20px;">Avalie o volume das suas jogadas na escala de 0 a 10.</p>
+        
+        <div class="grid-2">
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                <h4 style="color: #16a34a; margin: 0 0 15px 0;">🎾 Winners: <span id="win_val" style="font-size: 28px; color: #15803d; margin-left: 5px;">0</span></h4>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
+                    <span>0: Nenhum</span>
+                    <span>10: Chuva de Winner</span>
+                </div>
+                <input type="range" name="winners" id="inp_winners" min="0" max="10" value="0" class="slider-win" oninput="document.getElementById('win_val').innerText = this.value">
+            </div>
+
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                <h4 style="color: #dc2626; margin: 0 0 15px 0;">⚠️ Erros N.F.: <span id="err_val" style="font-size: 28px; color: #b91c1c; margin-left: 5px;">0</span></h4>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
+                    <span>0: Fui uma Parede</span>
+                    <span>10: Errei muito</span>
+                </div>
+                <input type="range" name="unforced_errors" id="inp_errors" min="0" max="10" value="0" class="slider-err" oninput="document.getElementById('err_val').innerText = this.value">
+            </div>
+        </div>
+    </div>
+
+    <div class="performance-container">
+        <div>
+            <h3 style="margin-top: 0; color: #002855;">📈 Avaliação Técnica (0-10)</h3>
+            <div class="rating-cards">
+                <div class="rating-box box-neutral"><label>Forehand</label><input type="number" name="forehand" id="inp-forehand" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Backhand</label><input type="number" name="backhand" id="inp-backhand" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="0" min="0" max="10" class="fund-input" onchange="toggleServeDetails()"></div>
+                <div class="rating-box box-neutral"><label>Devolução</label><input type="number" name="return_serve" id="inp-return" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Slice</label><input type="number" name="slice" id="inp-slice" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Voleio</label><input type="number" name="volley" id="inp-volley" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Smash</label><input type="number" name="smash" id="inp-smash" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Dropshot</label><input type="number" name="dropshot" id="inp-drop" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Footwork</label><input type="number" name="footwork" id="inp-foot" value="0" min="0" max="10" class="fund-input"></div>
+                <div class="rating-box box-neutral"><label>Estratégia</label><input type="number" name="strategy" id="inp-strat" value="0" min="0" max="10" class="fund-input"></div>
+            </div>
+
+            <div id="serve-details" style="display: none; margin-top: 15px; animation: fadeIn 0.3s ease-in-out;">
+                <div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1;">
+                    <h4 style="margin: 0 0 12px 0; color: #0f172a;">🎯 Estatísticas de Serviço</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div class="adv-serve-box box-neutral">
+                            <label style="font-size: 11px; font-weight: bold;">1º Serviço</label>
+                            <input type="number" name="first_serve" value="0" min="0" max="10" class="serve-input dynamic-serve">
+                        </div>
+                        <div class="adv-serve-box box-neutral">
+                            <label style="font-size: 11px; font-weight: bold;">2º Serviço</label>
+                            <input type="number" name="second_serve" value="0" min="0" max="10" class="serve-input dynamic-serve">
+                        </div>
+                        <div style="background: #fee2e2; padding: 10px; border-radius: 8px; border: 2px solid #fca5a5; text-align: center;">
+                            <label style="font-size: 11px; color: #ef4444; font-weight: bold;">D. Faltas</label>
+                            <input type="number" name="double_faults" value="0" min="0" class="serve-input error-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="liveRadarChart"></canvas>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <label style="font-weight: bold; color: #002855;">📝 Descrição da Partida:</label>
+        <textarea name="notes" rows="3" class="form-control" style="height: auto; padding: 15px; margin-top: 10px;"></textarea>
+        <button type="submit" class="btn-main" style="width: 100%; margin-top: 15px; height: 50px; font-size: 16px; background: #10b981; border: none; cursor: pointer; color: white; border-radius: 8px; font-weight: bold;">Salvar Relatório de Partida</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // === LÓGICA VERTICAL DO PLACAR LETZPLAY ===
+    function renderScoreInputs() {
+        const setModel = document.getElementById('set_model').value;
+        const gameModel = document.getElementById('game_model').value;
+        const scoreArea = document.getElementById('dynamic_score_area');
+
+        if(!setModel || !gameModel) {
+            scoreArea.style.display = 'none';
+            return;
+        }
+
+        scoreArea.style.display = 'block';
+
+        let numSets = 1;
+        if(setModel.includes('2 Sets')) numSets = 3;
+        else if(setModel.includes('3 Sets')) numSets = 3;
+        else if(setModel.includes('4 Sets')) numSets = 5;
+        else if(setModel.includes('5 Sets')) numSets = 5;
+
+        let headersHtml = '';
+        let pInputsHtml = '';
+        let oInputsHtml = '';
+
+        for(let i=1; i<=numSets; i++) {
+            let isSuperTb = setModel.includes('Super Tiebreak') && i === numSets;
+            let title = isSuperTb ? 'SUPER TB' : i + 'º SET';
+
+            headersHtml += `<div style="flex: 1; min-width: 90px; text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8;">${title}</div>`;
+
+            pInputsHtml += `
+                <div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
+                    <input type="number" class="score-input p-score" data-set="${i}" min="0">
+                    ${!isSuperTb ? `<input type="number" class="tb-input p-tb" data-set="${i}" min="0" style="display: none;">` : ''}
+                </div>
+            `;
+
+            oInputsHtml += `
+                <div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
+                    <input type="number" class="score-input o-score" data-set="${i}" min="0">
+                    ${!isSuperTb ? `<input type="number" class="tb-input o-tb" data-set="${i}" min="0" style="display: none;">` : ''}
+                </div>
+            `;
+        }
+
+        document.getElementById('set_headers').innerHTML = headersHtml;
+        document.getElementById('p_inputs').innerHTML = pInputsHtml;
+        document.getElementById('o_inputs').innerHTML = oInputsHtml;
+
+        document.querySelectorAll('.score-input, .tb-input').forEach(input => {
+            input.addEventListener('input', calculateTieBreak);
+        });
+        
+        calculateTieBreak();
+    }
+
+    function calculateTieBreak() {
+        const gameLimit = parseInt(document.getElementById('game_model').value);
+        let finalScoreString = "";
+        let setsPlayer = 0; let setsOpp = 0;
+
+        const numSets = document.querySelectorAll('#set_headers > div').length;
+
+        for(let i=1; i<=numSets; i++) {
+            const pInput = document.querySelector(`.p-score[data-set="${i}"]`);
+            const oInput = document.querySelector(`.o-score[data-set="${i}"]`);
+            const pTb = document.querySelector(`.p-tb[data-set="${i}"]`);
+            const oTb = document.querySelector(`.o-tb[data-set="${i}"]`);
+
+            if(!pInput || !oInput || pInput.value === "" || oInput.value === "") continue;
+
+            let p = parseInt(pInput.value);
+            let o = parseInt(oInput.value);
+            let isSuperTb = !pTb; 
+
+            if (p > o) setsPlayer++;
+            else if (o > p) setsOpp++;
+
+            // Exibe as caixas de Tie-Break para os dois jogadores
+            if(pTb && oTb) {
+                if ((p === gameLimit + 1 && o === gameLimit) || (o === gameLimit + 1 && p === gameLimit)) {
+                    pTb.style.display = 'inline-block';
+                    oTb.style.display = 'inline-block';
+                } else {
+                    pTb.style.display = 'none';
+                    oTb.style.display = 'none';
+                    pTb.value = '';
+                    oTb.value = '';
+                }
+            }
+
+            // Montagem para o Python
+            let setStr = "";
+            if(isSuperTb) {
+                setStr = `[${p}/${o}]`; 
+            } else {
+                setStr = `${p}/${o}`;
+                if(pTb && pTb.style.display !== 'none' && (pTb.value !== "" || oTb.value !== "")) {
+                    let loserTb = Math.min(parseInt(pTb.value) || 0, parseInt(oTb.value) || 0);
+                    setStr += ` (${loserTb})`; 
+                }
+            }
+            finalScoreString += setStr + " ";
+        }
+
+        document.getElementById('final_score').value = finalScoreString.trim();
+
+        // Atualiza a Badge de Resultado na mesma linha
+        const badge = document.getElementById('status-badge');
+        const hiddenInput = document.getElementById('result-hidden');
+
+        if (setsPlayer > setsOpp) {
+            badge.innerText = "VITÓRIA 🎉"; badge.style.background = "#dcfce7"; badge.style.color = "#15803d"; badge.style.borderColor = "#86efac"; hiddenInput.value = "Vitória";
+        } else if (setsOpp > setsPlayer) {
+            badge.innerText = "DERROTA 🏳️"; badge.style.background = "#fee2e2"; badge.style.color = "#b91c1c"; badge.style.borderColor = "#fca5a5"; hiddenInput.value = "Derrota";
+        } else {
+            badge.innerText = "AGUARDANDO..."; badge.style.background = "#f1f5f9"; badge.style.color = "#64748b"; badge.style.borderColor = "#e2e8f0"; hiddenInput.value = "Derrota";
+        }
+    }
+
+    // === SEQUESTRO DA TECLA "TAB" PARA NAVEGAÇÃO EM Z ===
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            const active = document.activeElement;
+            
+            // Só intercepta se o usuário estiver dentro da tabela de placar
+            if (!active || (!active.classList.contains('p-score') && !active.classList.contains('o-score') && 
+                            !active.classList.contains('p-tb') && !active.classList.contains('o-tb'))) {
                 return;
             }
-
-            scoreArea.style.display = 'block';
-
-            let numSets = 1;
-            if(setModel.includes('2 Sets')) numSets = 3;
-            else if(setModel.includes('3 Sets')) numSets = 3;
-            else if(setModel.includes('4 Sets')) numSets = 5;
-            else if(setModel.includes('5 Sets')) numSets = 5;
-
-            let headersHtml = '';
-            let pInputsHtml = '';
-            let oInputsHtml = '';
-
-            for(let i=1; i<=numSets; i++) {
-                let isSuperTb = setModel.includes('Super Tiebreak') && i === numSets;
-                let title = isSuperTb ? 'SUPER TB' : i + 'º SET';
-
-                headersHtml += `<div style="flex: 1; min-width: 90px; text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8;">${title}</div>`;
-
-                pInputsHtml += `
-                    <div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
-                        <input type="number" class="score-input p-score" data-set="${i}" min="0">
-                        ${!isSuperTb ? `<input type="number" class="tb-input p-tb" data-set="${i}" min="0" style="display: none;">` : ''}
-                    </div>
-                `;
-
-                oInputsHtml += `
-                    <div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
-                        <input type="number" class="score-input o-score" data-set="${i}" min="0">
-                        ${!isSuperTb ? `<input type="number" class="tb-input o-tb" data-set="${i}" min="0" style="display: none;">` : ''}
-                    </div>
-                `;
-            }
-
-            document.getElementById('set_headers').innerHTML = headersHtml;
-            document.getElementById('p_inputs').innerHTML = pInputsHtml;
-            document.getElementById('o_inputs').innerHTML = oInputsHtml;
-
-            document.querySelectorAll('.score-input, .tb-input').forEach(input => {
-                input.addEventListener('input', calculateTieBreak);
-            });
             
-            calculateTieBreak();
-        }
+            e.preventDefault(); // Impede o navegador de pular linha
+            
+            const set = parseInt(active.getAttribute('data-set'));
+            let nextFocus = null;
 
-        function calculateTieBreak() {
-            const gameLimit = parseInt(document.getElementById('game_model').value);
-            let finalScoreString = "";
-            let setsPlayer = 0; let setsOpp = 0;
-
-            const numSets = document.querySelectorAll('#set_headers > div').length;
-
-            for(let i=1; i<=numSets; i++) {
-                const pInput = document.querySelector(`.p-score[data-set="${i}"]`);
-                const oInput = document.querySelector(`.o-score[data-set="${i}"]`);
-                const pTb = document.querySelector(`.p-tb[data-set="${i}"]`);
-                const oTb = document.querySelector(`.o-tb[data-set="${i}"]`);
-
-                if(!pInput || !oInput || pInput.value === "" || oInput.value === "") continue;
-
-                let p = parseInt(pInput.value);
-                let o = parseInt(oInput.value);
-                let isSuperTb = !pTb; 
-
-                if (p > o) setsPlayer++;
-                else if (o > p) setsOpp++;
-
-                // Exibe as caixas de Tie-Break para os dois jogadores
-                if(pTb && oTb) {
-                    if ((p === gameLimit + 1 && o === gameLimit) || (o === gameLimit + 1 && p === gameLimit)) {
-                        pTb.style.display = 'inline-block';
-                        oTb.style.display = 'inline-block';
-                    } else {
-                        pTb.style.display = 'none';
-                        oTb.style.display = 'none';
-                        pTb.value = '';
-                        oTb.value = '';
-                    }
+            if (!e.shiftKey) { 
+                // NAVEGAÇÃO PARA FRENTE (Z: Seu Set 1 -> Adv Set 1 -> Seu Set 2...)
+                if (active.classList.contains('p-score')) {
+                    nextFocus = document.querySelector(`.o-score[data-set="${set}"]`);
+                } else if (active.classList.contains('o-score')) {
+                    const pTb = document.querySelector(`.p-tb[data-set="${set}"]`);
+                    if (pTb && pTb.style.display !== 'none') nextFocus = pTb;
+                    else nextFocus = document.querySelector(`.p-score[data-set="${set+1}"]`);
+                } else if (active.classList.contains('p-tb')) {
+                    nextFocus = document.querySelector(`.o-tb[data-set="${set}"]`);
+                } else if (active.classList.contains('o-tb')) {
+                    nextFocus = document.querySelector(`.p-score[data-set="${set+1}"]`);
                 }
-
-                // Montagem para o Python
-                let setStr = "";
-                if(isSuperTb) {
-                    setStr = `[${p}/${o}]`; 
-                } else {
-                    setStr = `${p}/${o}`;
-                    if(pTb && pTb.style.display !== 'none' && (pTb.value !== "" || oTb.value !== "")) {
-                        let loserTb = Math.min(parseInt(pTb.value) || 0, parseInt(oTb.value) || 0);
-                        setStr += ` (${loserTb})`; 
-                    }
+                
+                if (nextFocus) nextFocus.focus();
+                else document.getElementById('inp_winners').focus(); // Sai da tabela e vai para os Winners
+                
+            } else { 
+                // NAVEGAÇÃO PARA TRÁS (Shift + Tab)
+                if (active.classList.contains('o-tb')) {
+                    nextFocus = document.querySelector(`.p-tb[data-set="${set}"]`);
+                } else if (active.classList.contains('p-tb')) {
+                    nextFocus = document.querySelector(`.o-score[data-set="${set}"]`);
+                } else if (active.classList.contains('o-score')) {
+                    nextFocus = document.querySelector(`.p-score[data-set="${set}"]`);
+                } else if (active.classList.contains('p-score') && set > 1) {
+                    const prevOTb = document.querySelector(`.o-tb[data-set="${set-1}"]`);
+                    if (prevOTb && prevOTb.style.display !== 'none') nextFocus = prevOTb;
+                    else nextFocus = document.querySelector(`.o-score[data-set="${set-1}"]`);
                 }
-                finalScoreString += setStr + " ";
-            }
-
-            document.getElementById('final_score').value = finalScoreString.trim();
-
-            // Atualiza a Badge de Resultado na mesma linha
-            const badge = document.getElementById('status-badge');
-            const hiddenInput = document.getElementById('result-hidden');
-
-            if (setsPlayer > setsOpp) {
-                badge.innerText = "VITÓRIA 🎉"; badge.style.background = "#dcfce7"; badge.style.color = "#15803d"; badge.style.borderColor = "#86efac"; hiddenInput.value = "Vitória";
-            } else if (setsOpp > setsPlayer) {
-                badge.innerText = "DERROTA 🏳️"; badge.style.background = "#fee2e2"; badge.style.color = "#b91c1c"; badge.style.borderColor = "#fca5a5"; hiddenInput.value = "Derrota";
-            } else {
-                badge.innerText = "AGUARDANDO..."; badge.style.background = "#f1f5f9"; badge.style.color = "#64748b"; badge.style.borderColor = "#e2e8f0"; hiddenInput.value = "Derrota";
+                
+                if (nextFocus) nextFocus.focus();
+                else document.getElementById('game_model').focus(); // Sai da tabela para trás
             }
         }
+    });
 
-        // === SEQUESTRO DA TECLA "TAB" PARA NAVEGAÇÃO EM Z ===
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                const active = document.activeElement;
-                
-                // Só intercepta se o usuário estiver dentro da tabela de placar
-                if (!active || (!active.classList.contains('p-score') && !active.classList.contains('o-score') && 
-                                !active.classList.contains('p-tb') && !active.classList.contains('o-tb'))) {
-                    return;
-                }
-                
-                e.preventDefault(); // Impede o navegador de pular linha
-                
-                const set = parseInt(active.getAttribute('data-set'));
-                let nextFocus = null;
+    // === LÓGICA DO RESTO DO SEU FORMULÁRIO ===
+    function toggleDoubles() {
+        const format = document.getElementById('match_format').value;
+        const doublesBox = document.getElementById('doubles-opponents');
+        const singleOppDiv = document.getElementById('singles-opp-div');
+        const doublePartnerDiv = document.getElementById('doubles-partner-div');
+        const inpSingleOpp = document.getElementById('inp_opp_single');
+        const inpDoubleOpp1 = document.getElementById('inp_opp1');
+        const oppLabel = document.getElementById('opp_label');
 
-                if (!e.shiftKey) { 
-                    // NAVEGAÇÃO PARA FRENTE (Z: Seu Set 1 -> Adv Set 1 -> Seu Set 2...)
-                    if (active.classList.contains('p-score')) {
-                        nextFocus = document.querySelector(`.o-score[data-set="${set}"]`);
-                    } else if (active.classList.contains('o-score')) {
-                        const pTb = document.querySelector(`.p-tb[data-set="${set}"]`);
-                        if (pTb && pTb.style.display !== 'none') nextFocus = pTb;
-                        else nextFocus = document.querySelector(`.p-score[data-set="${set+1}"]`);
-                    } else if (active.classList.contains('p-tb')) {
-                        nextFocus = document.querySelector(`.o-tb[data-set="${set}"]`);
-                    } else if (active.classList.contains('o-tb')) {
-                        nextFocus = document.querySelector(`.p-score[data-set="${set+1}"]`);
-                    }
-                    
-                    if (nextFocus) nextFocus.focus();
-                    else document.getElementById('inp_winners').focus(); // Sai da tabela e vai para os Winners
-                    
-                } else { 
-                    // NAVEGAÇÃO PARA TRÁS (Shift + Tab)
-                    if (active.classList.contains('o-tb')) {
-                        nextFocus = document.querySelector(`.p-tb[data-set="${set}"]`);
-                    } else if (active.classList.contains('p-tb')) {
-                        nextFocus = document.querySelector(`.o-score[data-set="${set}"]`);
-                    } else if (active.classList.contains('o-score')) {
-                        nextFocus = document.querySelector(`.p-score[data-set="${set}"]`);
-                    } else if (active.classList.contains('p-score') && set > 1) {
-                        const prevOTb = document.querySelector(`.o-tb[data-set="${set-1}"]`);
-                        if (prevOTb && prevOTb.style.display !== 'none') nextFocus = prevOTb;
-                        else nextFocus = document.querySelector(`.o-score[data-set="${set-1}"]`);
-                    }
-                    
-                    if (nextFocus) nextFocus.focus();
-                    else document.getElementById('game_model').focus(); // Sai da tabela para trás
-                }
-            }
+        if (format === 'Duplas') {
+            doublesBox.style.display = 'block'; singleOppDiv.style.display = 'none'; doublePartnerDiv.style.display = 'block';
+            inpSingleOpp.removeAttribute('required'); inpSingleOpp.name = "ignore_opp";
+            inpDoubleOpp1.name = "opponent"; inpDoubleOpp1.setAttribute('required', 'true');
+            oppLabel.innerText = "Dupla";
+        } else {
+            doublesBox.style.display = 'none'; singleOppDiv.style.display = 'block'; doublePartnerDiv.style.display = 'none';
+            inpSingleOpp.setAttribute('required', 'true'); inpSingleOpp.name = "opponent";
+            inpDoubleOpp1.name = "ignore_opp"; inpDoubleOpp1.removeAttribute('required');
+            oppLabel.innerText = "Adversário";
+        }
+    }
+
+    function toggleServeDetails() {
+        var serveVal = document.getElementById('inp-serve').value;
+        document.getElementById('serve-details').style.display = serveVal > 0 ? 'block' : 'none';
+    }
+
+    function updateBoxColor(inputElement) {
+        const val = parseInt(inputElement.value) || 0;
+        const box = inputElement.closest('.rating-box') || inputElement.closest('.adv-serve-box');
+        if (!box) return;
+        box.classList.remove('box-neutral', 'box-red', 'box-orange', 'box-lime', 'box-emerald', 'box-elite');
+        if (val === 0) box.classList.add('box-neutral');
+        else if (val <= 5) box.classList.add('box-red');
+        else if (val === 6) box.classList.add('box-orange');
+        else if (val === 7) box.classList.add('box-lime');
+        else if (val === 8) box.classList.add('box-emerald');
+        else if (val >= 9) box.classList.add('box-elite');
+    }
+
+    window.onload = function() {
+        document.getElementById('match_date').valueAsDate = new Date();
+
+        const ctx = document.getElementById('liveRadarChart').getContext('2d');
+        const liveChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
+                datasets: [{
+                    label: 'Nível Técnico',
+                    data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(196, 255, 14, 0.2)', borderColor: '#a3e635', borderWidth: 2, pointBackgroundColor: '#002855'
+                }]
+            },
+            options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } } }
         });
 
-        // === LÓGICA DO RESTO DO SEU FORMULÁRIO ===
-        function toggleDoubles() {
-            const format = document.getElementById('match_format').value;
-            const doublesBox = document.getElementById('doubles-opponents');
-            const singleOppDiv = document.getElementById('singles-opp-div');
-            const doublePartnerDiv = document.getElementById('doubles-partner-div');
-            const inpSingleOpp = document.getElementById('inp_opp_single');
-            const inpDoubleOpp1 = document.getElementById('inp_opp1');
-            const oppLabel = document.getElementById('opp_label');
-
-            if (format === 'Duplas') {
-                doublesBox.style.display = 'block'; singleOppDiv.style.display = 'none'; doublePartnerDiv.style.display = 'block';
-                inpSingleOpp.removeAttribute('required'); inpSingleOpp.name = "ignore_opp";
-                inpDoubleOpp1.name = "opponent"; inpDoubleOpp1.setAttribute('required', 'true');
-                oppLabel.innerText = "Dupla";
-            } else {
-                doublesBox.style.display = 'none'; singleOppDiv.style.display = 'block'; doublePartnerDiv.style.display = 'none';
-                inpSingleOpp.setAttribute('required', 'true'); inpSingleOpp.name = "opponent";
-                inpDoubleOpp1.name = "ignore_opp"; inpDoubleOpp1.removeAttribute('required');
-                oppLabel.innerText = "Adversário";
-            }
+        function updateRadar() {
+            liveChart.data.datasets[0].data = [
+                document.getElementById('inp-forehand').value || 0, document.getElementById('inp-backhand').value || 0,
+                document.getElementById('inp-serve').value || 0, document.getElementById('inp-return').value || 0,
+                document.getElementById('inp-slice').value || 0, document.getElementById('inp-volley').value || 0,
+                document.getElementById('inp-smash').value || 0, document.getElementById('inp-drop').value || 0,
+                document.getElementById('inp-foot').value || 0, document.getElementById('inp-strat').value || 0
+            ];
+            liveChart.update();
         }
 
-        function toggleServeDetails() {
-            var serveVal = document.getElementById('inp-serve').value;
-            document.getElementById('serve-details').style.display = serveVal > 0 ? 'block' : 'none';
-        }
-
-        function updateBoxColor(inputElement) {
-            const val = parseInt(inputElement.value) || 0;
-            const box = inputElement.closest('.rating-box') || inputElement.closest('.adv-serve-box');
-            if (!box) return;
-            box.classList.remove('box-neutral', 'box-red', 'box-orange', 'box-lime', 'box-emerald', 'box-elite');
-            if (val === 0) box.classList.add('box-neutral');
-            else if (val <= 5) box.classList.add('box-red');
-            else if (val === 6) box.classList.add('box-orange');
-            else if (val === 7) box.classList.add('box-lime');
-            else if (val === 8) box.classList.add('box-emerald');
-            else if (val >= 9) box.classList.add('box-elite');
-        }
-
-        window.onload = function() {
-            document.getElementById('match_date').valueAsDate = new Date();
-
-            const ctx = document.getElementById('liveRadarChart').getContext('2d');
-            const liveChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
-                    datasets: [{
-                        label: 'Nível Técnico',
-                        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                        backgroundColor: 'rgba(196, 255, 14, 0.2)', borderColor: '#a3e635', borderWidth: 2, pointBackgroundColor: '#002855'
-                    }]
-                },
-                options: { scales: { r: { min: 0, max: 10, ticks: { display: false } } } }
+        document.querySelectorAll('.fund-input, .dynamic-serve').forEach(input => {
+            updateBoxColor(input);
+            input.addEventListener('input', function() {
+                if (this.value !== "") {
+                    let cleanStr = this.value.replace(/^0+(?=\d)/, '');
+                    let numVal = parseInt(cleanStr, 10);
+                    if (numVal < 0) this.value = 0;
+                    else if (numVal > 10) this.value = cleanStr.charAt(0);
+                    else this.value = cleanStr;
+                }
+                if (this.classList.contains('fund-input')) updateRadar();
+                updateBoxColor(this);
             });
-
-            function updateRadar() {
-                liveChart.data.datasets[0].data = [
-                    document.getElementById('inp-forehand').value || 0, document.getElementById('inp-backhand').value || 0,
-                    document.getElementById('inp-serve').value || 0, document.getElementById('inp-return').value || 0,
-                    document.getElementById('inp-slice').value || 0, document.getElementById('inp-volley').value || 0,
-                    document.getElementById('inp-smash').value || 0, document.getElementById('inp-drop').value || 0,
-                    document.getElementById('inp-foot').value || 0, document.getElementById('inp-strat').value || 0
-                ];
-                liveChart.update();
-            }
-
-            document.querySelectorAll('.fund-input, .dynamic-serve').forEach(input => {
-                updateBoxColor(input);
-                input.addEventListener('input', function() {
-                    if (this.value !== "") {
-                        let cleanStr = this.value.replace(/^0+(?=\d)/, '');
-                        let numVal = parseInt(cleanStr, 10);
-                        if (numVal < 0) this.value = 0;
-                        else if (numVal > 10) this.value = cleanStr.charAt(0);
-                        else this.value = cleanStr;
-                    }
-                    if (this.classList.contains('fund-input')) updateRadar();
-                    updateBoxColor(this);
-                });
-            });
-        };
-    </script>
-</body>
-</html>
+        });
+    };
+</script>
+{% endblock %}
