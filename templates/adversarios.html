@@ -20,7 +20,7 @@
 
         {% for opp in opponents %}
             {% set win_pct = ((opp[2] / opp[1]) * 100)|int %}
-            <a href="/h2h/{{ opp[0] }}" class="rival-card">
+            <a href="/h2h/{{ opp[0] | urlencode }}" class="rival-card">
                 <div>
                     <h2 style="margin: 0 0 5px 0; color: var(--atp-blue);">{{ opp[0] }}</h2>
                     <span style="color: var(--text-slate); font-size: 14px; font-weight: bold;">{{ opp[1] }} Partidas Jogadas</span>

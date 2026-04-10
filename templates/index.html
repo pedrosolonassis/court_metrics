@@ -1,4 +1,4 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,9 @@
         .chart-filter:hover { border-color: var(--atp-blue); }
 
         /* Estilos Base da Central de Fundamentos */
-        .fundamentos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 20px; }
+        /* Estilos Base da Central de Fundamentos (Forçando 5 colunas) */
+        .fundamentos-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 20px; }
+        @media (max-width: 768px) { .fundamentos-grid { grid-template-columns: repeat(2, 1fr); } }
         .fundamento-card { background: white; border: 2px solid #cbd5e1; border-radius: 12px; padding: 15px 10px; text-align: center; text-decoration: none; transition: 0.2s; display: flex; flex-direction: column; justify-content: center; }
         .fundamento-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
         .fund-nome { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; color: var(--text-slate); }
@@ -73,6 +75,7 @@
                 <p style="color: var(--text-slate); margin: 0;">Sua jornada rumo ao próximo nível começa aqui.</p>
             </div>
             <div style="display: flex; gap: 10px;">
+                <a href="/insights" class="btn-main" style="background: #e2e8f0; color: var(--atp-blue); border: 1px solid #cbd5e1;">📊 Estatísticas</a>
                 <a href="/adversarios" class="btn-main" style="background: #e2e8f0; color: var(--atp-blue); border: 1px solid #cbd5e1;">👥 Adversários</a>
                 <a href="/new_match" class="btn-main">➕ Registrar Partida</a>
                 <a href="/history" class="btn-main" style="background: #f1f5f9; color: var(--atp-blue); border: 1px solid #cbd5e1;">📚 Ver Histórico</a>
