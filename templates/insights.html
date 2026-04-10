@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Estatísticas Avançadas - Tennis Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; padding: 20px;}
+        .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;}
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 25px;}
+        .stat-val { font-size: 36px; font-weight: 900; }
+        .win-color { color: #10b981; } .loss-color { color: #ef4444; }
+        .chart-container { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 15px;}
+        
+        .x-ray-box { background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e1; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="container" style="max-width: 1000px; margin: 0 auto;">
+        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 30px;">
+            <h1 style="color: var(--atp-blue); margin: 0;">📊 Central de Insights</h1>
+            
+            <div style="background: {% if stats.streak_type == 'Vitória' %}#dcfce7{% else %}#fee2e2{% endif %}; border: 1px solid {% if stats.streak_type == 'Vitória' %}#86efac{% else %}#fca5a5{% endif %}; padding: 10px 20px; border-radius: 20px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">{% if stats.streak_type == 'Vitória' %}🔥{% else %}❄️{% endif %}</span>
+                <div>
+                    <span style="font-size: 11px; font-weight: bold; text-transform: uppercase; color: {% if stats.streak_type == 'Vitória' %}#15803d{% else %}#b91c1c{% endif %}; display: block;">Sequência Atual</span>
+                    <strong style="color: {% if stats.streak_type == 'Vitória' %}#16a34a{% else %}#dc2626{% endif %}; font-size: 16px;">{{ stats.streak_count }} {{ stats.streak_type }}s seguidas</strong>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="color: var(--atp-blue); margin-bottom: 15px;">Raio-X Técnico</h3>
+        <div class="grid-2">
+            <div class="card" style="display: flex; align-items: center; justify-content: space-around;">
+                <div style="text-align: center;">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Rating (Vitórias)</div>
+                    <div style="font-size: 32px; font-weight: 900; color: var(--atp-blue);">{{ stats.avg_perf_win }}</div>
+                </div>
+                <div style="font-size: 24px; color: #cbd5e1;">VS</div>
+                <div style="text-align: center;">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Rating (Derrotas)</div>
+                    <div style="font-size: 32px; font-weight: 900; color: #ef4444;">{{ stats.avg_perf_loss }}</div>
+                </div>
+            </div>
+
+            <div class="card" style="display: flex; align-items: center; justify-content: space-around;">
+                <div style="text-align: center;">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Média Winners</div>
+                    <div style="font-size: 32px; font-weight: 900; color: #10b981;">{{ stats.avg_winners }}</div>
+                </div>
+                <div style="font-size: 24px; color: #cbd5e1;">⚡</div>
+                <div style="text-align: center;">
+                    <div style="font-size: 11px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Média Erros N.F.</div>
+                    <div style="font-size: 32px; font-weight: 900; color: #f59e0b;">{{ stats.avg_ue }}</div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="color: var(--atp-blue); margin-bottom: 15px;">Mentalidade (Clutch Time)</h3>
+        <div class="grid-2">
+            <div class="card">
+                <h4 style="margin: 0 0 5px 0; color: var(--text-slate); text-transform: uppercase; font-size: 13px;">Desempenho em Tie-breaks</h4>
+                <p style="font-size: 13px; color: #94a3b8; margin: 0 0 15px 0;">Sua frieza nos momentos de maior tensão (7/6 ou Super TB).</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="text-align: center;"><div class="stat-val win-color">{{ stats.tb_won }}</div><span style="font-size: 12px; font-weight: bold; color: var(--text-slate);">VENCIDOS</span></div>
+                    <div style="font-size: 30px; font-weight: 200; color: #cbd5e1;">|</div>
+                    <div style="text-align: center;"><div class="stat-val loss-color">{{ stats.tb_lost }}</div><span style="font-size: 12px; font-weight: bold; color: var(--text-slate);">PERDIDOS</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin: 0 0 5px 0; color: var(--text-slate); text-transform: uppercase; font-size: 13px;">Fadiga no Set Decisivo</h4>
+                <p style="font-size: 13px; color: #94a3b8; margin: 0 0 15px 0;">Jogos que empataram 1x1 e foram decididos no detalhe físico.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="text-align: center;"><div class="stat-val win-color">{{ stats.decisive_won }}</div><span style="font-size: 12px; font-weight: bold; color: var(--text-slate);">VITÓRIAS</span></div>
+                    <div style="font-size: 30px; font-weight: 200; color: #cbd5e1;">|</div>
+                    <div style="text-align: center;"><div class="stat-val loss-color">{{ stats.decisive_lost }}</div><span style="font-size: 12px; font-weight: bold; color: var(--text-slate);">DERROTAS</span></div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="color: var(--atp-blue); margin-bottom: 15px; margin-top: 30px;">Análise por Cenário</h3>
+        <div class="grid-4">
+            <div class="card">
+                <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Superfície</h4>
+                <div class="chart-container"><canvas id="surfaceChart"></canvas></div>
+            </div>
+            
+            <div class="card">
+                <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Formato</h4>
+                <div class="chart-container"><canvas id="formatChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Tipo</h4>
+                <div class="chart-container"><canvas id="typeChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Classe</h4>
+                <div class="chart-container"><canvas id="classChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
+            
+            // Função Mágica para Gráficos
+            const createDoughnut = (id, labelsArray, dataArray, colorsArray) => {
+                const ctx = document.getElementById(id).getContext('2d');
+                if(dataArray.reduce((a, b) => a + b, 0) === 0) {
+                    labelsArray = ["Sem Dados"]; dataArray = [1]; colorsArray = ["#f1f5f9"];
+                }
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels: labelsArray, datasets: [{ data: dataArray, backgroundColor: colorsArray, borderWidth: 2, borderColor: '#ffffff' }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {callbacks: {label: function(c){return ' ' + c.label + ': ' + c.raw + ' Jogo(s)';}}} } }
+                });
+            };
+
+            // 1. Superfície
+            createDoughnut('surfaceChart', 
+                ['Dura (Vit)', 'Dura (Der)', 'Saibro (Vit)', 'Saibro (Der)'], 
+                [{{ stats.surface['Quadra Dura']['v'] }}, {{ stats.surface['Quadra Dura']['d'] }}, {{ stats.surface['Saibro']['v'] }}, {{ stats.surface['Saibro']['d'] }}], 
+                ['#10b981', '#fca5a5', '#f59e0b', '#fde047']
+            );
+
+            // 2. Formato
+            createDoughnut('formatChart', 
+                ['Simples (Vit)', 'Simples (Der)', 'Duplas (Vit)', 'Duplas (Der)'], 
+                [{{ stats.format['Simples']['v'] }}, {{ stats.format['Simples']['d'] }}, {{ stats.format['Duplas']['v'] }}, {{ stats.format['Duplas']['d'] }}], 
+                ['#10b981', '#fca5a5', '#0ea5e9', '#7dd3fc']
+            );
+
+            // 3. Tipo
+            createDoughnut('typeChart', 
+                ['Ranking (Vit)', 'Ranking (Der)', 'Amistoso (Vit)', 'Amistoso (Der)', 'Torneio (Vit)', 'Torneio (Der)'], 
+                [{{ stats.type['Ranking']['v'] }}, {{ stats.type['Ranking']['d'] }}, {{ stats.type['Amistoso']['v'] }}, {{ stats.type['Amistoso']['d'] }}, {{ stats.type['Torneio']['v'] }}, {{ stats.type['Torneio']['d'] }}], 
+                ['#10b981', '#fca5a5', '#8b5cf6', '#fde047', '#ec4899', '#c4b5fd']
+            );
+
+            // 4. Classes (Dinâmico gerado pelo Python)
+            let classLabels = []; let classData = []; let classColors = [];
+            const palette = ['#10b981', '#fca5a5', '#0ea5e9', '#7dd3fc', '#f59e0b', '#fde047', '#8b5cf6', '#c4b5fd'];
+            let colorIdx = 0;
+            
+            {% for cat, results in stats.category.items() %}
+                if ({{ results['v'] }} > 0) { classLabels.push('{{ cat }} (Vit)'); classData.push({{ results['v'] }}); classColors.push(palette[colorIdx%8]); }
+                colorIdx++;
+                if ({{ results['d'] }} > 0) { classLabels.push('{{ cat }} (Der)'); classData.push({{ results['d'] }}); classColors.push(palette[colorIdx%8]); }
+                colorIdx++;
+            {% endfor %}
+
+            createDoughnut('classChart', classLabels, classData, classColors);
+        };
+    </script>
+</body>
+</html>

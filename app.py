@@ -38,9 +38,16 @@ def create_db():
         unforced_errors INTEGER,
         performance_rating REAL,
         notes TEXT,
-        match_date TEXT
+        match_date TEXT,
+        game_format TEXT
     )
     """)
+    # ATUALIZAÇÃO SILENCIOSA: Adiciona a coluna game_format nas partidas antigas sem apagar nada
+    try:
+        c.execute("ALTER TABLE matches ADD COLUMN game_format TEXT DEFAULT 'Padrão'")
+    except sqlite3.OperationalError:
+        pass # Ignora o erro se a coluna já existir
+
     conn.commit()
     conn.close()
 
@@ -114,25 +121,16 @@ def new_match():
         match_type = request.form["match_type"]
         surface = request.form["surface"]
         result = request.form["result"]
-        match_format = request.form.get("match_format", "Simples")
+        
+        # Recebendo os dados do novo design do HTML
+        match_format = request.form.get("match_format", "1 Set")
+        game_format = request.form.get("game_format", "6")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")
         match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
-        # Capturando até o 5º Set
-        s1_p, s1_o = request.form.get("set1_player", "0"), request.form.get("set1_opp", "0")
-        s2_p, s2_o = request.form.get("set2_player", "0"), request.form.get("set2_opp", "0")
-        s3_p, s3_o = request.form.get("set3_player", ""), request.form.get("set3_opp", "")
-        s4_p, s4_o = request.form.get("set4_player", ""), request.form.get("set4_opp", "")
-        s5_p, s5_o = request.form.get("set5_player", ""), request.form.get("set5_opp", "")
-        
-        score = f"{s1_p}/{s1_o} {s2_p}/{s2_o}"
-        if s3_p and s3_o:
-            score += f" {s3_p}/{s3_o}"
-        if s4_p and s4_o:
-            score += f" {s4_p}/{s4_o}"
-        if s5_p and s5_o:
-            score += f" {s5_p}/{s5_o}"
+        # O HTML envia a string do placar já mastigada pelo Javascript: "6/4 7/6 (4) [10/8]"
+        score = request.form.get("final_score", "")
 
         f_names = ["forehand", "backhand", "serve", "first_serve", "second_serve", 
                    "double_faults", "return_serve", "slice", "volley", "smash", 
@@ -165,10 +163,10 @@ def new_match():
         INSERT INTO matches (opponent, categoria, match_type, surface, result, score, 
         match_format, partner, opp_partner, forehand, backhand, serve, first_serve, 
         second_serve, double_faults, return_serve, slice, volley, smash, dropshot, 
-        footwork, strategy, winners, unforced_errors, performance_rating, notes, match_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        footwork, strategy, winners, unforced_errors, performance_rating, notes, match_date, game_format)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (opponent, categoria, match_type, surface, result, score, match_format, 
-              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date))
+              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, game_format))
         
         conn.commit()
         conn.close()
@@ -187,25 +185,15 @@ def edit_match(id):
         match_type = request.form["match_type"]
         surface = request.form["surface"]
         result = request.form["result"]
-        match_format = request.form.get("match_format", "Simples")
+        
+        match_format = request.form.get("match_format", "1 Set")
+        game_format = request.form.get("game_format", "6")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")
         match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
-        # Capturando até o 5º Set
-        s1_p, s1_o = request.form.get("set1_player", "0"), request.form.get("set1_opp", "0")
-        s2_p, s2_o = request.form.get("set2_player", "0"), request.form.get("set2_opp", "0")
-        s3_p, s3_o = request.form.get("set3_player", ""), request.form.get("set3_opp", "")
-        s4_p, s4_o = request.form.get("set4_player", ""), request.form.get("set4_opp", "")
-        s5_p, s5_o = request.form.get("set5_player", ""), request.form.get("set5_opp", "")
-        
-        score = f"{s1_p}/{s1_o} {s2_p}/{s2_o}"
-        if s3_p and s3_o:
-            score += f" {s3_p}/{s3_o}"
-        if s4_p and s4_o:
-            score += f" {s4_p}/{s4_o}"
-        if s5_p and s5_o:
-            score += f" {s5_p}/{s5_o}"
+        # Puxa o placar unificado também no modo edição
+        score = request.form.get("final_score", request.form.get("score", ""))
 
         f_names = ["forehand", "backhand", "serve", "first_serve", "second_serve", 
                    "double_faults", "return_serve", "slice", "volley", "smash", 
@@ -237,10 +225,10 @@ def edit_match(id):
         opponent=?, categoria=?, match_type=?, surface=?, result=?, score=?, 
         match_format=?, partner=?, opp_partner=?, forehand=?, backhand=?, serve=?, first_serve=?, 
         second_serve=?, double_faults=?, return_serve=?, slice=?, volley=?, smash=?, dropshot=?, 
-        footwork=?, strategy=?, winners=?, unforced_errors=?, performance_rating=?, notes=?, match_date=?
+        footwork=?, strategy=?, winners=?, unforced_errors=?, performance_rating=?, notes=?, match_date=?, game_format=?
         WHERE id=?
         """, (opponent, categoria, match_type, surface, result, score, match_format, 
-              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, id))
+              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, game_format, id))
         
         conn.commit()
         conn.close()
@@ -329,10 +317,10 @@ def compare(id1, id2):
 def adversarios():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    # AJUSTE 3: Se for duplas, junta os nomes com " & ". Se for simples, usa só o oponente.
+    # AJUSTE: Usa LIKE '%Duplas%' para abranger todas as variações da palavra
     c.execute("""
         SELECT 
-            CASE WHEN match_format = 'Duplas' THEN opponent || ' & ' || opp_partner ELSE opponent END as rival, 
+            CASE WHEN match_format LIKE '%Duplas%' THEN opponent || ' & ' || opp_partner ELSE opponent END as rival, 
             COUNT(id) as total_jogos,
             SUM(CASE WHEN result = 'Vitória' THEN 1 ELSE 0 END) as vitorias
         FROM matches 
@@ -348,10 +336,9 @@ def h2h(opponent):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
-    # AJUSTE 3: Busca a entidade rival usando a mesma lógica de junção
     c.execute("""
         SELECT * FROM matches 
-        WHERE CASE WHEN match_format = 'Duplas' THEN opponent || ' & ' || opp_partner ELSE opponent END = ? 
+        WHERE CASE WHEN match_format LIKE '%Duplas%' THEN opponent || ' & ' || opp_partner ELSE opponent END = ? 
         ORDER BY match_date DESC
     """, (opponent,))
     matches = c.fetchall()
@@ -365,5 +352,95 @@ def h2h(opponent):
         
     return render_template("h2h_detail.html", matches=matches, opponent=opponent, career_avg=career_avg)
 
+# --- NOVA ROTA: CENTRAL DE INSIGHTS ESTATÍSTICOS ---
+@app.route("/insights")
+def insights():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches ORDER BY match_date DESC, id DESC")
+    matches = c.fetchall()
+    conn.close()
+
+    if not matches:
+        return redirect("/")
+
+    # 1. Calcular o Momento Atual (Streak)
+    streak_type = matches[0][5] if matches[0][5] else "Sem Dados"
+    streak_count = 0
+    for m in matches:
+        if m[5] == streak_type:
+            streak_count += 1
+        else:
+            break
+
+    stats = {
+        'streak_type': streak_type,
+        'streak_count': streak_count,
+        'surface': {'Quadra Dura': {'v': 0, 'd': 0}, 'Saibro': {'v': 0, 'd': 0}},
+        'format': {'Simples': {'v': 0, 'd': 0}, 'Duplas': {'v': 0, 'd': 0}},
+        'type': {'Ranking': {'v': 0, 'd': 0}, 'Torneio': {'v': 0, 'd': 0}, 'Amistoso': {'v': 0, 'd': 0}},
+        'category': {}, # Novo: Dinâmico baseado nas classes jogadas
+        'tb_won': 0, 'tb_lost': 0,
+        'decisive_won': 0, 'decisive_lost': 0,
+        'perf_wins': 0, 'perf_losses': 0, 
+        'count_wins': 0, 'count_losses': 0,
+        'winners_total': 0, 'ue_total': 0
+    }
+
+    for m in matches:
+        is_win = m[5] == 'Vitória'
+        
+        # Coleta de Médias (Vitória vs Derrota e Agressividade)
+        if is_win:
+            stats['count_wins'] += 1
+            stats['perf_wins'] += m[25]
+        else:
+            stats['count_losses'] += 1
+            stats['perf_losses'] += m[25]
+            
+        stats['winners_total'] += m[23]
+        stats['ue_total'] += m[24]
+
+        # Superfície, Formato e Tipo 
+        if m[4] and m[4] in stats['surface']: stats['surface'][m[4]]['v' if is_win else 'd'] += 1
+        if m[3] and m[3] in stats['type']: stats['type'][m[3]]['v' if is_win else 'd'] += 1
+        
+        # Categorias Dinâmicas
+        cat = m[2] if m[2] else 'Sem Classe'
+        if cat not in stats['category']: stats['category'][cat] = {'v': 0, 'd': 0}
+        stats['category'][cat]['v' if is_win else 'd'] += 1
+        
+        fmt_cat = 'Duplas' if m[7] and 'Duplas' in str(m[7]) else 'Simples'
+        stats['format'][fmt_cat]['v' if is_win else 'd'] += 1
+
+        # Lógica de Placar (Tie-breaks e Set Decisivo)
+        if m[6]: 
+            sets = [s for s in m[6].split() if '/' in s and s.strip() != '/' and s.strip() != '0/0']
+            for s in sets:
+                parts = s.split('/')
+                if len(parts) == 2:
+                    try:
+                        p1 = int(parts[0].replace('[', ''))
+                        p2 = int(parts[1].split(' ')[0].replace(']', '').replace('(', '').replace(')', ''))
+                        if (p1 == 7 and p2 == 6) or (p1 >= 10 and p1 - p2 >= 2):
+                            stats['tb_won'] += 1
+                        elif (p1 == 6 and p2 == 7) or (p2 >= 10 and p2 - p1 >= 2):
+                            stats['tb_lost'] += 1
+                    except ValueError:
+                        pass
+            try:
+                if (len(sets) == 3 and m[7] and '5 Sets' not in m[7]) or len(sets) == 5:
+                    if is_win: stats['decisive_won'] += 1
+                    else: stats['decisive_lost'] += 1
+            except Exception: pass 
+
+    # Calculando as médias finais para mandar pro HTML
+    total_jogos = len(matches)
+    stats['avg_perf_win'] = round(stats['perf_wins'] / stats['count_wins'], 1) if stats['count_wins'] > 0 else 0.0
+    stats['avg_perf_loss'] = round(stats['perf_losses'] / stats['count_losses'], 1) if stats['count_losses'] > 0 else 0.0
+    stats['avg_winners'] = round(stats['winners_total'] / total_jogos, 1) if total_jogos > 0 else 0.0
+    stats['avg_ue'] = round(stats['ue_total'] / total_jogos, 1) if total_jogos > 0 else 0.0
+
+    return render_template("insights.html", stats=stats)
 if __name__ == "__main__":
     app.run(debug=True)
