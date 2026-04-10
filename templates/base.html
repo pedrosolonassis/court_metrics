@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}Tennis Tracker{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,10 +17,10 @@
             --sidebar-text: #94a3b8;
             --sidebar-active: #38bdf8;
         }
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; display: flex; min-height: 100vh; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; display: flex; min-height: 100vh; overflow-x: hidden;}
         
-        /* --- ESTILOS DO MENU LATERAL (SIDEBAR) --- */
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s; z-index: 100;}
+        /* --- ESTILOS DO MENU LATERAL --- */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s ease; z-index: 1000;}
         .sidebar-logo { padding: 30px 20px; display: flex; align-items: center; gap: 15px; font-size: 22px; font-weight: 900; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .sidebar-logo i { color: var(--sidebar-active); font-size: 28px; }
         
@@ -34,20 +34,51 @@
         .nav-title { font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 900; letter-spacing: 1px; padding: 15px 25px 5px 25px; margin-top: 10px;}
 
         .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .logout-btn { display: flex; align-items: center; gap: 10px; justify-content: center; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; width: 100%; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.2s;}
+        .logout-btn { display: flex; align-items: center; gap: 10px; justify-content: center; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; width: 100%; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.2s; box-sizing: border-box;}
         .logout-btn:hover { background-color: #ef4444; color: white; }
 
-        /* --- ÁREA PRINCIPAL DE CONTEÚDO --- */
-        .main-content { flex: 1; margin-left: 260px; padding: 30px 40px; box-sizing: border-box; width: calc(100% - 260px); }
+        /* --- ÁREA PRINCIPAL --- */
+        .main-content { flex: 1; margin-left: 260px; padding: 30px 40px; box-sizing: border-box; width: calc(100% - 260px); transition: margin 0.3s ease, width 0.3s ease; }
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        /* Botão Menu Mobile (Oculto no Desktop) */
+        .menu-toggle { display: none; background: transparent; border: none; font-size: 28px; color: var(--atp-blue); cursor: pointer; padding: 0; margin-right: 15px;}
+        
+        .header-title-area { display: flex; align-items: center; }
         .user-profile { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; cursor: pointer; }
         .user-avatar { width: 35px; height: 35px; background: var(--atp-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+        /* Overlay Escuro para Mobile */
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 999; backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.3s ease; }
+
+        /* =======================================================
+           🚀 RESPONSIVIDADE (MAGIA PARA CELULAR)
+           ======================================================= */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); /* Esconde a barra lateral jogando ela para fora da tela */ }
+            .sidebar.show { transform: translateX(0); /* Mostra a barra quando tiver a classe 'show' */ }
+            
+            .main-content { margin-left: 0; width: 100%; padding: 20px 15px; /* Tira a margem e ajusta os espaços */ }
+            
+            .menu-toggle { display: block; /* Mostra o botão hambúrguer */ }
+            
+            .user-profile { padding: 5px; gap: 0;}
+            .user-profile > div:first-child { display: none; /* Esconde o nome do usuário, deixa só a bolinha do avatar */ }
+            
+            .top-header { margin-bottom: 20px; }
+            .top-header h1 { font-size: 20px !important; }
+            .top-header span { display: none; /* Esconde o subtítulo para economizar espaço */ }
+            
+            .sidebar-overlay.show { display: block; opacity: 1; }
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    <nav class="sidebar">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <nav class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <i class='bx bx-tennis-ball'></i>
             Tracker Pro
@@ -80,7 +111,7 @@
         </div>
 
         <div class="sidebar-footer">
-            <a href="#" class="logout-btn">
+            <a href="/logout" class="logout-btn">
                 <i class='bx bx-log-out'></i> Sair da Conta
             </a>
         </div>
@@ -88,22 +119,45 @@
 
     <main class="main-content">
         <header class="top-header">
-            <div>
-                <h1 style="margin: 0; color: var(--atp-blue); font-size: 24px;">{% block page_title %}Visão Geral{% endblock %}</h1>
-                <span style="color: var(--text-slate); font-size: 14px;">{% block page_subtitle %}Acompanhe sua evolução na quadra.{% endblock %}</span>
+            <div class="header-title-area">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class='bx bx-menu'></i>
+                </button>
+                <div>
+                    <h1 style="margin: 0; color: var(--atp-blue); font-size: 24px;">{% block page_title %}Visão Geral{% endblock %}</h1>
+                    <span style="color: var(--text-slate); font-size: 14px;">{% block page_subtitle %}Acompanhe sua evolução na quadra.{% endblock %}</span>
+                </div>
             </div>
+            
             <div class="user-profile">
                 <div style="text-align: right;">
-                    <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">Atleta Pro</div>
+                    <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">{{ session.username }}</div>
                     <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
                 </div>
-                <div class="user-avatar">A</div>
+                <div class="user-avatar">{{ session.username[0]|upper if session.username else 'A' }}</div>
             </div>
         </header>
 
         {% block content %}
         {% endblock %}
     </main>
+
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        // Abre o menu ao clicar no hambúrguer
+        menuToggle.addEventListener('click', toggleMenu);
+
+        // Fecha o menu ao clicar na parte escura (overlay)
+        overlay.addEventListener('click', toggleMenu);
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>
