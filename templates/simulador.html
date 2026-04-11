@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulador IA - Court Metrics{% endblock %}
+{% block page_title %}Oráculo (IA Predição){% endblock %}
+{% block page_subtitle %}Simule cenários e veja sua probabilidade matemática de vitória.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-ia { background: white; padding: 30px; border-radius: 16px; border-top: 5px solid #8b5cf6; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.1); margin-bottom: 25px; }
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-slate); margin-bottom: 8px; text-transform: uppercase; }
+    .form-control { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: bold;}
+    
+    .btn-ia { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(109, 40, 217, 0.3);}
+    .btn-ia:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(109, 40, 217, 0.5);}
+
+    .result-box { background: #0f172a; padding: 40px; border-radius: 16px; text-align: center; color: white; margin-top: 30px; position: relative; overflow: hidden; border: 1px solid #1e293b;}
+    .prob-value { font-size: 64px; font-weight: 900; background: -webkit-linear-gradient(#a78bfa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .prob-label { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-top: -10px; display: block; }
+    
+    .alerta-ia { background: #fee2e2; color: #b91c1c; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px; text-align: center; border: 1px solid #fca5a5;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    
+    {% if erro_dados %}
+        <div class="alerta-ia">
+            ⚠️ <strong>Calibração Necessária:</strong> {{ erro_dados }}
+        </div>
+    {% else %}
+        
+        <div class="card-ia">
+            <h3 style="margin-top: 0; color: #6d28d9;">🧪 Monte seu Cenário</h3>
+            <p style="color: var(--text-slate); font-size: 14px; margin-bottom: 25px;">A Inteligência Artificial vai analisar todo o seu histórico passado usando <em>Machine Learning</em> (Regressão Logística) para calcular sua chance de vitória neste cenário específico.</p>
+            
+            <form method="POST">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">Superfície do Jogo</label>
+                        <select name="surface" class="form-control">
+                            <option value="Quadra Dura">Quadra Dura (Rápida)</option>
+                            <option value="Saibro">Saibro (Terra Batida)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Seu Rating Alvo (0 a 10)</label>
+                        <input type="number" step="0.1" name="rating" class="form-control" placeholder="Ex: 7.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Meta de Winners</label>
+                        <input type="number" name="winners" class="form-control" placeholder="Quantos winners pretende bater?" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Limite de Erros N.F.</label>
+                        <input type="number" name="erros" class="form-control" placeholder="Quantos erros pretende cometer?" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-ia">🧠 Calcular Probabilidade com IA</button>
+            </form>
+        </div>
+
+        {% if probabilidade is defined %}
+            <div class="result-box">
+                <div class="prob-value">{{ probabilidade }}%</div>
+                <span class="prob-label">Chance Matemática de Vitória</span>
+                
+                <p style="color: #cbd5e1; font-size: 14px; margin-top: 25px; line-height: 1.6;">
+                    Se você jogar em <strong>{{ surface }}</strong> mantendo um nível técnico de <strong>{{ rating }}</strong>, 
+                    o algoritmo calcula que você vencerá aproximadamente {{ probabilidade|int }} a cada 100 partidas idênticas.
+                </p>
+                <a href="/simulador" style="color: #a78bfa; text-decoration: none; font-size: 13px; font-weight: bold; margin-top: 15px; display: inline-block;">⬅ Simular Novo Cenário</a>
+            </div>
+        {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}

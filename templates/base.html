@@ -51,6 +51,41 @@
         /* Overlay Escuro para Mobile */
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 999; backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.3s ease; }
 
+        /* --- ESTILOS DO MENU DROPDOWN DE PERFIL (LETZPLAY STYLE) --- */
+        .profile-container { position: relative; }
+        
+        .dropdown-menu {
+            display: none; position: absolute; top: 60px; right: 0; background: white;
+            min-width: 320px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0; z-index: 1000; overflow: hidden;
+        }
+        
+        .dropdown-menu.show { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .dropdown-item {
+            display: flex; align-items: center; gap: 15px; padding: 15px 20px;
+            text-decoration: none; color: var(--text-slate); transition: 0.2s;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background-color: #f8fafc; }
+
+        .dropdown-icon {
+            width: 40px; height: 40px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 20px; color: white; flex-shrink: 0;
+        }
+        
+        /* Cores de Categoria Dropdown */
+        .icon-blue { background-color: #5aa1e3; }
+        .icon-green { background-color: #9ccc65; }
+        .icon-teal { background-color: #4db6ac; }
+        .icon-orange { background-color: #f0ad4e; }
+        .icon-red { background-color: #ff7043; }
+
+        .dropdown-texts h5 { margin: 0 0 3px 0; color: #334155; font-size: 14px; font-weight: 600; }
+        .dropdown-texts p { margin: 0; font-size: 12px; color: #94a3b8; }
+
         /* =======================================================
            🚀 RESPONSIVIDADE (MAGIA PARA CELULAR)
            ======================================================= */
@@ -103,6 +138,9 @@
             <a href="/adversarios" class="nav-item {% if request.path == '/adversarios' or '/h2h/' in request.path %}active{% endif %}">
                 <i class='bx bx-target-lock'></i> Dossiê H2H
             </a>
+            <a href="/simulador" class="nav-item {% if request.path == '/simulador' %}active{% endif %}">
+                <i class='bx bx-brain'></i> Oráculo IA
+            </a>
 
             <div class="nav-title">Sistema</div>
             <a href="/export" class="nav-item">
@@ -129,12 +167,80 @@
                 </div>
             </div>
             
-            <div class="user-profile">
-                <div style="text-align: right;">
-                    <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">{{ session.username }}</div>
-                    <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
+            <div class="profile-container">
+                <div class="user-profile" id="profileBtn">
+                    <div style="text-align: right;">
+                        <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">
+                            {% if session.first_name and session.last_name %}
+                                {{ session.first_name }} {{ session.last_name }}
+                            {% else %}
+                                {{ session.username }}
+                            {% endif %}
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
+                    </div>
+                    <div class="user-avatar">
+                        {% if session.first_name %}
+                            {{ session.first_name[0]|upper }}
+                        {% elif session.username %}
+                            {{ session.username[0]|upper }}
+                        {% else %}
+                            U
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="user-avatar">{{ session.username[0]|upper if session.username else 'A' }}</div>
+
+                <div class="dropdown-menu" id="profileDropdown">
+                    <a href="/perfil" class="dropdown-item">
+                        <div class="dropdown-icon icon-blue"><i class='bx bx-user'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Perfil e suas informações</h5>
+                            <p>Altere seu nome, perfil, email, telefone, ...</p>
+                        </div>
+                    </a>
+                    <a href="/estilo" class="dropdown-item">
+                        <div class="dropdown-icon icon-blue"><i class='bx bx-grid-alt'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Informações sobre meu jogo</h5>
+                            <p>Habilite esportes e diga seu estilo de jogo</p>
+                        </div>
+                    </a>
+                    <a href="/horarios" class="dropdown-item">
+                        <div class="dropdown-icon icon-green"><i class='bx bx-calendar'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Preferências de horário</h5>
+                            <p>Configure os horários da sua disponibilidade</p>
+                        </div>
+                    </a>
+                    <a href="/notificacoes" class="dropdown-item">
+                        <div class="dropdown-icon icon-teal"><i class='bx bx-bell'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Preferências de notificação</h5>
+                            <p>Selecione quais e como quer recebê-las</p>
+                        </div>
+                    </a>
+                    <a href="/privacidade" class="dropdown-item">
+                        <div class="dropdown-icon icon-orange"><i class='bx bxs-lock-alt'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Privacidade</h5>
+                            <p>Configure quem pode ver suas informações</p>
+                        </div>
+                    </a>
+                    <a href="/senha" class="dropdown-item">
+                        <div class="dropdown-icon icon-orange"><i class='bx bx-key'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Alterar minha senha</h5>
+                            <p>Altere sua senha e mantenha ela sempre segura</p>
+                        </div>
+                    </a>
+                    <a href="/excluir" class="dropdown-item">
+                        <div class="dropdown-icon icon-red"><i class='bx bxs-user-x'></i></div>
+                        <div class="dropdown-texts">
+                            <h5>Excluir minha conta</h5>
+                            <p>Sua conta será excluída e não será possível recuperá-la</p>
+                        </div>
+                    </a>
+                </div>
             </div>
         </header>
 
@@ -157,6 +263,22 @@
 
         // Fecha o menu ao clicar na parte escura (overlay)
         overlay.addEventListener('click', toggleMenu);
+
+        // Lógica do Menu Dropdown de Perfil
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        profileBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Impede que o clique se propague e feche imediatamente
+            profileDropdown.classList.toggle('show');
+        });
+
+        // Fecha o dropdown se o usuário clicar em qualquer outro lugar da tela
+        window.addEventListener('click', function(e) {
+            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
     </script>
 
     {% block extra_js %}{% endblock %}

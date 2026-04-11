@@ -137,9 +137,11 @@ def register():
         conn.commit()
         conn.close()
         
-        # Loga automaticamente após o registro
+        # Loga automaticamente após o registro e salva os dados na sessão
         session["user_id"] = new_user_id
         session["username"] = username
+        session["first_name"] = first_name
+        session["last_name"] = last_name
         return redirect("/")
         
     return render_template("register.html")
@@ -159,6 +161,8 @@ def login():
         if user and check_password_hash(user[2], password):
             session["user_id"] = user[0]
             session["username"] = user[1]
+            session["first_name"] = user[3]
+            session["last_name"] = user[4]
             return redirect("/")
         else:
             return render_template("login.html", error="Usuário ou senha incorretos.")
@@ -561,7 +565,67 @@ def insights():
     stats['avg_winners'] = round(stats['winners_total'] / total_jogos, 1) if total_jogos > 0 else 0.0
     stats['avg_ue'] = round(stats['ue_total'] / total_jogos, 1) if total_jogos > 0 else 0.0
 
-    return render_template("insights.html", stats=stats)
+    return render_template("insights.html", stats=stats, matches=matches)
+
+@app.route("/simulador", methods=["GET", "POST"])
+@login_required
+def simulador():
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    # Puxa o histórico do usuário para treinar a IA
+    c.execute("SELECT surface, performance_rating, winners, unforced_errors, result FROM matches WHERE user_id = ?", (session["user_id"],))
+    matches = c.fetchall()
+    conn.close()
+
+    # Regra 1: Precisa de dados suficientes
+    if len(matches) < 5:
+        return render_template("simulador.html", erro_dados="Jogue mais! O Oráculo precisa de pelo menos 5 partidas registradas para aprender seus padrões.")
+
+    if request.method == "POST":
+        sim_surface = request.form["surface"]
+        sim_rating = float(request.form["rating"])
+        # Fator de agressividade: Winners dividido por Erros (soma 1 para evitar divisão por zero)
+        sim_agressividade = float(request.form["winners"]) / (float(request.form["erros"]) + 1)
+
+        try:
+            from sklearn.linear_model import LogisticRegression
+            import numpy as np
+
+            X = []
+            y = []
+            for m in matches:
+                is_saibro = 1 if m[0] == 'Saibro' else 0
+                rating = m[1]
+                agr = m[2] / (m[3] + 1)
+                target = 1 if m[4] == 'Vitória' else 0
+                
+                X.append([is_saibro, rating, agr])
+                y.append(target)
+
+            # Regra 2: A IA precisa conhecer os dois lados da moeda
+            if len(set(y)) < 2:
+                return render_template("simulador.html", erro_dados="O Oráculo precisa de exemplos tanto de Vitórias quanto de Derrotas no seu histórico para aprender a diferença.")
+
+            # Treinando o cérebro da IA
+            model = LogisticRegression()
+            model.fit(X, y)
+
+            # Fazendo a Previsão
+            is_saibro_sim = 1 if sim_surface == 'Saibro' else 0
+            cenario = np.array([[is_saibro_sim, sim_rating, sim_agressividade]])
+            
+            # Pega a probabilidade de vitória (classe 1)
+            probabilidade = model.predict_proba(cenario)[0][1] * 100
+
+            return render_template("simulador.html", 
+                                   probabilidade=round(probabilidade, 1),
+                                   surface=sim_surface, 
+                                   rating=sim_rating)
+
+        except Exception as e:
+            return render_template("simulador.html", erro_dados=f"Erro no Motor de IA: {str(e)}")
+
+    return render_template("simulador.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

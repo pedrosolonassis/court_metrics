@@ -12,6 +12,8 @@
     .stat-val { font-size: 36px; font-weight: 900; }
     .win-color { color: #10b981; } .loss-color { color: #ef4444; }
     .chart-container { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 15px;}
+    .chart-container-large { position: relative; height: 280px; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 15px;}
+    .filter-select { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; color: var(--atp-blue); font-weight: bold; background: #f8fafc; cursor: pointer; }
 </style>
 {% endblock %}
 
@@ -76,26 +78,50 @@
         </div>
     </div>
 
-    <h3 style="color: var(--atp-blue); margin-bottom: 15px; margin-top: 30px;">Análise por Cenário</h3>
-    <div class="grid-4">
+    <h3 style="color: var(--atp-blue); margin-bottom: 15px; margin-top: 30px;">Análise Profunda (Advanced Metrics)</h3>
+    <div class="grid-2">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 15px;">
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 5px 0; color: var(--atp-blue); text-transform: uppercase; font-size: 13px;">DNA Técnico (Raio-X)</h4>
+                    <p style="font-size: 13px; color: #94a3b8; margin: 0;">Onde seu jogo "quebra"?</p>
+                </div>
+                <select id="radarFilter" class="filter-select" style="width: auto; min-width: 170px;">
+                    <option value="vit">Média de Vitórias</option>
+                    <option value="der">Média de Derrotas</option>
+                    <option value="all">Visão Geral (Todas)</option>
+                </select>
+            </div>
+            <div class="chart-container-large"><canvas id="graficoRadar"></canvas></div>
+        </div>
+
+        <div class="card">
+            <h4 style="margin: 0 0 5px 0; color: var(--atp-blue); text-transform: uppercase; font-size: 13px;">Assinatura: Winners vs Erros</h4>
+            <p style="font-size: 13px; color: #94a3b8; margin: 0 0 10px 0;">Seu perfil de risco e recompensa nas partidas.</p>
+            <div class="chart-container-large"><canvas id="graficoDispersao"></canvas></div>
+        </div>
+    </div>
+
+    <h3 style="color: var(--atp-blue); margin-bottom: 15px; margin-top: 30px;">Análise por Cenário (Vitórias vs Derrotas)</h3>
+    <div class="grid-2">
         <div class="card">
             <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Superfície</h4>
-            <div class="chart-container"><canvas id="surfaceChart"></canvas></div>
+            <div class="chart-container-large"><canvas id="surfaceChart"></canvas></div>
         </div>
         
         <div class="card">
             <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Formato</h4>
-            <div class="chart-container"><canvas id="formatChart"></canvas></div>
+            <div class="chart-container-large"><canvas id="formatChart"></canvas></div>
         </div>
 
         <div class="card">
             <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Tipo</h4>
-            <div class="chart-container"><canvas id="typeChart"></canvas></div>
+            <div class="chart-container-large"><canvas id="typeChart"></canvas></div>
         </div>
 
         <div class="card">
             <h4 style="margin: 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 13px;">Por Classe</h4>
-            <div class="chart-container"><canvas id="classChart"></canvas></div>
+            <div class="chart-container-large"><canvas id="classChart"></canvas></div>
         </div>
     </div>
 {% endblock %}
@@ -105,48 +131,197 @@
     window.onload = function() {
         Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
         
-        const createDoughnut = (id, labelsArray, dataArray, colorsArray) => {
+        // =========================================================
+        // 1. LÓGICA DAS BARRAS EMPILHADAS (Cenários)
+        // =========================================================
+        const createStackedBar = (id, labelsArray, vitData, derData) => {
             const ctx = document.getElementById(id).getContext('2d');
-            if(dataArray.reduce((a, b) => a + b, 0) === 0) {
-                labelsArray = ["Sem Dados"]; dataArray = [1]; colorsArray = ["#f1f5f9"];
-            }
             new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: labelsArray, datasets: [{ data: dataArray, backgroundColor: colorsArray, borderWidth: 2, borderColor: '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: {callbacks: {label: function(c){return ' ' + c.label + ': ' + c.raw + ' Jogo(s)';}}} } }
+                type: 'bar',
+                data: {
+                    labels: labelsArray,
+                    datasets: [
+                        { label: 'Vitórias', data: vitData, backgroundColor: '#10b981', borderRadius: 4 },
+                        { label: 'Derrotas', data: derData, backgroundColor: '#ef4444', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, grid: { display: false } },
+                        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } }
+                    },
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8 } } }
+                }
             });
         };
 
-        createDoughnut('surfaceChart', 
-            ['Dura (Vit)', 'Dura (Der)', 'Saibro (Vit)', 'Saibro (Der)'], 
-            [{{ stats.surface['Quadra Dura']['v'] }}, {{ stats.surface['Quadra Dura']['d'] }}, {{ stats.surface['Saibro']['v'] }}, {{ stats.surface['Saibro']['d'] }}], 
-            ['#10b981', '#fca5a5', '#f59e0b', '#fde047']
+        createStackedBar('surfaceChart', 
+            ['Quadra Dura', 'Saibro'], 
+            [{{ stats.surface['Quadra Dura']['v'] | default(0) }}, {{ stats.surface['Saibro']['v'] | default(0) }}], 
+            [{{ stats.surface['Quadra Dura']['d'] | default(0) }}, {{ stats.surface['Saibro']['d'] | default(0) }}]
         );
 
-        createDoughnut('formatChart', 
-            ['Simples (Vit)', 'Simples (Der)', 'Duplas (Vit)', 'Duplas (Der)'], 
-            [{{ stats.format['Simples']['v'] }}, {{ stats.format['Simples']['d'] }}, {{ stats.format['Duplas']['v'] }}, {{ stats.format['Duplas']['d'] }}], 
-            ['#10b981', '#fca5a5', '#0ea5e9', '#7dd3fc']
+        createStackedBar('formatChart', 
+            ['Simples', 'Duplas'], 
+            [{{ stats.format['Simples']['v'] | default(0) }}, {{ stats.format['Duplas']['v'] | default(0) }}], 
+            [{{ stats.format['Simples']['d'] | default(0) }}, {{ stats.format['Duplas']['d'] | default(0) }}]
         );
 
-        createDoughnut('typeChart', 
-            ['Ranking (Vit)', 'Ranking (Der)', 'Amistoso (Vit)', 'Amistoso (Der)', 'Torneio (Vit)', 'Torneio (Der)'], 
-            [{{ stats.type['Ranking']['v'] }}, {{ stats.type['Ranking']['d'] }}, {{ stats.type['Amistoso']['v'] }}, {{ stats.type['Amistoso']['d'] }}, {{ stats.type['Torneio']['v'] }}, {{ stats.type['Torneio']['d'] }}], 
-            ['#10b981', '#fca5a5', '#8b5cf6', '#fde047', '#ec4899', '#c4b5fd']
+        createStackedBar('typeChart', 
+            ['Ranking', 'Amistoso', 'Torneio'], 
+            [{{ stats.type['Ranking']['v'] | default(0) }}, {{ stats.type['Amistoso']['v'] | default(0) }}, {{ stats.type['Torneio']['v'] | default(0) }}], 
+            [{{ stats.type['Ranking']['d'] | default(0) }}, {{ stats.type['Amistoso']['d'] | default(0) }}, {{ stats.type['Torneio']['d'] | default(0) }}]
         );
 
-        let classLabels = []; let classData = []; let classColors = [];
-        const palette = ['#10b981', '#fca5a5', '#0ea5e9', '#7dd3fc', '#f59e0b', '#fde047', '#8b5cf6', '#c4b5fd'];
-        let colorIdx = 0;
-        
+        let classLabels = []; let classVit = []; let classDer = [];
         {% for cat, results in stats.category.items() %}
-            if ({{ results['v'] }} > 0) { classLabels.push('{{ cat }} (Vit)'); classData.push({{ results['v'] }}); classColors.push(palette[colorIdx%8]); }
-            colorIdx++;
-            if ({{ results['d'] }} > 0) { classLabels.push('{{ cat }} (Der)'); classData.push({{ results['d'] }}); classColors.push(palette[colorIdx%8]); }
-            colorIdx++;
+            classLabels.push({{ cat | tojson }}); 
+            classVit.push({{ results['v'] | default(0) }});
+            classDer.push({{ results['d'] | default(0) }});
         {% endfor %}
+        createStackedBar('classChart', classLabels, classVit, classDer);
 
-        createDoughnut('classChart', classLabels, classData, classColors);
+
+        // =========================================================
+        // 2. LÓGICA DA ANÁLISE PROFUNDA (Radar & Scatter)
+        // =========================================================
+        const vitoriasScatter = [];
+        const derrotasScatter = [];
+
+        // Arrays para somar os 10 fundamentos: 
+        let vitSums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let derSums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let countVit = 0, countDer = 0;
+
+        {% if matches %}
+            {% for m in matches|reverse %}
+                {% if m[5] == 'Vitória' %}
+                    vitoriasScatter.push({ x: {{ m[24] | default(0) }}, y: {{ m[23] | default(0) }} });
+                    
+                    vitSums[0] += {{ m[10] | default(0) }}; // Forehand
+                    vitSums[1] += {{ m[11] | default(0) }}; // Backhand
+                    vitSums[2] += {{ m[12] | default(0) }}; // Saque
+                    vitSums[3] += {{ m[16] | default(0) }}; // Devolução
+                    vitSums[4] += {{ m[17] | default(0) }}; // Slice
+                    vitSums[5] += {{ m[18] | default(0) }}; // Voleio
+                    vitSums[6] += {{ m[19] | default(0) }}; // Smash
+                    vitSums[7] += {{ m[20] | default(0) }}; // Dropshot
+                    vitSums[8] += {{ m[21] | default(0) }}; // Footwork
+                    vitSums[9] += {{ m[22] | default(0) }}; // Estratégia
+                    countVit++;
+                {% else %}
+                    derrotasScatter.push({ x: {{ m[24] | default(0) }}, y: {{ m[23] | default(0) }} });
+                    
+                    derSums[0] += {{ m[10] | default(0) }};
+                    derSums[1] += {{ m[11] | default(0) }};
+                    derSums[2] += {{ m[12] | default(0) }};
+                    derSums[3] += {{ m[16] | default(0) }};
+                    derSums[4] += {{ m[17] | default(0) }};
+                    derSums[5] += {{ m[18] | default(0) }};
+                    derSums[6] += {{ m[19] | default(0) }};
+                    derSums[7] += {{ m[20] | default(0) }};
+                    derSums[8] += {{ m[21] | default(0) }};
+                    derSums[9] += {{ m[22] | default(0) }};
+                    countDer++;
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        // RENDERIZA O RADAR CHART (DNA TÉCNICO) COM TODOS OS 10 FUNDAMENTOS
+        let vC = countVit || 1; 
+        let dC = countDer || 1;
+
+        const radarVit = vitSums.map(val => val / vC);
+        const radarDer = derSums.map(val => val / dC);
+
+        const datasetVit = {
+            label: 'Vitórias',
+            data: radarVit,
+            backgroundColor: 'rgba(16, 185, 129, 0.2)', 
+            borderColor: '#10b981',
+            pointBackgroundColor: '#10b981',
+            borderWidth: 2
+        };
+
+        const datasetDer = {
+            label: 'Derrotas',
+            data: radarDer,
+            backgroundColor: 'rgba(239, 68, 68, 0.2)', 
+            borderColor: '#ef4444',
+            pointBackgroundColor: '#ef4444',
+            borderWidth: 2
+        };
+
+        const ctxRadar = document.getElementById('graficoRadar').getContext('2d');
+        const radarChart = new Chart(ctxRadar, {
+            type: 'radar',
+            data: {
+                labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
+                datasets: [datasetVit] // Inicializa apenas com vitórias
+            },
+            options: {
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: {
+                    r: { 
+                        min: 0, 
+                        max: 10, 
+                        ticks: { 
+                            stepSize: 2,
+                            display: false // Oculta os números 0, 2, 4, 6, 8, 10
+                        } 
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            // Limpa o título (mostra só o nome do fundamento)
+                            title: function(context) {
+                                return context[0].label;
+                            },
+                            // Limpa o rótulo (mostra apenas a nota com 1 casa decimal, sem o "(Vitória)" ou nome do dataset)
+                            label: function(context) {
+                                return context.raw.toFixed(1); 
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Lógica do Filtro Dropdown
+        document.getElementById('radarFilter').addEventListener('change', function(e) {
+            const val = e.target.value;
+            if (val === 'vit') {
+                radarChart.data.datasets = [datasetVit];
+            } else if (val === 'der') {
+                radarChart.data.datasets = [datasetDer];
+            } else {
+                radarChart.data.datasets = [datasetVit, datasetDer]; // Mostra ambos
+            }
+            radarChart.update();
+        });
+
+
+        // RENDERIZA O SCATTER PLOT (RISCO VS RECOMPENSA)
+        const ctxDispersao = document.getElementById('graficoDispersao').getContext('2d');
+        new Chart(ctxDispersao, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    { label: 'Vitórias', data: vitoriasScatter, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderColor: '#10b981', borderWidth: 1, pointRadius: 6, pointHoverRadius: 9 },
+                    { label: 'Derrotas', data: derrotasScatter, backgroundColor: 'rgba(239, 68, 68, 0.7)', borderColor: '#ef4444', borderWidth: 1, pointRadius: 6, pointHoverRadius: 9 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Erros Não Forçados (Risco)', color: '#64748b' } },
+                    y: { title: { display: true, text: 'Winners (Recompensa)', color: '#64748b' } }
+                }
+            }
+        });
     };
 </script>
 {% endblock %}
