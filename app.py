@@ -13,12 +13,16 @@ def create_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
-    # 1. CRIA A TABELA DE USUÁRIOS
+    # 1. CRIA A TABELA DE USUÁRIOS (Atualizada com novos campos)
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
+        password TEXT NOT NULL,
+        first_name TEXT,
+        last_name TEXT,
+        email TEXT,
+        birth_date TEXT
     )
     """)
 
@@ -70,6 +74,14 @@ def create_db():
     except sqlite3.OperationalError:
         pass
 
+    # Migração silenciosa para os novos campos de usuário
+    novos_campos_usuario = ['first_name', 'last_name', 'email', 'birth_date']
+    for campo in novos_campos_usuario:
+        try: 
+            c.execute(f"ALTER TABLE users ADD COLUMN {campo} TEXT")
+        except sqlite3.OperationalError: 
+            pass
+
     conn.commit()
     conn.close()
 
@@ -89,20 +101,34 @@ def login_required(f):
 def register():
     if request.method == "POST":
         username = request.form["username"]
+        first_name = request.form["first_name"]
+        last_name = request.form["last_name"]
+        email = request.form["email"]
+        birth_date = request.form["birth_date"]
         password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+        
+        # VALIDAÇÕES DE SENHA
+        if password != confirm_password:
+            return render_template("register.html", error="As senhas não coincidem.")
+        if len(password) < 6:
+            return render_template("register.html", error="A senha deve ter no mínimo 6 caracteres.")
         
         conn = sqlite3.connect("database.db")
         c = conn.cursor()
         
-        # Verifica se o usuário já existe
-        c.execute("SELECT * FROM users WHERE username = ?", (username,))
+        # Verifica se o usuário ou e-mail já existe
+        c.execute("SELECT * FROM users WHERE username = ? OR email = ?", (username, email))
         if c.fetchone():
             conn.close()
-            return render_template("register.html", error="Este nome de usuário já existe.")
+            return render_template("register.html", error="Este Nome de Usuário ou E-mail já está em uso.")
         
-        # Cria o usuário com senha criptografada
+        # Cria o usuário com senha criptografada e novos campos
         hashed_password = generate_password_hash(password)
-        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+        c.execute("""
+            INSERT INTO users (username, password, first_name, last_name, email, birth_date) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (username, hashed_password, first_name, last_name, email, birth_date))
         new_user_id = c.lastrowid
         
         # MIGRAÇÃO INTELIGENTE: A primeira conta herda os jogos antigos que estavam sem dono
