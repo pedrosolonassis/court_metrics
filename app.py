@@ -7,7 +7,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "chave_super_secreta_tennis_tracker" # Necessário para segurança da sessão
+app.secret_key = "chave_super_secreta_court_metrics" # Necessário para segurança da sessão
 
 def create_db():
     conn = sqlite3.connect("database.db")
