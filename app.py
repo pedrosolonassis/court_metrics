@@ -1,14 +1,28 @@
 import sqlite3
 import csv
 import io
-from flask import Flask, render_template, request, redirect, Response
+from flask import Flask, render_template, request, redirect, Response, session, flash
 from datetime import datetime
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = "chave_super_secreta_tennis_tracker" # Necessário para segurança da sessão
 
 def create_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
+    
+    # 1. CRIA A TABELA DE USUÁRIOS
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )
+    """)
+
+    # 2. TABELA DE PARTIDAS (Agora com user_id no final para preservar os índices antigos)
     c.execute("""
     CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,35 +53,115 @@ def create_db():
         performance_rating REAL,
         notes TEXT,
         match_date TEXT,
-        game_format TEXT
+        game_format TEXT,
+        user_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users (id)
     )
     """)
-    # ATUALIZAÇÃO SILENCIOSA: Adiciona a coluna game_format nas partidas antigas sem apagar nada
+    
+    # ATUALIZAÇÕES SILENCIOSAS: Adiciona as colunas novas em bancos antigos sem apagar dados
     try:
         c.execute("ALTER TABLE matches ADD COLUMN game_format TEXT DEFAULT 'Padrão'")
     except sqlite3.OperationalError:
-        pass # Ignora o erro se a coluna já existir
+        pass
+        
+    try:
+        c.execute("ALTER TABLE matches ADD COLUMN user_id INTEGER")
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
 
 create_db()
 
-# --- ROTA DA HOME: LIMPA E RÁPIDA ---
+# --- DECORADOR DE SEGURANÇA (O PORTEIRO) ---
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- ROTAS DE AUTENTICAÇÃO (LOGIN / REGISTRO) ---
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        
+        # Verifica se o usuário já existe
+        c.execute("SELECT * FROM users WHERE username = ?", (username,))
+        if c.fetchone():
+            conn.close()
+            return render_template("register.html", error="Este nome de usuário já existe.")
+        
+        # Cria o usuário com senha criptografada
+        hashed_password = generate_password_hash(password)
+        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+        new_user_id = c.lastrowid
+        
+        # MIGRAÇÃO INTELIGENTE: A primeira conta herda os jogos antigos que estavam sem dono
+        c.execute("UPDATE matches SET user_id = ? WHERE user_id IS NULL", (new_user_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        # Loga automaticamente após o registro
+        session["user_id"] = new_user_id
+        session["username"] = username
+        return redirect("/")
+        
+    return render_template("register.html")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username = ?", (username,))
+        user = c.fetchone()
+        conn.close()
+        
+        if user and check_password_hash(user[2], password):
+            session["user_id"] = user[0]
+            session["username"] = user[1]
+            return redirect("/")
+        else:
+            return render_template("login.html", error="Usuário ou senha incorretos.")
+            
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
+# ==============================================================================
+# --- ROTAS DO SISTEMA (AGORA PROTEGIDAS PELO @login_required) ---
+# ==============================================================================
+
 @app.route("/")
+@login_required
 def home():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    
-    # Busca todos os jogos sem filtros para calcular as médias gerais do Dashboard
-    c.execute("SELECT * FROM matches ORDER BY match_date DESC, id DESC")
+    # Busca apenas os jogos do usuário logado
+    c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC, id DESC", (session["user_id"],))
     matches = c.fetchall()
     conn.close()
-    
     return render_template("index.html", matches=matches)
 
-# --- NOVA ROTA: HISTÓRICO COMPLETO COM FILTROS ---
 @app.route("/history")
+@login_required
 def history():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
@@ -76,8 +170,8 @@ def history():
     f_type = request.args.get("match_type", "")
     f_format = request.args.get("match_format", "")
     
-    query = "SELECT * FROM matches WHERE 1=1"
-    params = []
+    query = "SELECT * FROM matches WHERE user_id = ?"
+    params = [session["user_id"]]
     
     if f_surface:
         query += " AND surface = ?"
@@ -103,17 +197,18 @@ def history():
     
     return render_template("history.html", matches=matches, filters=filters)
 
-# --- NOVA ROTA: DETALHES DO FUNDAMENTO ---
 @app.route("/fundamento/<nome>")
+@login_required
 def fundamento(nome):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches ORDER BY match_date ASC") # Crescente para ver evolução
+    c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date ASC", (session["user_id"],)) 
     matches = c.fetchall()
     conn.close()
     return render_template("fundamento.html", matches=matches, nome=nome)
 
 @app.route("/new_match", methods=["GET", "POST"])
+@login_required
 def new_match():
     if request.method == "POST":
         opponent = request.form["opponent"]
@@ -122,14 +217,12 @@ def new_match():
         surface = request.form["surface"]
         result = request.form["result"]
         
-        # Recebendo os dados do novo design do HTML
         match_format = request.form.get("match_format", "1 Set")
         game_format = request.form.get("game_format", "6")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")
         match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
-        # O HTML envia a string do placar já mastigada pelo Javascript: "6/4 7/6 (4) [10/8]"
         score = request.form.get("final_score", "")
 
         f_names = ["forehand", "backhand", "serve", "first_serve", "second_serve", 
@@ -163,10 +256,10 @@ def new_match():
         INSERT INTO matches (opponent, categoria, match_type, surface, result, score, 
         match_format, partner, opp_partner, forehand, backhand, serve, first_serve, 
         second_serve, double_faults, return_serve, slice, volley, smash, dropshot, 
-        footwork, strategy, winners, unforced_errors, performance_rating, notes, match_date, game_format)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        footwork, strategy, winners, unforced_errors, performance_rating, notes, match_date, game_format, user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (opponent, categoria, match_type, surface, result, score, match_format, 
-              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, game_format))
+              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, game_format, session["user_id"]))
         
         conn.commit()
         conn.close()
@@ -175,6 +268,7 @@ def new_match():
     return render_template("new_match.html")
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
+@login_required
 def edit_match(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
@@ -192,7 +286,6 @@ def edit_match(id):
         opp_partner = request.form.get("opp_partner", "")
         match_date = request.form.get("match_date", datetime.today().strftime('%Y-%m-%d'))
         
-        # Puxa o placar unificado também no modo edição
         score = request.form.get("final_score", request.form.get("score", ""))
 
         f_names = ["forehand", "backhand", "serve", "first_serve", "second_serve", 
@@ -226,34 +319,40 @@ def edit_match(id):
         match_format=?, partner=?, opp_partner=?, forehand=?, backhand=?, serve=?, first_serve=?, 
         second_serve=?, double_faults=?, return_serve=?, slice=?, volley=?, smash=?, dropshot=?, 
         footwork=?, strategy=?, winners=?, unforced_errors=?, performance_rating=?, notes=?, match_date=?, game_format=?
-        WHERE id=?
+        WHERE id=? AND user_id=?
         """, (opponent, categoria, match_type, surface, result, score, match_format, 
-              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, game_format, id))
+              partner, opp_partner, *notes_list, winners, unforced_errors, perf, request.form.get("notes", ""), match_date, game_format, id, session["user_id"]))
         
         conn.commit()
         conn.close()
         return redirect("/")
     
     else:
-        c.execute("SELECT * FROM matches WHERE id = ?", (id,))
+        # Garante que só pode editar a própria partida
+        c.execute("SELECT * FROM matches WHERE id = ? AND user_id = ?", (id, session["user_id"]))
         match = c.fetchone()
         conn.close()
-        return render_template("edit_match.html", match=match)
+        if match:
+            return render_template("edit_match.html", match=match)
+        return redirect("/")
 
 @app.route("/delete/<int:id>", methods=["POST"])
+@login_required
 def delete_match(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("DELETE FROM matches WHERE id = ?", (id,))
+    # Garante que só pode deletar a própria partida
+    c.execute("DELETE FROM matches WHERE id = ? AND user_id = ?", (id, session["user_id"]))
     conn.commit()
     conn.close()
     return redirect("/")
 
 @app.route("/match/<int:id>")
+@login_required
 def match_details(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches WHERE id = ?", (id,))
+    c.execute("SELECT * FROM matches WHERE id = ? AND user_id = ?", (id, session["user_id"]))
     match = c.fetchone()
     conn.close()
     
@@ -262,10 +361,11 @@ def match_details(id):
     return redirect("/")
 
 @app.route("/export")
+@login_required
 def export_csv():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches ORDER BY match_date DESC")
+    c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC", (session["user_id"],))
     matches = c.fetchall()
     column_names = [description[0] for description in c.description]
     conn.close()
@@ -281,16 +381,14 @@ def export_csv():
         headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
     )
 
-# --- ROTAS DE COMPARAÇÃO DE PARTIDAS ---
 @app.route("/select_compare/<int:id>")
+@login_required
 def select_compare(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    # Pega o jogo principal
-    c.execute("SELECT * FROM matches WHERE id = ?", (id,))
+    c.execute("SELECT * FROM matches WHERE id = ? AND user_id = ?", (id, session["user_id"]))
     base_match = c.fetchone()
-    # Pega todos os outros jogos para escolher
-    c.execute("SELECT * FROM matches WHERE id != ? ORDER BY match_date DESC", (id,))
+    c.execute("SELECT * FROM matches WHERE id != ? AND user_id = ? ORDER BY match_date DESC", (id, session["user_id"]))
     other_matches = c.fetchall()
     conn.close()
     
@@ -299,12 +397,13 @@ def select_compare(id):
     return redirect("/")
 
 @app.route("/compare/<int:id1>/<int:id2>")
+@login_required
 def compare(id1, id2):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches WHERE id = ?", (id1,))
+    c.execute("SELECT * FROM matches WHERE id = ? AND user_id = ?", (id1, session["user_id"]))
     match1 = c.fetchone()
-    c.execute("SELECT * FROM matches WHERE id = ?", (id2,))
+    c.execute("SELECT * FROM matches WHERE id = ? AND user_id = ?", (id2, session["user_id"]))
     match2 = c.fetchone()
     conn.close()
     
@@ -312,38 +411,39 @@ def compare(id1, id2):
         return render_template("compare.html", m1=match1, m2=match2)
     return redirect("/")
 
-# --- ROTAS DE DOSSIÊ DE ADVERSÁRIOS (H2H) ---
 @app.route("/adversarios")
+@login_required
 def adversarios():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    # AJUSTE: Usa LIKE '%Duplas%' para abranger todas as variações da palavra
     c.execute("""
         SELECT 
             CASE WHEN match_format LIKE '%Duplas%' THEN opponent || ' & ' || opp_partner ELSE opponent END as rival, 
             COUNT(id) as total_jogos,
             SUM(CASE WHEN result = 'Vitória' THEN 1 ELSE 0 END) as vitorias
         FROM matches 
+        WHERE user_id = ?
         GROUP BY rival 
         ORDER BY total_jogos DESC
-    """)
+    """, (session["user_id"],))
     opponents_data = c.fetchall()
     conn.close()
     return render_template("adversarios.html", opponents=opponents_data)
 
 @app.route("/h2h/<path:opponent>")
+@login_required
 def h2h(opponent):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
     c.execute("""
         SELECT * FROM matches 
-        WHERE CASE WHEN match_format LIKE '%Duplas%' THEN opponent || ' & ' || opp_partner ELSE opponent END = ? 
+        WHERE user_id = ? AND CASE WHEN match_format LIKE '%Duplas%' THEN opponent || ' & ' || opp_partner ELSE opponent END = ? 
         ORDER BY match_date DESC
-    """, (opponent,))
+    """, (session["user_id"], opponent))
     matches = c.fetchall()
     
-    c.execute("SELECT AVG(performance_rating), AVG(winners), AVG(unforced_errors) FROM matches")
+    c.execute("SELECT AVG(performance_rating), AVG(winners), AVG(unforced_errors) FROM matches WHERE user_id = ?", (session["user_id"],))
     career_avg = c.fetchone()
     conn.close()
     
@@ -352,19 +452,18 @@ def h2h(opponent):
         
     return render_template("h2h_detail.html", matches=matches, opponent=opponent, career_avg=career_avg)
 
-# --- NOVA ROTA: CENTRAL DE INSIGHTS ESTATÍSTICOS ---
 @app.route("/insights")
+@login_required
 def insights():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches ORDER BY match_date DESC, id DESC")
+    c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC, id DESC", (session["user_id"],))
     matches = c.fetchall()
     conn.close()
 
     if not matches:
         return redirect("/")
 
-    # 1. Calcular o Momento Atual (Streak)
     streak_type = matches[0][5] if matches[0][5] else "Sem Dados"
     streak_count = 0
     for m in matches:
@@ -379,7 +478,7 @@ def insights():
         'surface': {'Quadra Dura': {'v': 0, 'd': 0}, 'Saibro': {'v': 0, 'd': 0}},
         'format': {'Simples': {'v': 0, 'd': 0}, 'Duplas': {'v': 0, 'd': 0}},
         'type': {'Ranking': {'v': 0, 'd': 0}, 'Torneio': {'v': 0, 'd': 0}, 'Amistoso': {'v': 0, 'd': 0}},
-        'category': {}, # Novo: Dinâmico baseado nas classes jogadas
+        'category': {}, 
         'tb_won': 0, 'tb_lost': 0,
         'decisive_won': 0, 'decisive_lost': 0,
         'perf_wins': 0, 'perf_losses': 0, 
@@ -390,7 +489,6 @@ def insights():
     for m in matches:
         is_win = m[5] == 'Vitória'
         
-        # Coleta de Médias (Vitória vs Derrota e Agressividade)
         if is_win:
             stats['count_wins'] += 1
             stats['perf_wins'] += m[25]
@@ -401,11 +499,9 @@ def insights():
         stats['winners_total'] += m[23]
         stats['ue_total'] += m[24]
 
-        # Superfície, Formato e Tipo 
         if m[4] and m[4] in stats['surface']: stats['surface'][m[4]]['v' if is_win else 'd'] += 1
         if m[3] and m[3] in stats['type']: stats['type'][m[3]]['v' if is_win else 'd'] += 1
         
-        # Categorias Dinâmicas
         cat = m[2] if m[2] else 'Sem Classe'
         if cat not in stats['category']: stats['category'][cat] = {'v': 0, 'd': 0}
         stats['category'][cat]['v' if is_win else 'd'] += 1
@@ -413,7 +509,6 @@ def insights():
         fmt_cat = 'Duplas' if m[7] and 'Duplas' in str(m[7]) else 'Simples'
         stats['format'][fmt_cat]['v' if is_win else 'd'] += 1
 
-        # Lógica de Placar (Tie-breaks e Set Decisivo)
         if m[6]: 
             sets = [s for s in m[6].split() if '/' in s and s.strip() != '/' and s.strip() != '0/0']
             for s in sets:
@@ -434,7 +529,6 @@ def insights():
                     else: stats['decisive_lost'] += 1
             except Exception: pass 
 
-    # Calculando as médias finais para mandar pro HTML
     total_jogos = len(matches)
     stats['avg_perf_win'] = round(stats['perf_wins'] / stats['count_wins'], 1) if stats['count_wins'] > 0 else 0.0
     stats['avg_perf_loss'] = round(stats['perf_losses'] / stats['count_losses'], 1) if stats['count_losses'] > 0 else 0.0
@@ -442,5 +536,6 @@ def insights():
     stats['avg_ue'] = round(stats['ue_total'] / total_jogos, 1) if total_jogos > 0 else 0.0
 
     return render_template("insights.html", stats=stats)
+
 if __name__ == "__main__":
     app.run(debug=True)
