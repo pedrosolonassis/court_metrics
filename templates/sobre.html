@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Sobre - Court Metrics{% endblock %}
+{% block page_title %}Sobre o Court Metrics{% endblock %}
+{% block page_subtitle %}A história e o propósito por trás dos dados.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-container { background: white; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); max-width: 800px; margin: 0 auto; }
+    .about-header { text-align: center; margin-bottom: 40px; }
+    .about-header i { font-size: 64px; color: var(--atp-blue); margin-bottom: 10px; }
+    .about-header h2 { margin: 0; color: var(--atp-blue); font-size: 28px; }
+    .about-header p { color: #64748b; font-size: 16px; margin-top: 10px; }
+    
+    .story-section { margin-bottom: 35px; }
+    .story-section h3 { color: var(--atp-blue); font-size: 18px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+    .story-section p { color: #475569; line-height: 1.8; font-size: 15px; margin-bottom: 15px; text-align: justify; }
+    
+    .highlight-box { background: #f8fafc; border-left: 4px solid var(--tennis-green); padding: 20px; border-radius: 0 12px 12px 0; margin: 25px 0; }
+    .highlight-box p { margin: 0; font-weight: 500; color: var(--atp-blue); font-style: italic; }
+    
+    .diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+    .diff-card { background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; transition: transform 0.2s; }
+    .diff-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); border-color: var(--atp-blue); }
+    .diff-card i { font-size: 24px; color: #10b981; margin-bottom: 10px; }
+    .diff-card h4 { margin: 0 0 10px 0; color: var(--atp-blue); font-size: 15px; }
+    .diff-card p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="about-container">
+        <div class="about-header">
+            <i class='bx bx-tennis-ball'></i>
+            <h2>Court Metrics</h2>
+            <p>Nascido nas quadras. Guiado pelos dados.</p>
+        </div>
+
+        <div class="story-section">
+            <h3><i class='bx bx-book-open'></i> A Motivação</h3>
+            <p>A ideia do Court Metrics surgiu de uma frustração comum nas quadras amadoras. Jogadores dedicados (competindo em níveis de 3ª ou 4ª classe) terminam suas partidas sabendo se ganharam ou perderam, mas raramente entendem o <strong>porquê</strong>. O tênis é um esporte de detalhes, onde um leve ajuste na devolução ou um foco maior no primeiro saque pode mudar o rumo de um campeonato inteiro.</p>
+            <p>Unindo a paixão pelo esporte com o olhar técnico da Análise de Dados, percebi que o mercado estava cheio de aplicativos focados apenas em registrar o placar final ou promover rankings sociais. Ninguém estava olhando para o "DNA Técnico" do jogador de forma acessível.</p>
+            
+            <div class="highlight-box">
+                <p>"Se profissionais usam estatísticas avançadas para moldar suas táticas, por que os amadores deveriam jogar às cegas? O objetivo era construir uma ponte entre o feeling da quadra e a precisão analítica."</p>
+            </div>
+        </div>
+
+        <div class="story-section">
+            <h3><i class='bx bx-target-lock'></i> O Que Nos Torna Únicos?</h3>
+            <p>Enquanto a maioria dos concorrentes foca na rede social do tênis (encontrar parceiros ou marcar quadras), o Court Metrics foca 100% no desenvolvimento individual do tenista. Nós não perguntamos apenas o placar; nós mapeamos a sua evolução.</p>
+            
+            <div class="diff-grid">
+                <div class="diff-card">
+                    <i class='bx bx-radar'></i>
+                    <h4>Raio-X Técnico</h4>
+                    <p>Mapeamento de 10 fundamentos em um gráfico radar. Saiba exatamente onde seu jogo quebra nas derrotas e brilha nas vitórias.</p>
+                </div>
+                <div class="diff-card">
+                    <i class='bx bx-line-chart'></i>
+                    <h4>Balanço Tático (Risco vs Recompensa)</h4>
+                    <p>Análise profunda da sua agressividade comparando Winners gerados contra Erros Não Forçados.</p>
+                </div>
+                <div class="diff-card">
+                    <i class='bx bx-folder-open'></i>
+                    <h4>Dossiê Head-to-Head</h4>
+                    <p>Não entre na quadra sem saber o que funciona contra aquele adversário específico. A plataforma gera relatórios focados no seu rival.</p>
+                </div>
+                <div class="diff-card">
+                    <i class='bx bx-brain'></i>
+                    <h4>Oráculo IA (Machine Learning)</h4>
+                    <p>Um modelo preditivo treinado exclusivamente com o seu histórico para calcular a probabilidade de vitória antes mesmo de você pisar no saibro ou na quadra dura.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="story-section" style="margin-top: 40px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 30px;">
+            <h3 style="justify-content: center; border: none;"><i class='bx bx-code-alt'></i> Desenvolvido em Paraíba, Brasil</h3>
+            <p style="text-align: center;">Criado com dedicação para transformar a forma como você enxerga o seu próprio jogo.<br>Vá para a quadra, jogue duro e deixe que nós cuidamos das métricas.</p>
+        </div>
+    </div>
+{% endblock %}

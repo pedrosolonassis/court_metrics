@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Feedback - Court Metrics{% endblock %}
+{% block page_title %}Central de Feedback{% endblock %}
+{% block page_subtitle %}Ajude-nos a melhorar compartilhando suas ideias, reportando bugs ou sugerindo novos recursos.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feedback-container {
+        background: white; 
+        padding: 35px; 
+        border-radius: 16px; 
+        border: 1px solid #e2e8f0; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        max-width: 650px;
+        margin: 0 auto;
+    }
+    
+    .form-group { margin-bottom: 20px; }
+    
+    .form-label { 
+        display: block; 
+        font-size: 13px; 
+        font-weight: 800; 
+        color: var(--atp-blue); 
+        margin-bottom: 8px; 
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .form-label span { color: #ef4444; } /* Asterisco vermelho para obrigatório */
+    
+    .form-control { 
+        width: 100%; 
+        padding: 14px; 
+        border: 1px solid #cbd5e1; 
+        border-radius: 10px; 
+        font-size: 14px; 
+        outline: none; 
+        background: #f8fafc; 
+        color: var(--text-main); 
+        box-sizing: border-box;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus { 
+        border-color: var(--atp-blue); 
+        background: white; 
+        box-shadow: 0 0 0 3px rgba(0, 40, 85, 0.1);
+    }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 120px;
+    }
+    
+    .file-upload-box {
+        border: 2px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    
+    .file-upload-box:hover {
+        border-color: var(--atp-blue);
+        background: #f1f5f9;
+    }
+
+    .file-upload-box i {
+        font-size: 32px;
+        color: #94a3b8;
+        margin-bottom: 10px;
+    }
+    
+    /* Esconde o input real */
+    #imageInput {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        opacity: 0; cursor: pointer;
+    }
+
+    .btn-submit { 
+        background: var(--atp-blue); 
+        color: white; 
+        padding: 16px; 
+        border: none; 
+        border-radius: 10px; 
+        font-weight: bold; 
+        font-size: 15px;
+        cursor: pointer; 
+        width: 100%;
+        transition: 0.2s;
+        margin-top: 10px;
+    }
+    
+    .btn-submit:hover { 
+        background: #001d3d; 
+        transform: translateY(-2px);
+    }
+
+    .success-alert {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #15803d;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-weight: 500;
+    }
+    .success-alert i { font-size: 24px; color: #16a34a; }
+</style>
+{% endblock %}
+
+{% block content %}
+    {% if success %}
+    <div class="success-alert" style="max-width: 650px; margin-left: auto; margin-right: auto;">
+        <i class='bx bx-check-circle'></i>
+        <div>
+            <strong style="display: block; margin-bottom: 4px;">Feedback enviado com sucesso!</strong>
+            <span style="font-size: 14px; opacity: 0.9;">Muito obrigado por nos ajudar a melhorar o Court Metrics. Nossa equipe irá analisar sua mensagem em breve.</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="feedback-container">
+        <form method="POST" action="/feedback" enctype="multipart/form-data">
+            
+            <div class="form-group">
+                <label class="form-label">Tipo de Feedback <span>*</span></label>
+                <select name="feedback_type" class="form-control" required>
+                    <option value="Sugestão Geral">💡 Sugestão Geral</option>
+                    <option value="Reportar Bug">🐛 Reportar um Bug</option>
+                    <option value="Novo Recurso">✨ Solicitar Novo Recurso</option>
+                    <option value="Elogio">❤️ Elogio</option>
+                    <option value="Outro">Outro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Assunto <span>*</span></label>
+                <input type="text" name="subject" class="form-control" placeholder="Ex: Adicionar suporte para Beach Tennis" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Descrição <span>*</span></label>
+                <textarea name="description" class="form-control" placeholder="Por favor, forneça informações detalhadas sobre o seu feedback..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Prioridade <span>*</span></label>
+                <select name="priority" class="form-control" required>
+                    <option value="Baixa">🟢 Baixa</option>
+                    <option value="Média" selected>🟡 Média</option>
+                    <option value="Alta">🔴 Alta</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Anexos (Opcional)</label>
+                <div class="file-upload-box">
+                    <i class='bx bx-image-add'></i>
+                    <div style="font-size: 14px; color: #64748b; font-weight: 500;" id="fileNameDisplay">
+                        Clique para anexar um Print (PNG, JPG)
+                    </div>
+                    <input type="file" name="image" id="imageInput" accept="image/*" onchange="updateFileName()">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Enviar Feedback</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Função simples para mostrar o nome da imagem que o usuário anexou
+    function updateFileName() {
+        const input = document.getElementById('imageInput');
+        const display = document.getElementById('fileNameDisplay');
+        if (input.files && input.files.length > 0) {
+            display.innerHTML = `<span style="color: var(--atp-blue);">Anexado: <strong>${input.files[0].name}</strong></span>`;
+        } else {
+            display.innerHTML = "Clique para anexar um Print (PNG, JPG)";
+        }
+    }
+</script>
+{% endblock %}

@@ -1,6 +1,8 @@
 import sqlite3
 import csv
 import io
+import os
+from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, Response, session, flash
 from datetime import datetime
 from functools import wraps
@@ -8,6 +10,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta_court_metrics" # Necessário para segurança da sessão
+
+# --- CONFIGURAÇÃO DA PASTA DE UPLOADS (FOTOS DE PERFIL E FEEDBACK) ---
+UPLOAD_FOLDER = 'static/uploads/profiles'
+FEEDBACK_FOLDER = 'static/uploads/feedback'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['FEEDBACK_FOLDER'] = FEEDBACK_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(FEEDBACK_FOLDER, exist_ok=True)
 
 def create_db():
     conn = sqlite3.connect("database.db")
@@ -26,7 +36,7 @@ def create_db():
     )
     """)
 
-    # 2. TABELA DE PARTIDAS (Agora com user_id no final para preservar os índices antigos)
+    # 2. TABELA DE PARTIDAS
     c.execute("""
     CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,6 +72,21 @@ def create_db():
         FOREIGN KEY (user_id) REFERENCES users (id)
     )
     """)
+
+    # 3. TABELA DE FEEDBACKS (NOVA)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        feedback_type TEXT,
+        subject TEXT,
+        description TEXT,
+        priority TEXT,
+        image_path TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+    """)
     
     # ATUALIZAÇÕES SILENCIOSAS: Adiciona as colunas novas em bancos antigos sem apagar dados
     try:
@@ -75,10 +100,16 @@ def create_db():
         pass
 
     # Migração silenciosa para os novos campos de usuário
-    novos_campos_usuario = ['first_name', 'last_name', 'email', 'birth_date']
-    for campo in novos_campos_usuario:
+    novos_campos_usuario = {
+        'first_name': 'TEXT', 'last_name': 'TEXT', 'email': 'TEXT', 'birth_date': 'TEXT',
+        'gender': 'TEXT', 'phone': 'TEXT', 'playing_since': 'TEXT', 
+        'forehand_hand': 'TEXT', 'backhand_type': 'TEXT', 
+        'height': 'REAL', 'weight': 'REAL', 'profile_pic': 'TEXT'
+    }
+    
+    for campo, tipo in novos_campos_usuario.items():
         try: 
-            c.execute(f"ALTER TABLE users ADD COLUMN {campo} TEXT")
+            c.execute(f"ALTER TABLE users ADD COLUMN {campo} {tipo}")
         except sqlite3.OperationalError: 
             pass
 
@@ -153,16 +184,18 @@ def login():
         password = request.form["password"]
         
         conn = sqlite3.connect("database.db")
+        conn.row_factory = sqlite3.Row # Usa dicionário para evitar erros de índice
         c = conn.cursor()
         c.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = c.fetchone()
         conn.close()
         
-        if user and check_password_hash(user[2], password):
-            session["user_id"] = user[0]
-            session["username"] = user[1]
-            session["first_name"] = user[3]
-            session["last_name"] = user[4]
+        if user and check_password_hash(user['password'], password):
+            session["user_id"] = user['id']
+            session["username"] = user['username']
+            session["first_name"] = user['first_name']
+            session["last_name"] = user['last_name']
+            session["profile_pic"] = user['profile_pic'] # Adiciona a foto à sessão
             return redirect("/")
         else:
             return render_template("login.html", error="Usuário ou senha incorretos.")
@@ -187,8 +220,139 @@ def home():
     # Busca apenas os jogos do usuário logado
     c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC, id DESC", (session["user_id"],))
     matches = c.fetchall()
+    
+    # Busca as informações de perfil e transforma em dicionário para não quebrar o HTML antigo
+    c.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
+    user_row = c.fetchone()
+    col_names = [description[0] for description in c.description]
+    user_data = dict(zip(col_names, user_row)) if user_row else {}
     conn.close()
-    return render_template("index.html", matches=matches)
+
+    # Lógica: Última vez que jogou
+    ultima_partida = "Sem registros"
+    if matches:
+        last_date_str = matches[0][27] # match_date é o índice 27
+        try:
+            last_date = datetime.strptime(last_date_str, '%Y-%m-%d').date()
+            hoje = datetime.today().date()
+            delta = (hoje - last_date).days
+            if delta == 0: ultima_partida = "Hoje"
+            elif delta == 1: ultima_partida = "Ontem"
+            else: ultima_partida = f"há {delta} dias"
+        except:
+            pass
+
+    # Lógica: Há quanto tempo joga
+    tempo_joga = "Não informado"
+    if user_data.get('playing_since'):
+        try:
+            start_date = datetime.strptime(user_data['playing_since'], '%Y-%m-%d').date()
+            anos = datetime.today().year - start_date.year
+            if anos == 0:
+                tempo_joga = "Menos de 1 ano"
+            elif anos == 1:
+                tempo_joga = "há 1 ano"
+            else:
+                tempo_joga = f"há mais de {anos} anos"
+        except:
+            pass
+
+    return render_template("index.html", matches=matches, user_data=user_data, tempo_joga=tempo_joga, ultima_partida=ultima_partida)
+
+@app.route("/perfil", methods=["GET", "POST"])
+@login_required
+def perfil():
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    if request.method == "POST":
+        # 1. Tratar o upload da foto de perfil recortada (se houver)
+        foto_filename = None
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            if file and file.filename != '':
+                # Cria um nome de arquivo seguro vinculado ao ID do usuário
+                filename = secure_filename(f"user_{session['user_id']}_profile.png")
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                # Salva apenas o caminho relativo no banco de dados
+                foto_filename = f"uploads/profiles/{filename}"
+
+        # 2. Atualizar os outros dados do usuário
+        update_query = """
+            UPDATE users SET 
+            first_name=?, last_name=?, email=?, gender=?, birth_date=?, phone=?,
+            playing_since=?, forehand_hand=?, backhand_type=?, height=?, weight=?
+        """
+        params = [
+            request.form.get("first_name"), request.form.get("last_name"), request.form.get("email"),
+            request.form.get("gender"), request.form.get("birth_date"), request.form.get("phone"),
+            request.form.get("playing_since"), request.form.get("forehand_hand"), request.form.get("backhand_type"),
+            request.form.get("height"), request.form.get("weight")
+        ]
+
+        # Só atualiza o banco com a foto se uma nova foi enviada
+        if foto_filename:
+            update_query += ", profile_pic=?"
+            params.append(foto_filename)
+            session["profile_pic"] = foto_filename # Atualiza a sessão instantaneamente
+
+        update_query += " WHERE id=?"
+        params.append(session["user_id"])
+
+        c.execute(update_query, tuple(params))
+        
+        session["first_name"] = request.form.get("first_name")
+        session["last_name"] = request.form.get("last_name")
+        
+        conn.commit()
+        conn.close()
+        return redirect("/perfil")
+
+    # Resgata os dados para preencher o formulário no GET
+    c.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
+    user_row = c.fetchone()
+    user_data = dict(user_row) if user_row else {}
+    
+    # Previne que a foto suma da tela caso a sessão tenha sido perdida mas o banco não
+    if 'profile_pic' not in session and user_data.get('profile_pic'):
+        session['profile_pic'] = user_data['profile_pic']
+
+    conn.close()
+    
+    return render_template("perfil.html", user=user_data)
+
+@app.route("/feedback", methods=["GET", "POST"])
+@login_required
+def feedback():
+    if request.method == "POST":
+        feedback_type = request.form.get("feedback_type")
+        subject = request.form.get("subject")
+        description = request.form.get("description")
+        priority = request.form.get("priority")
+        
+        foto_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename != '':
+                filename = secure_filename(f"fb_{session['user_id']}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
+                filepath = os.path.join(app.config['FEEDBACK_FOLDER'], filename)
+                file.save(filepath)
+                foto_filename = f"uploads/feedback/{filename}"
+
+        conn = sqlite3.connect("database.db")
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO feedback (user_id, feedback_type, subject, description, priority, image_path)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (session["user_id"], feedback_type, subject, description, priority, foto_filename))
+        conn.commit()
+        conn.close()
+        
+        return render_template("feedback.html", success=True)
+        
+    return render_template("feedback.html")
 
 @app.route("/history")
 @login_required
@@ -626,6 +790,24 @@ def simulador():
             return render_template("simulador.html", erro_dados=f"Erro no Motor de IA: {str(e)}")
 
     return render_template("simulador.html")
+
+@app.route("/sobre")
+@login_required
+def sobre():
+    # Passamos os dados do usuário para o cabeçalho funcionar corretamente
+    conn = sqlite3.connect("database.db")
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
+    user_row = c.fetchone()
+    col_names = [description[0] for description in c.description]
+    user_data = dict(zip(col_names, user_row)) if user_row else {}
+    conn.close()
+    return render_template("sobre.html", user=user_data)
+
+@app.route("/privacidade")
+@login_required
+def privacidade():
+    return render_template("privacidade.html")
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Política de Privacidade - Court Metrics{% endblock %}
+{% block page_title %}Política de Privacidade{% endblock %}
+{% block page_subtitle %}Como cuidamos das suas informações e garantimos sua segurança.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .privacy-container { background: white; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); max-width: 800px; margin: 0 auto; color: #334155; }
+    .privacy-container h3 { color: var(--atp-blue); font-size: 18px; margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+    .privacy-container p, .privacy-container li { line-height: 1.7; font-size: 14px; margin-bottom: 15px; color: #475569; }
+    .privacy-container ul { margin-top: 0; padding-left: 20px; }
+    .last-updated { font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 30px; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="privacy-container">
+        <span class="last-updated">Última atualização: Abril de 2026</span>
+        
+        <p>A sua privacidade é fundamental para nós. Esta Política de Privacidade descreve como o <strong>Court Metrics</strong> ("nós", "nosso", "aplicativo") coleta, usa, protege e trata as suas informações pessoais e os dados gerados através do uso da nossa plataforma.</p>
+
+        <h3>1. Informações que Coletamos</h3>
+        <p>Para fornecer análises precisas sobre o seu desempenho, coletamos os seguintes tipos de informações:</p>
+        <ul>
+            <li><strong>Dados de Registro:</strong> Nome, e-mail, data de nascimento e senha (criptografada).</li>
+            <li><strong>Perfil Esportivo:</strong> Gênero, altura, peso, mão dominante (forehand), tipo de backhand e tempo de experiência no esporte.</li>
+            <li><strong>Dados de Partidas:</strong> Placar, tipo de superfície, categoria, nome do adversário, notas dos seus fundamentos técnicos (saque, voleio, etc.), winners, erros não forçados e anotações pessoais.</li>
+            <li><strong>Mídia:</strong> Imagens de perfil ou capturas de tela enviadas através da aba de Feedback.</li>
+        </ul>
+
+        <h3>2. Como Usamos as suas Informações</h3>
+        <p>Os dados coletados são utilizados exclusivamente para o funcionamento e melhoria do Court Metrics. Especificamente, usamos seus dados para:</p>
+        <ul>
+            <li>Gerar o seu Dashboard pessoal e calcular seu Rating ATP.</li>
+            <li>Construir gráficos de evolução técnica, Raio-X e dossiês de Head-to-Head.</li>
+            <li>Treinar o modelo de Machine Learning local ("Oráculo IA") para prever cenários exclusivos do seu estilo de jogo.</li>
+            <li>Melhorar a plataforma através da análise dos feedbacks enviados.</li>
+        </ul>
+
+        <h3>3. Compartilhamento de Dados</h3>
+        <p><strong>Nós não vendemos, alugamos ou comercializamos as suas informações pessoais e estatísticas de jogo para terceiros.</strong> Seus dados são privados e servem unicamente ao propósito de autoavaliação esportiva.</p>
+
+        <h3>4. Segurança dos Dados</h3>
+        <p>Implementamos medidas de segurança técnicas e organizacionais para proteger suas informações contra acesso, alteração, divulgação ou destruição não autorizados. Senhas são armazenadas utilizando hashes seguros (criptografia irreversível) no nosso banco de dados, o que significa que nem mesmo nós temos acesso à sua senha original.</p>
+
+        <h3>5. Seus Direitos (LGPD)</h3>
+        <p>Você tem total controle sobre seus dados. A qualquer momento, você pode:</p>
+        <ul>
+            <li>Acessar, corrigir ou atualizar os seus dados através da aba "Meu Perfil".</li>
+            <li>Exportar todo o seu histórico de partidas em formato CSV na aba "Exportar CSV".</li>
+            <li>Excluir permanentemente a sua conta e todos os dados associados a ela através das configurações da conta.</li>
+        </ul>
+
+        <h3>6. Retenção de Dados</h3>
+        <p>Manteremos suas informações pessoais e dados de jogo apenas pelo tempo necessário para fornecer nossos serviços. Se você decidir excluir sua conta, todos os seus dados estatísticos e imagens de perfil associadas serão permanentemente removidos do nosso banco de dados ativo.</p>
+
+        <h3>7. Contato</h3>
+        <p>Se você tiver dúvidas, sugestões ou preocupações sobre nossa Política de Privacidade, sinta-se à vontade para nos contatar através da aba de "Feedback" dentro do aplicativo.</p>
+    </div>
+{% endblock %}

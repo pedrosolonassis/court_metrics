@@ -1,94 +1,90 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Head-to-Head vs {{ opponent }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --atp-blue: #002855; --text-slate: #64748b; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; padding: 20px;}
-        .stat-box { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; flex: 1; }
-        .val { font-size: 32px; font-weight: 900; margin: 10px 0 5px 0;}
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
 
-    {% set wins = matches|selectattr(5, 'equalto', 'Vitória')|list|length %}
-    {% set total = matches|length %}
-    {% set win_rate = ((wins / total) * 100)|int %}
+{% block title %}Dossiê Head-to-Head - Court Metrics{% endblock %}
+{% block page_title %}Estatísticas de Adversário{% endblock %}
+{% block page_subtitle %}Sua performance histórica contra este oponente.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-box { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; flex: 1; min-width: 200px; }
+    .val { font-size: 32px; font-weight: 900; margin: 10px 0 5px 0;}
+    .match-row { background: white; padding: 20px; border-radius: 10px; text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.2s; }
+    .match-row:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set wins = matches|selectattr(5, 'equalto', 'Vitória')|list|length %}
+{% set total = matches|length %}
+{% set win_rate = ((wins / total) * 100)|int %}
+
+{% set total_rating = matches|sum(attribute=25) %}
+{% set avg_rating = (total_rating / total)|round(1) %}
+
+{% set total_win = matches|sum(attribute=23) %}
+{% set total_ue = matches|sum(attribute=24) %}
+
+<div class="container" style="max-width: 900px; margin: 0 auto; padding-bottom: 50px;">
+    <a href="/adversarios" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para Adversários</a>
     
-    {% set total_rating = matches|sum(attribute=25) %}
-    {% set avg_rating = (total_rating / total)|round(1) %}
-    
-    {% set total_win = matches|sum(attribute=23) %}
-    {% set total_ue = matches|sum(attribute=24) %}
-
-    <div class="container" style="max-width: 900px; margin: 0 auto;">
-        <a href="/adversarios" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para Adversários</a>
-        
-        <div style="background: var(--atp-blue); color: white; padding: 30px; border-radius: 16px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <span style="font-size: 12px; font-weight: bold; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase;">Head-to-Head</span>
-                
-                <h1 style="margin: 5px 0; color: white !important;">Você vs {{ opponent }}</h1>
-                
-                <p style="margin: 0; opacity: 0.9;">{{ total }} Confronto(s) Registrado(s)</p>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 48px; font-weight: 900; color: {% if win_rate >= 50 %}#d1ff00{% else %}#fca5a5{% endif %};">{{ win_rate }}%</div>
-                <span style="font-size: 12px; font-weight: bold; opacity: 0.8; text-transform: uppercase;">Taxa de Vitória</span>
-            </div>
+    <div style="background: var(--atp-blue); color: white; padding: 30px; border-radius: 16px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+        <div>
+            <span style="font-size: 12px; font-weight: bold; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase;">Head-to-Head</span>
+            <h1 style="margin: 5px 0; color: white !important;">Você vs {{ opponent }}</h1>
+            <p style="margin: 0; opacity: 0.9;">{{ total }} Confronto(s) Registrado(s)</p>
         </div>
-
-        <h3 style="color: var(--atp-blue); margin-top: 30px;">⚖️ Sua Performance vs {{ opponent }}</h3>
-        
-        <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
-            <div class="stat-box">
-                <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Rating ATP Médio</span>
-                <div class="val" style="color: var(--atp-blue);">{{ avg_rating }}</div>
-                <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[0]) }}</div>
-            </div>
-            <div class="stat-box">
-                <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Winners p/ Jogo</span>
-                <div class="val" style="color: #10b981;">{{ (total_win / total)|round(1) }}</div>
-                <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[1]) }}</div>
-            </div>
-            <div class="stat-box">
-                <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Erros Não Forçados</span>
-                <div class="val" style="color: #ef4444;">{{ (total_ue / total)|round(1) }}</div>
-                <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[2]) }}</div>
-            </div>
-        </div>
-
-        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
-            <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); font-size: 18px;">💡 Inteligência Tática</h4>
-            <p style="color: #475569; line-height: 1.6; margin: 0;">
-                {% if (total_win / total) > career_avg[1] %}
-                    Você consegue ser <strong>mais agressivo</strong> contra {{ opponent }} do que o seu normal, gerando mais winners. A tática de forçar o jogo está funcionando.
-                {% else %}
-                    Você está gerando <strong>menos winners</strong> contra {{ opponent }} do que a sua média. Provavelmente ele(a) tem uma defesa sólida ou devolve bolas mais pesadas. Foque em construir melhor o ponto antes de atacar.
-                {% endif %}
-                
-                {% if (total_ue / total) > career_avg[2] %}
-                    Cuidado: Seu índice de erros não forçados está <strong>acima do seu padrão</strong>. {{ opponent }} pode estar quebrando seu ritmo, talvez forçando você a bater bolas desconfortáveis. Tente usar mais o slice para cadenciar.
-                {% endif %}
-            </p>
-        </div>
-
-        <h3 style="color: var(--atp-blue);">📖 Histórico de Confrontos</h3>
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            {% for m in matches %}
-                <a href="/match/{{ m[0] }}" style="background: white; padding: 20px; border-radius: 10px; border-left: 5px solid {% if m[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %}; text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <div>
-                        <div style="font-size: 12px; color: #94a3b8; font-weight: bold; margin-bottom: 5px;">📅 {{ m[27][8:10] }}/{{ m[27][5:7] }}/{{ m[27][0:4] }} • {{ m[4] }}</div>
-                        <strong style="color: var(--atp-blue); font-size: 18px;">{{ m[6] }}</strong>
-                    </div>
-                    <div style="font-weight: bold; color: {% if m[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %};">{{ m[5] }}</div>
-                </a>
-            {% endfor %}
+        <div style="text-align: right;">
+            <div style="font-size: 48px; font-weight: 900; color: {% if win_rate >= 50 %}#d1ff00{% else %}#fca5a5{% endif %};">{{ win_rate }}%</div>
+            <span style="font-size: 12px; font-weight: bold; opacity: 0.8; text-transform: uppercase;">Taxa de Vitória</span>
         </div>
     </div>
 
-</body>
-</html>
+    <h3 style="color: var(--atp-blue); margin-top: 30px;">⚖️ Sua Performance vs {{ opponent }}</h3>
+    
+    <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+        <div class="stat-box">
+            <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Rating ATP Médio</span>
+            <div class="val" style="color: var(--atp-blue);">{{ avg_rating }}</div>
+            <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[0]) }}</div>
+        </div>
+        <div class="stat-box">
+            <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Winners p/ Jogo</span>
+            <div class="val" style="color: #10b981;">{{ (total_win / total)|round(1) }}</div>
+            <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[1]) }}</div>
+        </div>
+        <div class="stat-box">
+            <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Erros Não Forçados</span>
+            <div class="val" style="color: #ef4444;">{{ (total_ue / total)|round(1) }}</div>
+            <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[2]) }}</div>
+        </div>
+    </div>
+
+    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); font-size: 18px;">💡 Inteligência Tática</h4>
+        <p style="color: #475569; line-height: 1.6; margin: 0;">
+            {% if (total_win / total) > career_avg[1] %}
+                Você consegue ser <strong>mais agressivo</strong> contra {{ opponent }} do que o seu normal, gerando mais winners. A tática de forçar o jogo está funcionando.
+            {% else %}
+                Você está gerando <strong>menos winners</strong> contra {{ opponent }} do que a sua média. Provavelmente ele(a) tem uma defesa sólida ou devolve bolas mais pesadas. Foque em construir melhor o ponto antes de atacar.
+            {% endif %}
+            
+            {% if (total_ue / total) > career_avg[2] %}
+                Cuidado: Seu índice de erros não forçados está <strong>acima do seu padrão</strong>. {{ opponent }} pode estar quebrando seu ritmo, talvez forçando você a bater bolas desconfortáveis. Tente usar mais o slice para cadenciar.
+            {% endif %}
+        </p>
+    </div>
+
+    <h3 style="color: var(--atp-blue);">📖 Histórico de Confrontos</h3>
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        {% for m in matches %}
+            <a href="/match/{{ m[0] }}" class="match-row" style="border-left: 5px solid {% if m[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %};">
+                <div>
+                    <div style="font-size: 12px; color: #94a3b8; font-weight: bold; margin-bottom: 5px;">📅 {{ m[27][8:10] }}/{{ m[27][5:7] }}/{{ m[27][0:4] }} • {{ m[4] }}</div>
+                    <strong style="color: var(--atp-blue); font-size: 18px;">{{ m[6] }}</strong>
+                </div>
+                <div style="font-weight: bold; color: {% if m[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %};">{{ m[5] }}</div>
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

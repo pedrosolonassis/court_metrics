@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+
+{% block title %}Meu Perfil - Court Metrics{% endblock %}
+{% block page_title %}Configurações da Conta{% endblock %}
+{% block page_subtitle %}Gerencie suas informações pessoais e características de jogo.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-section { background: white; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; }
+    .section-title { font-size: 16px; color: var(--atp-blue); margin: 0 0 20px 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; text-transform: uppercase; font-weight: 900;}
+    
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-group { margin-bottom: 15px; }
+    .form-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-slate); margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 500; box-sizing: border-box;}
+    .form-control:focus { border-color: #38bdf8; background: white;}
+    
+    .btn-save { background: var(--atp-blue); color: white; padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .btn-save:hover { background: #001d3d; }
+    
+    .btn-outline { background: transparent; color: var(--text-slate); padding: 12px 20px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; cursor: pointer;}
+    
+    /* --- ESTILOS DA FOTO DE PERFIL E MODAL CROPPER --- */
+    .profile-photo-container { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+    .current-photo { 
+        width: 100px; height: 100px; border-radius: 50%; background-color: var(--atp-blue); color: white; 
+        display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; overflow: hidden;
+        border: 3px solid #f1f5f9; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .current-photo img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .btn-change-photo { 
+        background: #10b981; color: white; padding: 10px 20px; border-radius: 20px; text-decoration: none; 
+        font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; border: none;
+    }
+    .btn-change-photo:hover { background: #059669; }
+
+    /* Modal do Cropper (Escondido por padrão) */
+    .cropper-modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(15, 23, 42, 0.9); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .cropper-modal.active { display: flex; }
+    
+    .cropper-box {
+        background: #1e293b; padding: 20px; border-radius: 16px; width: 90%; max-width: 500px; position: relative;
+    }
+    .cropper-header { display: flex; justify-content: space-between; align-items: center; color: white; margin-bottom: 15px; }
+    .cropper-header h3 { margin: 0; font-size: 16px; }
+    .btn-close-modal { background: #334155; border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    
+    .img-container { height: 350px; background-color: #0f172a; margin-bottom: 20px; border-radius: 8px; overflow: hidden; }
+    .img-container img { display: block; max-width: 100%; }
+    
+    /* Faz a máscara do Cropper ficar redonda */
+    .cropper-view-box, .cropper-face { border-radius: 50%; }
+    
+    .cropper-actions { display: flex; justify-content: space-between; align-items: center; }
+    .zoom-controls { display: flex; gap: 10px; }
+    .btn-zoom { background: #334155; color: white; border: none; width: 40px; height: 40px; border-radius: 8px; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+    .btn-zoom:hover { background: #475569; }
+    .btn-confirm-crop { background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;}
+    .btn-confirm-crop:hover { background: #059669; }
+
+    /* Esconde o input file original */
+    #realFileInput { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding-bottom: 50px;">
+
+    <form method="POST" action="/perfil" enctype="multipart/form-data" id="profileForm">
+        
+        <div class="settings-section">
+            <h3 class="section-title">Editar Perfil</h3>
+            
+            <div class="profile-photo-container">
+                <div class="current-photo" id="photoPreview">
+                    {% if user.profile_pic %}
+                        <img src="{{ url_for('static', filename=user.profile_pic) }}" alt="Foto">
+                    {% else %}
+                        {{ user.first_name[0]|upper if user.first_name else user.username[0]|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <button type="button" class="btn-change-photo" onclick="document.getElementById('realFileInput').click();">
+                        <i class='bx bx-camera'></i> Alterar Foto de Perfil
+                    </button>
+                    <input type="file" id="realFileInput" name="profile_pic" accept="image/*" onchange="openCropper(event)">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Usuário (@)</label>
+                    <input type="text" class="form-control" value="{{ user.username }}" readonly style="background: #e2e8f0; cursor: not-allowed; color: #64748b;">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3 class="section-title">Suas Informações</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Nome</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ user.first_name or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sobrenome</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ user.last_name or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" name="email" class="form-control" value="{{ user.email or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Celular</label>
+                    <input type="text" name="phone" class="form-control" value="{{ user.phone or '' }}" placeholder="(XX) XXXXX-XXXX">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gênero</label>
+                    <select name="gender" class="form-control">
+                        <option value="">Selecione...</option>
+                        <option value="Masculino" {% if user.gender == 'Masculino' %}selected{% endif %}>Masculino</option>
+                        <option value="Feminino" {% if user.gender == 'Feminino' %}selected{% endif %}>Feminino</option>
+                        <option value="Não-Binário" {% if user.gender == 'Não-Binário' %}selected{% endif %}>Não-Binário</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data de Nascimento</label>
+                    <input type="date" name="birth_date" class="form-control" value="{{ user.birth_date or '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <h3 class="section-title">Informações sobre meu jogo</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Jogo desde (Data de Início)</label>
+                    <input type="date" name="playing_since" class="form-control" value="{{ user.playing_since or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Forehand</label>
+                    <select name="forehand_hand" class="form-control">
+                        <option value="">Selecione...</option>
+                        <option value="Destro (Direita)" {% if user.forehand_hand == 'Destro (Direita)' %}selected{% endif %}>Destro (Direita)</option>
+                        <option value="Canhoto (Esquerda)" {% if user.forehand_hand == 'Canhoto (Esquerda)' %}selected{% endif %}>Canhoto (Esquerda)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Backhand</label>
+                    <select name="backhand_type" class="form-control">
+                        <option value="">Selecione...</option>
+                        <option value="Uma Mão" {% if user.backhand_type == 'Uma Mão' %}selected{% endif %}>Uma Mão</option>
+                        <option value="Duas Mãos" {% if user.backhand_type == 'Duas Mãos' %}selected{% endif %}>Duas Mãos</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Altura (m)</label>
+                        <input type="number" step="0.01" name="height" class="form-control" value="{{ user.height or '' }}" placeholder="Ex: 1.73">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Peso (kg)</label>
+                        <input type="number" step="0.1" name="weight" class="form-control" value="{{ user.weight or '' }}" placeholder="Ex: 70.5">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button type="submit" class="btn-save">Salvar Alterações</button>
+        </div>
+
+    </form>
+</div>
+
+<div class="cropper-modal" id="cropModal">
+    <div class="cropper-box">
+        <div class="cropper-header">
+            <h3>Ajuste a Foto de Perfil</h3>
+            <button type="button" class="btn-close-modal" onclick="closeCropper()"><i class='bx bx-x'></i></button>
+        </div>
+        <div class="img-container">
+            <img id="imageToCrop" src="">
+        </div>
+        <div class="cropper-actions">
+            <div class="zoom-controls">
+                <button type="button" class="btn-zoom" onclick="cropper.zoom(0.1)"><i class='bx bx-plus'></i></button>
+                <button type="button" class="btn-zoom" onclick="cropper.zoom(-0.1)"><i class='bx bx-minus'></i></button>
+            </div>
+            <button type="button" class="btn-confirm-crop" onclick="confirmCrop()">Confirmar Corte</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cropper = null;
+    const modal = document.getElementById('cropModal');
+    const imageElement = document.getElementById('imageToCrop');
+    const fileInput = document.getElementById('realFileInput');
+
+    // 1. Quando o usuário seleciona um arquivo no PC
+    function openCropper(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Abre o Modal
+                modal.classList.add('active');
+                // Coloca a imagem no preview do Modal
+                imageElement.src = e.target.result;
+                
+                // Se já tinha um cropper ativo, destrói para criar um novo
+                if (cropper) { cropper.destroy(); }
+                
+                // Inicia o plugin de corte
+                cropper = new Cropper(imageElement, {
+                    aspectRatio: 1, // Força a ser um quadrado perfeito (para o círculo)
+                    viewMode: 1,    // Restringe o crop box dentro do canvas
+                    dragMode: 'move',// Permite arrastar a imagem
+                    autoCropArea: 0.8,
+                    cropBoxMovable: false, // Trava a caixa, o usuário move a imagem
+                    cropBoxResizable: false, // Trava o tamanho da caixa
+                    background: false
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // 2. Quando clica no 'X' para cancelar
+    function closeCropper() {
+        modal.classList.remove('active');
+        fileInput.value = ""; // Limpa a seleção
+        if (cropper) { cropper.destroy(); }
+    }
+
+    // 3. Quando clica no botão verde "Confirmar Corte"
+    function confirmCrop() {
+        if (!cropper) return;
+
+        // Pega a área cortada e gera um novo arquivo de imagem
+        cropper.getCroppedCanvas({
+            width: 400, // Tamanho final da imagem salva
+            height: 400
+        }).toBlob((blob) => {
+            // A. Mostra a prévia cortada na tela imediatamente
+            const url = URL.createObjectURL(blob);
+            document.getElementById('photoPreview').innerHTML = `<img src="${url}" alt="Foto Cortada">`;
+            
+            // B. O Truque Mágico: Precisamos colocar esse 'blob' (arquivo cortado) dentro do form
+            // Como não dá para jogar direto no input file (medida de segurança dos navegadores),
+            // nós vamos interceptar o submit do formulário e injetar esse arquivo lá.
+            
+            // Cria um arquivo virtual File a partir do Blob gerado pelo Cropper
+            let file = new File([blob], "profile_cropped.png", {type: "image/png", lastModified: new Date().getTime()});
+            let container = new DataTransfer();
+            container.items.add(file);
+            // Substitui o arquivo original do input (aquela foto inteira) pela versão redondinha cortada
+            fileInput.files = container.files;
+            
+            // Fecha o Modal
+            modal.classList.remove('active');
+            if (cropper) { cropper.destroy(); }
+
+        }, 'image/png');
+    }
+</script>
+{% endblock %}

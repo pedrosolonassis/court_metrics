@@ -63,6 +63,38 @@
 {% endblock %}
 
 {% block content %}
+
+    <div style="background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 25px;">
+        <h4 style="margin: 0 0 15px 0; color: var(--text-slate); text-transform: uppercase; font-size: 13px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; letter-spacing: 1px;">INFORMAÇÕES PESSOAIS E DE JOGO</h4>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 30px; font-size: 15px; align-items: center;">
+            <div>
+                <span style="color: var(--text-slate); display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Gênero</span>
+                <span style="color: var(--atp-blue); font-weight: bold;">{{ user_data.gender or '---' }}</span>
+            </div>
+            <div>
+                <span style="color: var(--text-slate); display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Altura</span>
+                <span style="color: var(--atp-blue); font-weight: bold;">{{ user_data.height ~ 'm' if user_data.height else '---' }}</span>
+            </div>
+            <div>
+                <span style="color: var(--text-slate); display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Forehand</span>
+                <span style="color: var(--atp-blue); font-weight: bold;">{{ user_data.forehand_hand or '---' }}</span>
+            </div>
+            <div>
+                <span style="color: var(--text-slate); display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Backhand</span>
+                <span style="color: var(--atp-blue); font-weight: bold;">{{ user_data.backhand_type or '---' }}</span>
+            </div>
+            <div>
+                <span style="color: var(--text-slate); display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Joga</span>
+                <span style="color: var(--atp-blue); font-weight: bold;">{{ tempo_joga }}</span>
+            </div>
+            <div>
+                <span style="color: var(--text-slate); display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Jogou</span>
+                <span style="color: var(--atp-blue); font-weight: bold;">{{ ultima_partida }}</span>
+            </div>
+        </div>
+    </div>
+
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px;">
         <div class="insight-card" style="background: var(--atp-blue); color: white; padding: 25px; border-radius: 15px; text-align: center;">
             <span style="font-size: 12px; text-transform: uppercase; opacity: 0.7; font-weight: bold; letter-spacing: 1px;">Média Performance</span>
@@ -136,8 +168,8 @@
                 </a>
             {% endfor %}
         </div>
-    </div>
-    {% endif %}
+    </div> 
+    {% endif %} 
 
     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-left: 4px solid var(--tennis-green); padding-left: 15px; margin-bottom: 20px;">
         <h2 style="color: var(--atp-blue); margin: 0;">Histórico Recente</h2>

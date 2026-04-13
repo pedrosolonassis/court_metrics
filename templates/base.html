@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}Court Metrics{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -19,8 +20,22 @@
         }
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f1f5f9; display: flex; min-height: 100vh; overflow-x: hidden;}
         
-        /* --- ESTILOS DO MENU LATERAL --- */
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; transition: transform 0.3s ease; z-index: 1000;}
+        /* --- ESTILOS DO MENU LATERAL (Corrigidos para persistência) --- */
+        .sidebar { 
+            width: 260px; 
+            background-color: var(--sidebar-bg); 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            position: fixed; /* Fixa na lateral esquerda */
+            top: 0;
+            left: 0;
+            height: 100vh; 
+            overflow-y: auto; 
+            transition: transform 0.3s ease; 
+            z-index: 1000;
+        }
+        
         .sidebar-logo { padding: 30px 20px; display: flex; align-items: center; gap: 15px; font-size: 22px; font-weight: 900; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .sidebar-logo i { color: var(--sidebar-active); font-size: 28px; }
         
@@ -33,12 +48,18 @@
         
         .nav-title { font-size: 11px; text-transform: uppercase; color: #475569; font-weight: 900; letter-spacing: 1px; padding: 15px 25px 5px 25px; margin-top: 10px;}
 
-        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .logout-btn { display: flex; align-items: center; gap: 10px; justify-content: center; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; width: 100%; padding: 12px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.2s; box-sizing: border-box;}
-        .logout-btn:hover { background-color: #ef4444; color: white; }
+        .sidebar-footer { padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); text-align: center; color: var(--sidebar-text); font-size: 12px; font-weight: bold; letter-spacing: 1px; }
 
-        /* --- ÁREA PRINCIPAL --- */
-        .main-content { flex: 1; margin-left: 260px; padding: 30px 40px; box-sizing: border-box; width: calc(100% - 260px); transition: margin 0.3s ease, width 0.3s ease; }
+        /* --- ÁREA PRINCIPAL (Empurrada para a direita pela largura do menu lateral) --- */
+        .main-content { 
+            flex: 1; 
+            margin-left: 260px; /* Garante que o conteúdo não fique debaixo do menu fixo */
+            padding: 30px 40px; 
+            box-sizing: border-box; 
+            width: calc(100% - 260px); 
+            transition: margin 0.3s ease, width 0.3s ease; 
+        }
+        
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
         /* Botão Menu Mobile (Oculto no Desktop) */
@@ -46,63 +67,58 @@
         
         .header-title-area { display: flex; align-items: center; }
         .user-profile { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; cursor: pointer; }
-        .user-avatar { width: 35px; height: 35px; background: var(--atp-blue); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        /* Avatar atualizado para suportar imagem */
+        .user-avatar { 
+            width: 35px; height: 35px; 
+            background: var(--atp-blue); color: white; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; overflow: hidden; 
+        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
         /* Overlay Escuro para Mobile */
         .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.5); z-index: 999; backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.3s ease; }
 
-        /* --- ESTILOS DO MENU DROPDOWN DE PERFIL (LETZPLAY STYLE) --- */
-        .profile-container { position: relative; }
+        /* --- ESTILOS DO MENU DROPDOWN --- */
+        .profile-container { position: relative; z-index: 100; } /* Z-index para sobrepor gráficos */
         
         .dropdown-menu {
             display: none; position: absolute; top: 60px; right: 0; background: white;
-            min-width: 320px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border: 1px solid #e2e8f0; z-index: 1000; overflow: hidden;
+            min-width: 220px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0; overflow: hidden; padding: 8px 0;
         }
         
-        .dropdown-menu.show { display: block; animation: fadeIn 0.2s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown-menu.show { display: block; animation: fadeIn 0.15s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
         .dropdown-item {
-            display: flex; align-items: center; gap: 15px; padding: 15px 20px;
-            text-decoration: none; color: var(--text-slate); transition: 0.2s;
-            border-bottom: 1px solid #f1f5f9;
+            display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+            text-decoration: none; color: #334155; transition: 0.2s; font-size: 14px; font-weight: 500;
         }
-        .dropdown-item:last-child { border-bottom: none; }
-        .dropdown-item:hover { background-color: #f8fafc; }
-
-        .dropdown-icon {
-            width: 40px; height: 40px; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; font-size: 20px; color: white; flex-shrink: 0;
-        }
+        .dropdown-item:hover { background-color: #f8fafc; color: var(--atp-blue); }
+        .dropdown-item i { font-size: 18px; color: #1e293b; }
+        .dropdown-item:hover i { color: var(--atp-blue); }
         
-        /* Cores de Categoria Dropdown */
-        .icon-blue { background-color: #5aa1e3; }
-        .icon-green { background-color: #9ccc65; }
-        .icon-teal { background-color: #4db6ac; }
-        .icon-orange { background-color: #f0ad4e; }
-        .icon-red { background-color: #ff7043; }
-
-        .dropdown-texts h5 { margin: 0 0 3px 0; color: #334155; font-size: 14px; font-weight: 600; }
-        .dropdown-texts p { margin: 0; font-size: 12px; color: #94a3b8; }
+        .dropdown-divider { border-top: 1px solid #e2e8f0; margin: 5px 0; }
 
         /* =======================================================
            🚀 RESPONSIVIDADE (MAGIA PARA CELULAR)
            ======================================================= */
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); /* Esconde a barra lateral jogando ela para fora da tela */ }
-            .sidebar.show { transform: translateX(0); /* Mostra a barra quando tiver a classe 'show' */ }
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
             
-            .main-content { margin-left: 0; width: 100%; padding: 20px 15px; /* Tira a margem e ajusta os espaços */ }
+            .main-content { margin-left: 0; width: 100%; padding: 20px 15px; }
             
-            .menu-toggle { display: block; /* Mostra o botão hambúrguer */ }
+            .menu-toggle { display: block; }
             
             .user-profile { padding: 5px; gap: 0;}
-            .user-profile > div:first-child { display: none; /* Esconde o nome do usuário, deixa só a bolinha do avatar */ }
+            .user-profile > div:first-child { display: none; }
             
             .top-header { margin-bottom: 20px; }
             .top-header h1 { font-size: 20px !important; }
-            .top-header span { display: none; /* Esconde o subtítulo para economizar espaço */ }
+            .top-header span { display: none; }
             
             .sidebar-overlay.show { display: block; opacity: 1; }
         }
@@ -146,12 +162,19 @@
             <a href="/export" class="nav-item">
                 <i class='bx bx-cloud-download'></i> Exportar CSV
             </a>
+            <a href="/feedback" class="nav-item {% if request.path == '/feedback' %}active{% endif %}">
+                <i class='bx bx-message-square-dots'></i> Feedback
+            </a>
+            <a href="/sobre" class="nav-item {% if request.path == '/sobre' %}active{% endif %}">
+                <i class='bx bx-info-circle'></i> Sobre
+            </a>
         </div>
 
         <div class="sidebar-footer">
-            <a href="/logout" class="logout-btn">
-                <i class='bx bx-log-out'></i> Sair da Conta
+            <a href="/privacidade" style="color: var(--sidebar-text); text-decoration: none; font-size: 11px; display: block; margin-bottom: 8px; transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--sidebar-text)'">
+                Política de Privacidade
             </a>
+            Versão 1.0.0
         </div>
     </nav>
 
@@ -180,7 +203,9 @@
                         <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
                     </div>
                     <div class="user-avatar">
-                        {% if session.first_name %}
+                        {% if session.profile_pic %}
+                            <img src="{{ url_for('static', filename=session.profile_pic) }}" alt="Foto de Perfil">
+                        {% elif session.first_name %}
                             {{ session.first_name[0]|upper }}
                         {% elif session.username %}
                             {{ session.username[0]|upper }}
@@ -192,53 +217,12 @@
 
                 <div class="dropdown-menu" id="profileDropdown">
                     <a href="/perfil" class="dropdown-item">
-                        <div class="dropdown-icon icon-blue"><i class='bx bx-user'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Perfil e suas informações</h5>
-                            <p>Altere seu nome, perfil, email, telefone, ...</p>
-                        </div>
+                        <i class='bx bx-user'></i> Meu Perfil
                     </a>
-                    <a href="/estilo" class="dropdown-item">
-                        <div class="dropdown-icon icon-blue"><i class='bx bx-grid-alt'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Informações sobre meu jogo</h5>
-                            <p>Habilite esportes e diga seu estilo de jogo</p>
-                        </div>
-                    </a>
-                    <a href="/horarios" class="dropdown-item">
-                        <div class="dropdown-icon icon-green"><i class='bx bx-calendar'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Preferências de horário</h5>
-                            <p>Configure os horários da sua disponibilidade</p>
-                        </div>
-                    </a>
-                    <a href="/notificacoes" class="dropdown-item">
-                        <div class="dropdown-icon icon-teal"><i class='bx bx-bell'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Preferências de notificação</h5>
-                            <p>Selecione quais e como quer recebê-las</p>
-                        </div>
-                    </a>
-                    <a href="/privacidade" class="dropdown-item">
-                        <div class="dropdown-icon icon-orange"><i class='bx bxs-lock-alt'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Privacidade</h5>
-                            <p>Configure quem pode ver suas informações</p>
-                        </div>
-                    </a>
-                    <a href="/senha" class="dropdown-item">
-                        <div class="dropdown-icon icon-orange"><i class='bx bx-key'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Alterar minha senha</h5>
-                            <p>Altere sua senha e mantenha ela sempre segura</p>
-                        </div>
-                    </a>
-                    <a href="/excluir" class="dropdown-item">
-                        <div class="dropdown-icon icon-red"><i class='bx bxs-user-x'></i></div>
-                        <div class="dropdown-texts">
-                            <h5>Excluir minha conta</h5>
-                            <p>Sua conta será excluída e não será possível recuperá-la</p>
-                        </div>
+                    
+                    <div class="dropdown-divider"></div>
+                    <a href="/logout" class="dropdown-item" style="color: #ef4444;">
+                        <i class='bx bx-log-out' style="color: #ef4444;"></i> Sair da Conta
                     </a>
                 </div>
             </div>
@@ -248,6 +232,7 @@
         {% endblock %}
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script>
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.getElementById('sidebar');
@@ -258,22 +243,17 @@
             overlay.classList.toggle('show');
         }
 
-        // Abre o menu ao clicar no hambúrguer
         menuToggle.addEventListener('click', toggleMenu);
-
-        // Fecha o menu ao clicar na parte escura (overlay)
         overlay.addEventListener('click', toggleMenu);
 
-        // Lógica do Menu Dropdown de Perfil
         const profileBtn = document.getElementById('profileBtn');
         const profileDropdown = document.getElementById('profileDropdown');
 
         profileBtn.addEventListener('click', function(e) {
-            e.stopPropagation(); // Impede que o clique se propague e feche imediatamente
+            e.stopPropagation();
             profileDropdown.classList.toggle('show');
         });
 
-        // Fecha o dropdown se o usuário clicar em qualquer outro lugar da tela
         window.addEventListener('click', function(e) {
             if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
                 profileDropdown.classList.remove('show');
