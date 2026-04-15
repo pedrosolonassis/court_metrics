@@ -122,6 +122,32 @@
             
             .sidebar-overlay.show { display: block; opacity: 1; }
         }
+
+        /* --- ESTILOS DO SINO DE NOTIFICAÇÃO --- */
+        .notification-container { position: relative; z-index: 101; margin-right: 10px; }
+        .notification-btn { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s; position: relative;}
+        .notification-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+        .notification-btn i { font-size: 22px; color: var(--atp-blue); }
+        
+        .notification-badge { position: absolute; top: -2px; right: -2px; background: #ef4444; color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 2px solid white; }
+
+        .notif-menu { width: 340px; right: -20px; top: 55px; padding: 0; } /* reaproveita as classes do dropdown-menu */
+        .notif-header { padding: 15px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .notif-header h4 { margin: 0; font-size: 14px; color: var(--atp-blue); text-transform: uppercase; letter-spacing: 0.5px;}
+        .notif-header .badge { background: #fee2e2; color: #ef4444; font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: bold; }
+        
+        .notif-list { max-height: 320px; overflow-y: auto; }
+        .notif-item { display: flex; gap: 15px; padding: 15px 20px; border-bottom: 1px solid #f1f5f9; text-decoration: none; transition: 0.2s; align-items: flex-start; }
+        .notif-item:hover { background: #f8fafc; }
+        .notif-item:last-child { border-bottom: none; }
+        
+        .notif-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .notif-content h5 { margin: 0 0 4px 0; font-size: 13px; color: var(--atp-blue); }
+        .notif-content p { margin: 0; font-size: 12px; color: #64748b; line-height: 1.5; }
+        
+        .notif-footer { padding: 12px; text-align: center; border-top: 1px solid #e2e8f0; background: #f8fafc; }
+        .notif-footer a { font-size: 12px; color: var(--atp-blue); text-decoration: none; font-weight: bold; }
+
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -181,49 +207,71 @@
     <main class="main-content">
         <header class="top-header">
             <div class="header-title-area">
-                <button class="menu-toggle" id="menuToggle">
-                    <i class='bx bx-menu'></i>
-                </button>
+                <button class="menu-toggle" id="menuToggle"><i class='bx bx-menu'></i></button>
                 <div>
                     <h1 style="margin: 0; color: var(--atp-blue); font-size: 24px;">{% block page_title %}Visão Geral{% endblock %}</h1>
                     <span style="color: var(--text-slate); font-size: 14px;">{% block page_subtitle %}Acompanhe sua evolução na quadra.{% endblock %}</span>
                 </div>
             </div>
             
-            <div class="profile-container">
-                <div class="user-profile" id="profileBtn">
-                    <div style="text-align: right;">
-                        <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">
-                            {% if session.first_name and session.last_name %}
-                                {{ session.first_name }} {{ session.last_name }}
-                            {% else %}
-                                {{ session.username }}
-                            {% endif %}
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
-                    </div>
-                    <div class="user-avatar">
-                        {% if session.profile_pic %}
-                            <img src="{{ url_for('static', filename=session.profile_pic) }}" alt="Foto de Perfil">
-                        {% elif session.first_name %}
-                            {{ session.first_name[0]|upper }}
-                        {% elif session.username %}
-                            {{ session.username[0]|upper }}
-                        {% else %}
-                            U
+            <div style="display: flex; align-items: center;">
+                <div class="notification-container">
+                    <div class="notification-btn" id="notifBtn">
+                        <i class='bx bx-bell'></i>
+                        {% if notifications|length > 0 %}
+                            <span class="notification-badge">{{ notifications|length }}</span>
                         {% endif %}
+                    </div>
+
+                    <div class="dropdown-menu notif-menu" id="notifDropdown">
+                        <div class="notif-header">
+                            <h4>Notificações</h4>
+                            <span class="badge">{{ notifications|length }} Novas</span>
+                        </div>
+                        <div class="notif-list">
+                            {% for n in notifications %}
+                            <a href="/read_notif/{{ n['id'] }}" class="notif-item">
+                                <div class="notif-icon" style="background-color: {{ n['color'] }}15; color: {{ n['color'] }};">
+                                    <i class='bx {{ n['icon'] }}'></i>
+                                </div>
+                                <div class="notif-content">
+                                    <h5>{{ n['title'] }}</h5>
+                                    <p>{{ n['text'] }}</p>
+                                </div>
+                            </a>
+                            {% else %}
+                            <div style="padding: 25px 20px; text-align: center; color: #94a3b8; font-size: 13px;">
+                                Tudo limpo por aqui! Nenhuma nova notificação.
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="notif-footer">
+                            <a href="/read_all_notifs">Marcar todas como lidas</a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="dropdown-menu" id="profileDropdown">
-                    <a href="/perfil" class="dropdown-item">
-                        <i class='bx bx-user'></i> Meu Perfil
-                    </a>
-                    
-                    <div class="dropdown-divider"></div>
-                    <a href="/logout" class="dropdown-item" style="color: #ef4444;">
-                        <i class='bx bx-log-out' style="color: #ef4444;"></i> Sair da Conta
-                    </a>
+                <div class="profile-container">
+                    <div class="user-profile" id="profileBtn">
+                        <div style="text-align: right;">
+                            <div style="font-size: 13px; font-weight: bold; color: var(--atp-blue);">
+                                {% if session.first_name and session.last_name %} {{ session.first_name }} {{ session.last_name }} {% else %} {{ session.username }} {% endif %}
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-slate);">Conta Ativa</div>
+                        </div>
+                        <div class="user-avatar">
+                            {% if session.profile_pic %}<img src="{{ url_for('static', filename=session.profile_pic) }}" alt="Foto">
+                            {% elif session.first_name %}{{ session.first_name[0]|upper }}
+                            {% elif session.username %}{{ session.username[0]|upper }}
+                            {% else %}U{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="dropdown-menu" id="profileDropdown">
+                        <a href="/perfil" class="dropdown-item"><i class='bx bx-user'></i> Meu Perfil</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="/logout" class="dropdown-item" style="color: #ef4444;"><i class='bx bx-log-out' style="color: #ef4444;"></i> Sair da Conta</a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -254,11 +302,25 @@
             profileDropdown.classList.toggle('show');
         });
 
-        window.addEventListener('click', function(e) {
-            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
-                profileDropdown.classList.remove('show');
+        const notifBtn = document.getElementById('notifBtn');
+        const notifDropdown = document.getElementById('notifDropdown');
+
+        notifBtn.addEventListener('click', function(e) { 
+            e.stopPropagation(); 
+            notifDropdown.classList.toggle('show'); 
+            profileDropdown.classList.remove('show'); // Fecha o de perfil se estiver aberto
+        });
+
+        // Atualiza a função de clique na tela para fechar os menus
+        window.addEventListener('click', function(e) { 
+            if (!profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) { 
+                profileDropdown.classList.remove('show'); 
+            }
+            if (!notifBtn.contains(e.target) && !notifDropdown.contains(e.target)) { 
+                notifDropdown.classList.remove('show'); 
             }
         });
+        
     </script>
 
     {% block extra_js %}{% endblock %}

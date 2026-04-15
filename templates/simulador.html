@@ -1,79 +1,147 @@
 {% extends 'base.html' %}
 
-{% block title %}Simulador IA - Court Metrics{% endblock %}
+{% block title %}Oráculo IA - Court Metrics{% endblock %}
 {% block page_title %}Oráculo (IA Predição){% endblock %}
 {% block page_subtitle %}Simule cenários e veja sua probabilidade matemática de vitória.{% endblock %}
 
 {% block extra_css %}
 <style>
-    .card-ia { background: white; padding: 30px; border-radius: 16px; border-top: 5px solid #8b5cf6; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.1); margin-bottom: 25px; }
-    .form-group { margin-bottom: 20px; }
-    .form-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-slate); margin-bottom: 8px; text-transform: uppercase; }
-    .form-control { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: bold;}
+    .sim-container { background: white; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); max-width: 800px; margin: 0 auto; }
+    .sim-header { border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 25px; }
+    .sim-header h3 { margin: 0; color: #6d28d9; display: flex; align-items: center; gap: 10px; font-size: 20px;}
+    .sim-header p { color: #64748b; font-size: 14px; margin-top: 10px; line-height: 1.5;}
     
-    .btn-ia { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 10px rgba(109, 40, 217, 0.3);}
-    .btn-ia:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(109, 40, 217, 0.5);}
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+    .form-control { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 500; box-sizing: border-box; }
+    .form-control:focus { border-color: #6d28d9; background: white; box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1); }
+    
+    /* Sliders Mentais Específicos para a IA (Roxos) */
+    .range-slider-container { display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
+    .range-slider-container input[type="range"] { flex: 1; accent-color: #6d28d9; }
+    .range-val { font-size: 18px; font-weight: 900; color: #6d28d9; min-width: 20px; text-align: center; }
 
-    .result-box { background: #0f172a; padding: 40px; border-radius: 16px; text-align: center; color: white; margin-top: 30px; position: relative; overflow: hidden; border: 1px solid #1e293b;}
-    .prob-value { font-size: 64px; font-weight: 900; background: -webkit-linear-gradient(#a78bfa, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .prob-label { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-top: -10px; display: block; }
+    /* Sliders de Winners e Erros (Verde e Vermelho) */
+    .slider-win { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #dcfce7; outline: none; margin-top: 15px;}
+    .slider-win::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #16a34a; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
     
-    .alerta-ia { background: #fee2e2; color: #b91c1c; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 14px; text-align: center; border: 1px solid #fca5a5;}
+    .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
+    .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+
+    .btn-submit { background: #6d28d9; color: white; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; transition: 0.2s; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .btn-submit:hover { background: #5b21b6; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(109,40,217,0.2); }
+
+    .result-box { margin-top: 30px; padding: 30px; border-radius: 12px; text-align: center; border: 2px dashed #cbd5e1; background: #f8fafc; animation: fadeIn 0.5s ease; }
+    .result-title { font-size: 16px; color: #64748b; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;}
+    .result-pct { font-size: 64px; font-weight: 900; line-height: 1; margin-bottom: 10px; }
+    .result-desc { font-size: 14px; color: #475569; }
+
+    .error-box { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 20px; border-radius: 12px; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: 500;}
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto;">
-    
+<div class="sim-container">
+    <div class="sim-header">
+        <h3><i class='bx bx-test-tube'></i> Monte seu Cenário</h3>
+        <p>A Inteligência Artificial vai analisar todo o seu histórico passado usando <em>Machine Learning</em> (Regressão Logística) para calcular sua chance de vitória neste cenário específico, unindo técnica e mentalidade.</p>
+    </div>
+
     {% if erro_dados %}
-        <div class="alerta-ia">
-            ⚠️ <strong>Calibração Necessária:</strong> {{ erro_dados }}
+        <div class="error-box">
+            <i class='bx bx-error-circle' style="font-size: 24px;"></i>
+            {{ erro_dados }}
         </div>
-    {% else %}
-        
-        <div class="card-ia">
-            <h3 style="margin-top: 0; color: #6d28d9;">🧪 Monte seu Cenário</h3>
-            <p style="color: var(--text-slate); font-size: 14px; margin-bottom: 25px;">A Inteligência Artificial vai analisar todo o seu histórico passado usando <em>Machine Learning</em> (Regressão Logística) para calcular sua chance de vitória neste cenário específico.</p>
-            
-            <form method="POST">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="form-group">
-                        <label class="form-label">Superfície do Jogo</label>
-                        <select name="surface" class="form-control">
-                            <option value="Quadra Dura">Quadra Dura (Rápida)</option>
-                            <option value="Saibro">Saibro (Terra Batida)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Seu Rating Alvo (0 a 10)</label>
-                        <input type="number" step="0.1" name="rating" class="form-control" placeholder="Ex: 7.5" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Meta de Winners</label>
-                        <input type="number" name="winners" class="form-control" placeholder="Quantos winners pretende bater?" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Limite de Erros N.F.</label>
-                        <input type="number" name="erros" class="form-control" placeholder="Quantos erros pretende cometer?" required>
-                    </div>
-                </div>
-                <button type="submit" class="btn-ia">🧠 Calcular Probabilidade com IA</button>
-            </form>
-        </div>
-
-        {% if probabilidade is defined %}
-            <div class="result-box">
-                <div class="prob-value">{{ probabilidade }}%</div>
-                <span class="prob-label">Chance Matemática de Vitória</span>
-                
-                <p style="color: #cbd5e1; font-size: 14px; margin-top: 25px; line-height: 1.6;">
-                    Se você jogar em <strong>{{ surface }}</strong> mantendo um nível técnico de <strong>{{ rating }}</strong>, 
-                    o algoritmo calcula que você vencerá aproximadamente {{ probabilidade|int }} a cada 100 partidas idênticas.
-                </p>
-                <a href="/simulador" style="color: #a78bfa; text-decoration: none; font-size: 13px; font-weight: bold; margin-top: 15px; display: inline-block;">⬅ Simular Novo Cenário</a>
-            </div>
-        {% endif %}
-
     {% endif %}
+
+    <form method="POST" action="/simulador">
+        
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Superfície do Jogo</label>
+                <select name="surface" class="form-control" required>
+                    <option value="Quadra Dura" {% if surface == 'Quadra Dura' %}selected{% endif %}>Quadra Dura (Rápida)</option>
+                    <option value="Saibro" {% if surface == 'Saibro' %}selected{% endif %}>Saibro (Terra Batida)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Seu Rating Alvo (0 a 10)</label>
+                <input type="number" step="0.1" min="0" max="10" name="rating" class="form-control" required placeholder="Ex: 7.5" value="{{ rating if rating else '' }}">
+            </div>
+        </div>
+
+        <div class="sim-header" style="border: none; padding-bottom: 0; margin-bottom: 15px; margin-top: 15px;">
+            <h3 style="font-size: 16px; color: #002855;"><i class='bx bx-crosshair'></i> Saldo Tático (Agressividade)</h3>
+        </div>
+
+        <div class="grid-2">
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                <h4 style="color: #16a34a; margin: 0 0 15px 0;">🎾 Winners: <span id="win_val" style="font-size: 28px; color: #15803d; margin-left: 5px;">{{ request.form.get('winners', 0) }}</span></h4>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
+                    <span>0: Nenhum</span>
+                    <span>10: Chuva de Winner</span>
+                </div>
+                <input type="range" name="winners" id="inp_winners" min="0" max="10" value="{{ request.form.get('winners', 0) }}" class="slider-win" oninput="document.getElementById('win_val').innerText = this.value">
+            </div>
+
+            <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
+                <h4 style="color: #dc2626; margin: 0 0 15px 0;">⚠️ Erros N.F.: <span id="err_val" style="font-size: 28px; color: #b91c1c; margin-left: 5px;">{{ request.form.get('erros', 0) }}</span></h4>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; font-weight: bold; padding: 0 5px;">
+                    <span>0: Fui uma Parede</span>
+                    <span>10: Errei muito</span>
+                </div>
+                <input type="range" name="erros" id="inp_errors" min="0" max="10" value="{{ request.form.get('erros', 0) }}" class="slider-err" oninput="document.getElementById('err_val').innerText = this.value">
+            </div>
+        </div>
+
+        <div class="sim-header" style="border: none; padding-bottom: 0; margin-bottom: 15px; margin-top: 25px;">
+            <h3 style="font-size: 16px; color: #002855;"><i class='bx bx-brain'></i> Projeção Mental</h3>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Foco Esperado (1 a 5)</label>
+                <div class="range-slider-container">
+                    <input type="range" name="focus" min="1" max="5" value="{{ focus if focus else 3 }}" oninput="this.nextElementSibling.innerText = this.value">
+                    <span class="range-val">{{ focus if focus else 3 }}</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Resiliência Esperada (1 a 5)</label>
+                <div class="range-slider-container">
+                    <input type="range" name="resilience" min="1" max="5" value="{{ resilience if resilience else 3 }}" oninput="this.nextElementSibling.innerText = this.value">
+                    <span class="range-val">{{ resilience if resilience else 3 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit"><i class='bx bx-brain'></i> Calcular Probabilidade com IA</button>
+    </form>
+
+    {% if probabilidade is defined %}
+        <div class="result-box">
+            <div class="result-title">Sua Probabilidade de Vitória</div>
+            
+            {% set color = '#ef4444' %}
+            {% if probabilidade >= 75 %} {% set color = '#10b981' %}
+            {% elif probabilidade >= 50 %} {% set color = '#f59e0b' %}
+            {% endif %}
+            
+            <div class="result-pct" style="color: {{ color }};">{{ probabilidade }}%</div>
+            
+            <div class="result-desc">
+                {% if probabilidade >= 80 %}
+                    <span style="color: #10b981; font-weight: bold;">Cenário Altamente Favorável!</span><br>Se você mantiver a agressividade controlada e esse nível de foco, o jogo está nas suas mãos.
+                {% elif probabilidade >= 50 %}
+                    <span style="color: #f59e0b; font-weight: bold;">Jogo Parelho!</span><br>A técnica está equilibrada. A sua resiliência mental (Nota {{ focus }}) vai ditar o ritmo desse jogo.
+                {% else %}
+                    <span style="color: #ef4444; font-weight: bold;">Cenário Desfavorável.</span><br>Historicamente, essa combinação de superfície e mentalidade não traz bons resultados. Revise sua tática ou aumente seu foco esperado.
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
 </div>
 {% endblock %}

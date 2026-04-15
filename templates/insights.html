@@ -8,12 +8,30 @@
 <style>
     .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
     .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;}
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px;}
     .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 25px;}
+    
+    @media (max-width: 768px) {
+        .grid-3 { grid-template-columns: 1fr; }
+    }
+
     .stat-val { font-size: 36px; font-weight: 900; }
     .win-color { color: #10b981; } .loss-color { color: #ef4444; }
     .chart-container { position: relative; height: 180px; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 15px;}
     .chart-container-large { position: relative; height: 280px; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 15px;}
     .filter-select { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; color: var(--atp-blue); font-weight: bold; background: #f8fafc; cursor: pointer; }
+
+    /* Estilos da Seção Mental */
+    .compare-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px;}
+    .stat-win { color: #10b981; font-weight: 900; font-size: 32px; display: flex; flex-direction: column; width: 40%; text-align: center;}
+    .stat-loss { color: #ef4444; font-weight: 900; font-size: 32px; display: flex; flex-direction: column; width: 40%; text-align: center;}
+    .stat-label-small { font-size: 10px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
+    .vs-badge { background: #f1f5f9; color: #cbd5e1; font-size: 16px; font-weight: 900; padding: 6px 10px; border-radius: 12px; }
+
+    .mental-bar-bg { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+    .mental-bar-fill { height: 100%; border-radius: 4px; }
+    .fill-win { background-color: #10b981; }
+    .fill-loss { background-color: #ef4444; }
 </style>
 {% endblock %}
 
@@ -55,7 +73,89 @@
         </div>
     </div>
 
-    <h3 style="color: var(--atp-blue); margin-bottom: 15px;">Mentalidade (Clutch Time)</h3>
+    <h3 style="color: #6d28d9; margin-bottom: 15px; margin-top: 30px;"><i class='bx bx-brain'></i> Impacto Mental no Jogo</h3>
+    <div class="grid-2" style="margin-bottom: {% if stats.avg_focus_loss < stats.avg_focus_win - 1 or stats.avg_res_loss < stats.avg_res_win - 1 %}15px{% else %}25px{% endif %};">
+        <div class="card" style="border-top: 3px solid #6d28d9;">
+            <h4 style="margin: 0; color: var(--text-slate); text-transform: uppercase; font-size: 13px; text-align: center;">Foco e Concentração (1 a 5)</h4>
+            <div class="compare-row">
+                <div class="stat-win">
+                    {{ stats.avg_focus_win }}
+                    <span class="stat-label-small">Nas Vitórias</span>
+                    <div class="mental-bar-bg"><div class="mental-bar-fill fill-win" style="width: {{ (stats.avg_focus_win / 5) * 100 }}%;"></div></div>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="stat-loss">
+                    {{ stats.avg_focus_loss }}
+                    <span class="stat-label-small">Nas Derrotas</span>
+                    <div class="mental-bar-bg"><div class="mental-bar-fill fill-loss" style="width: {{ (stats.avg_focus_loss / 5) * 100 }}%;"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="border-top: 3px solid #6d28d9;">
+            <h4 style="margin: 0; color: var(--text-slate); text-transform: uppercase; font-size: 13px; text-align: center;">Controle Emocional (1 a 5)</h4>
+            <div class="compare-row">
+                <div class="stat-win">
+                    {{ stats.avg_res_win }}
+                    <span class="stat-label-small">Nas Vitórias</span>
+                    <div class="mental-bar-bg"><div class="mental-bar-fill fill-win" style="width: {{ (stats.avg_res_win / 5) * 100 }}%;"></div></div>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="stat-loss">
+                    {{ stats.avg_res_loss }}
+                    <span class="stat-label-small">Nas Derrotas</span>
+                    <div class="mental-bar-bg"><div class="mental-bar-fill fill-loss" style="width: {{ (stats.avg_res_loss / 5) * 100 }}%;"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if stats.avg_focus_loss < stats.avg_focus_win - 1 or stats.avg_res_loss < stats.avg_res_win - 1 %}
+    <div style="background: #fef2f2; border: 1px dashed #fca5a5; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 13px; color: #991b1b; display: flex; align-items: center; gap: 10px;">
+        <i class='bx bx-error-circle' style="font-size: 24px;"></i>
+        <strong>Alerta do Oráculo:</strong> Seus dados indicam uma queda expressiva no fator mental durante as derrotas. O seu jogo técnico pode estar sendo bloqueado pela falta de controle emocional.
+    </div>
+    {% endif %}
+
+    <h3 style="color: #0ea5e9; margin-bottom: 5px; margin-top: 30px;"><i class='bx bx-trending-up'></i> Resiliência no 1º Set</h3>
+    <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 15px;">A sua capacidade mental de fechar um jogo ganho ou de buscar uma virada (ignora jogos de apenas 1 Set).</p>
+    
+    <div class="grid-3">
+        {% for tipo in ['Ranking', 'Torneio', 'Amistoso'] %}
+            {% set w_w = stats.first_set[tipo].won_match_won %}
+            {% set w_l = stats.first_set[tipo].won_match_lost %}
+            {% set l_w = stats.first_set[tipo].lost_match_won %}
+            {% set l_l = stats.first_set[tipo].lost_match_lost %}
+            
+            {% set total_won_first = w_w + w_l %}
+            {% set conv_rate = ((w_w / total_won_first) * 100)|int if total_won_first > 0 else 0 %}
+            
+            {% set total_lost_first = l_w + l_l %}
+            {% set drop_rate = ((l_l / total_lost_first) * 100)|int if total_lost_first > 0 else 0 %}
+
+            <div class="card" style="border-top: 3px solid #0ea5e9; padding: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: var(--atp-blue); text-align: center; text-transform: uppercase; font-size: 14px;">🎾 {{ tipo }}</h4>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                    <div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 3px;">Se ganhou 1º Set:</div>
+                        <div style="font-size: 22px; font-weight: 900; color: #10b981;">{{ conv_rate }}% <span style="font-size: 10px; color: #94a3b8; font-weight: normal; text-transform: uppercase;">Conversão</span></div>
+                        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">({{ w_w }}V - {{ w_l }}D)</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 3px;">Se perdeu 1º Set:</div>
+                        <div style="font-size: 22px; font-weight: 900; color: #ef4444;">{{ drop_rate }}% <span style="font-size: 10px; color: #94a3b8; font-weight: normal; text-transform: uppercase;">Queda</span></div>
+                        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">({{ l_l }}D - {{ l_w }}V)</div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <h3 style="color: var(--atp-blue); margin-bottom: 15px; margin-top: 30px;">Mentalidade (Clutch Time)</h3>
     <div class="grid-2">
         <div class="card">
             <h4 style="margin: 0 0 5px 0; color: var(--text-slate); text-transform: uppercase; font-size: 13px;">Desempenho em Tie-breaks</h4>
@@ -276,14 +376,8 @@
                 plugins: {
                     tooltip: {
                         callbacks: {
-                            // Limpa o título (mostra só o nome do fundamento)
-                            title: function(context) {
-                                return context[0].label;
-                            },
-                            // Limpa o rótulo (mostra apenas a nota com 1 casa decimal, sem o "(Vitória)" ou nome do dataset)
-                            label: function(context) {
-                                return context.raw.toFixed(1); 
-                            }
+                            title: function(context) { return context[0].label; },
+                            label: function(context) { return context.raw.toFixed(1); }
                         }
                     }
                 }
