@@ -74,6 +74,19 @@ def create_db():
     )
     """)
 
+    # TABELA DE NOTIFICAÇÕES
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        message TEXT,
+        link TEXT,
+        is_read INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )
+    """)
+
     # 3. TABELA DE FEEDBACKS
     c.execute("""
     CREATE TABLE IF NOT EXISTS feedback (
