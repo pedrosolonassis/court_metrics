@@ -67,32 +67,44 @@
         {% for match in matches %}
             <div class="match-card">
                 <div>
-                    <div style="position: absolute; top: 20px; right: 20px; text-align: right;">
-                        <div style="font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">
-                            📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                        <div style="line-height: 1.7; flex: 1; min-width: 0;">
+                            {% if 'Duplas' in match[7] %}
+                                <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👥 vs {{ match[1] }} & {{ match[9] }}</strong>
+                            {% else %}
+                                <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👤 vs {{ match[1] }}</strong>
+                            {% endif %}
+                            
+                            <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] | replace('Quadra Dura', 'Dura') }}</span>
+                            
+                            {% set perf = match[25] %}
+                            {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}
+                            {% elif perf >= 8.0 %}{% set pc, pb, pt = '#047857', '#d1fae5', '#6ee7b7' %}
+                            {% elif perf >= 7.0 %}{% set pc, pb, pt = '#4d7c0f', '#ecfccb', '#bef264' %}
+                            {% elif perf >= 6.0 %}{% set pc, pb, pt = '#c2410c', '#ffedd5', '#fdba74' %}
+                            {% else %}{% set pc, pb, pt = '#b91c1c', '#fee2e2', '#fca5a5' %}{% endif %}
+
+                            <div class="perf-badge" style="background: {{ pb }}; color: {{ pc }}; border-color: {{ pt }}; display: block; width: max-content;">
+                                <span style="font-size: 11px; text-transform: uppercase; opacity: 0.8;">Rating:</span> {{ "%.1f"|format(perf) }}
+                            </div>
                         </div>
-                        <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">{{ match[5] }}</span><br>
-                        <span style="color: var(--atp-blue); font-size: 16px; font-weight: 800;">{{ match[6] }}</span>
-                    </div>
 
-                    <div style="line-height: 1.7; padding-right: 90px;">
-                        {% if 'Duplas' in match[7] %}
-                            <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px;">👥 vs {{ match[1] }} & {{ match[9] }}</strong>
-                        {% else %}
-                            <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px;">👤 vs {{ match[1] }}</strong>
-                        {% endif %}
-                        <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] }}</span>
-                    </div>
-                    
-                    {% set perf = match[25] %}
-                    {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}
-                    {% elif perf >= 8.0 %}{% set pc, pb, pt = '#047857', '#d1fae5', '#6ee7b7' %}
-                    {% elif perf >= 7.0 %}{% set pc, pb, pt = '#4d7c0f', '#ecfccb', '#bef264' %}
-                    {% elif perf >= 6.0 %}{% set pc, pb, pt = '#c2410c', '#ffedd5', '#fdba74' %}
-                    {% else %}{% set pc, pb, pt = '#b91c1c', '#fee2e2', '#fca5a5' %}{% endif %}
-
-                    <div class="perf-badge" style="background: {{ pb }}; color: {{ pc }}; border-color: {{ pt }};">
-                        <span style="font-size: 11px; text-transform: uppercase; opacity: 0.8;">Rating:</span> {{ "%.1f"|format(perf) }}
+                        <div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
+                            <div style="font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">
+                                📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }}
+                            </div>
+                            <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">
+                                {{ match[5] }}
+                            </span>
+                            
+                            {% set clean_score = match[6] | replace(' /', '') | replace('/ ', '') | trim %}
+                            {% if clean_score.endswith('/') %}
+                                {% set clean_score = clean_score[:-1] | trim %}
+                            {% endif %}
+                            <span style="color: var(--atp-blue); font-size: 16px; font-weight: 800; display: block; margin-top: 5px; text-align: right; line-height: 1.3;">
+                                {{ clean_score }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 

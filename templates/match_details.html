@@ -35,10 +35,47 @@
     .atp-score-sets { display: flex; gap: 5px; }
     .atp-set-box { width: 34px; height: 34px; border-radius: 6px; font-size: 20px; font-weight: 900; color: #94a3b8; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; }
     .atp-set-win { color: #15803d; background: #dcfce7; border-color: #86efac; }
+
+    /* --- NOVOS ESTILOS: MENTAL E CLUTCH --- */
+    .mental-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; margin-top: 15px; }
+    @media (max-width: 768px) { .mental-grid { grid-template-columns: 1fr; } }
+    
+    .mental-stat-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+    
+    .mental-bar-container { margin-bottom: 20px; }
+    .mental-bar-container:last-child { margin-bottom: 0; }
+    .mental-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--text-slate); margin-bottom: 8px; text-transform: uppercase; }
+    .mental-bar-bg { width: 100%; height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .mental-bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease-in-out; }
+    
+    .clutch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .clutch-item { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; text-align: center; }
+    .clutch-value { font-size: 28px; font-weight: 900; color: var(--atp-blue); margin-bottom: 5px; }
+    .clutch-label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; }
+    
+    .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .display-tag { padding: 6px 12px; border-radius: 15px; background: #e0f2fe; color: #0284c7; font-size: 12px; font-weight: bold; border: 1px solid #bae6fd; }
 </style>
 {% endblock %}
 
 {% block content %}
+
+{% set v_fh = match[10]|int if match[10] else 0 %}
+{% set v_bh = match[11]|int if match[11] else 0 %}
+{% set v_sq = match[12]|int if match[12] else 0 %}
+{% set v_dv = match[16]|int if match[16] else 0 %}
+{% set v_sl = match[17]|int if match[17] else 0 %}
+{% set v_vl = match[18]|int if match[18] else 0 %}
+{% set v_sm = match[19]|int if match[19] else 0 %}
+{% set v_dp = match[20]|int if match[20] else 0 %}
+{% set v_fw = match[21]|int if match[21] else 0 %}
+{% set v_es = match[22]|int if match[22] else 0 %}
+
+{% set golpes = [(v_fh, 'Forehand'), (v_bh, 'Backhand'), (v_sq, 'Saque'), (v_dv, 'Devolução'), (v_sl, 'Slice'), (v_vl, 'Voleio'), (v_sm, 'Smash'), (v_dp, 'Dropshot'), (v_fw, 'Footwork'), (v_es, 'Estratégia')] %}
+{% set sorted_golpes = golpes|sort(attribute='0', reverse=true) %}
+{% set melhor_golpe = sorted_golpes[0] %}
+{% set pior_golpe = sorted_golpes[-1] %}
+
 <div class="container" style="max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
     
     <div style="margin-bottom: 20px;">
@@ -49,7 +86,7 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
             <div style="flex: 1; max-width: 600px;">
                 <div style="color: #94a3b8; font-weight: bold; font-size: 13px; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-                    📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] }} • {{ match[3] }} • Categoria: {{ match[2] }}
+                    📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] | replace('Quadra Dura', 'Dura') }} • {{ match[3] }} • Categoria: {{ match[2] }}
                     <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}" style="padding: 4px 12px; font-size: 11px;">{{ match[5] }}</span>
                 </div>
 
@@ -118,16 +155,12 @@
             <span>Erros Não Forçados (Pontos Cedidos Gratuitamente)</span>
         </div>
 
-        {% if total_shots > 0 or match[13] > 0 or match[25] > 0 %}
+        {% if melhor_golpe[0] > 0 %}
             <div style="margin-top: 25px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; display: flex; gap: 15px; align-items: center;">
                 <span style="font-size: 32px;">💡</span>
                 <div>
                     <h4 style="margin: 0 0 5px 0; color: var(--atp-blue);">Resumo da Inteligência</h4>
                     <p style="font-size: 14px; color: #475569; margin: 0; line-height: 1.6;">
-                        {% set golpes = [(match[10], 'Forehand'), (match[11], 'Backhand'), (match[12], 'Saque'), (match[16], 'Devolução'), (match[17], 'Slice'), (match[18], 'Voleio'), (match[19], 'Smash'), (match[20], 'Dropshot'), (match[21], 'Footwork'), (match[22], 'Estratégia')] %}
-                        {% set sorted_golpes = golpes|sort(attribute='0', reverse=true) %}
-                        {% set melhor_golpe = sorted_golpes[0] %}
-                        {% set pior_golpe = sorted_golpes[-1] %}
                         {% set saldo = match[23] - match[24] %}
 
                         {% if match[5] == 'Vitória' %}
@@ -155,6 +188,88 @@
         {% endif %}
     </div>
 
+    <div class="content-section">
+        <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">🧠 Análise Mental e Resiliência</h3>
+        
+        <div class="mental-grid">
+            <div class="mental-stat-box">
+                <div class="mental-bar-container">
+                    <div class="mental-label">
+                        <span>Foco e Concentração</span>
+                        <span style="color: var(--atp-blue);">{{ match[30] }}/5</span>
+                    </div>
+                    <div class="mental-bar-bg">
+                        {% set focus_pct = (match[30] / 5) * 100 %}
+                        {% set focus_color = '#ef4444' if match[30] <= 2 else ('#f59e0b' if match[30] == 3 else '#10b981') %}
+                        <div class="mental-bar-fill" style="width: {{ focus_pct }}%; background-color: {{ focus_color }};"></div>
+                    </div>
+                </div>
+                
+                <div class="mental-bar-container">
+                    <div class="mental-label">
+                        <span>Controle Emocional</span>
+                        <span style="color: var(--atp-blue);">{{ match[31] }}/5</span>
+                    </div>
+                    <div class="mental-bar-bg">
+                        {% set res_pct = (match[31] / 5) * 100 %}
+                        {% set res_color = '#ef4444' if match[31] <= 2 else ('#f59e0b' if match[31] == 3 else '#10b981') %}
+                        <div class="mental-bar-fill" style="width: {{ res_pct }}%; background-color: {{ res_color }};"></div>
+                    </div>
+                </div>
+
+                {% if match[35] %}
+                <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                    <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Tags do Jogo:</span>
+                    <div class="tags-container">
+                        {% set tags = (match[35]|string).split(',') %}
+                        {% for tag in tags %}
+                            {% if tag.strip() %}
+                                <span class="display-tag">{{ tag.strip() }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div>
+                <h4 style="margin: 0 0 15px 0; font-size: 13px; color: var(--text-slate); text-transform: uppercase;">Métricas "Clutch"</h4>
+                
+                {% set v_saved = match[32]|int %}
+                {% set v_won = match[33]|int %}
+                {% set v_mom = match[34]|int %}
+
+                {% set dict_saved = {0: 'Não Avaliado', 1: 'Colapso', 2: 'Vulnerável', 3: 'Equilibrado', 4: 'Parede', 5: 'Intransponível'} %}
+                {% set dict_won = {0: 'Não Avaliado', 1: 'Desastre', 2: 'Ineficiente', 3: 'Equilibrado', 4: 'Matador', 5: 'Cirúrgico'} %}
+                {% set dict_mom = {0: 'Não Avaliado', 1: 'Pane Geral', 2: 'Grave', 3: 'Moderado', 4: 'Leve', 5: 'Foco de Aço'} %}
+
+                {% set c_saved = '#64748b' if v_saved == 0 else ('#ef4444' if v_saved <= 2 else ('#f59e0b' if v_saved == 3 else '#10b981')) %}
+                {% set c_won = '#64748b' if v_won == 0 else ('#ef4444' if v_won <= 2 else ('#f59e0b' if v_won == 3 else '#10b981')) %}
+                {% set c_mom = '#64748b' if v_mom == 0 else ('#ef4444' if v_mom <= 2 else ('#f59e0b' if v_mom == 3 else '#10b981')) %}
+
+                <div class="clutch-grid">
+                    <div class="clutch-item">
+                        <div class="clutch-value" style="color: {{ c_saved }};">{{ v_saved if v_saved > 0 else '-' }}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: {{ c_saved }}; margin-bottom: 8px;">{{ dict_saved[v_saved] }}</div>
+                        <div class="clutch-label">BP Salvos (Seu Saque)</div>
+                    </div>
+                    
+                    <div class="clutch-item">
+                        <div class="clutch-value" style="color: {{ c_won }};">{{ v_won if v_won > 0 else '-' }}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: {{ c_won }}; margin-bottom: 8px;">{{ dict_won[v_won] }}</div>
+                        <div class="clutch-label">Quebras (Saque Dele)</div>
+                    </div>
+                    
+                    <div class="clutch-item" style="grid-column: span 2;">
+                        <div class="clutch-value" style="color: {{ c_mom }};">{{ v_mom if v_mom > 0 else '-' }}</div>
+                        <div style="font-size: 12px; font-weight: bold; color: {{ c_mom }}; margin-bottom: 8px;">{{ dict_mom[v_mom] }}</div>
+                        <div class="clutch-label">Apagão (Momentum)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="grid-layout">
         <div class="content-section" style="margin-bottom: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -168,11 +283,6 @@
                 <div style="height: 280px; flex: 1.5; min-width: 280px; display: flex; justify-content: center;">
                     <canvas id="radarChart"></canvas>
                 </div>
-
-                {% set golpes = [(match[10], 'Forehand'), (match[11], 'Backhand'), (match[12], 'Saque'), (match[16], 'Devolução'), (match[17], 'Slice'), (match[18], 'Voleio'), (match[19], 'Smash'), (match[20], 'Dropshot'), (match[21], 'Footwork'), (match[22], 'Estratégia')] %}
-                {% set sorted_golpes = golpes|sort(attribute='0', reverse=true) %}
-                {% set melhor_golpe = sorted_golpes[0] %}
-                {% set pior_golpe = sorted_golpes[-1] %}
 
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 200px;">
                     <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px;">
@@ -218,9 +328,14 @@
                 </div>
             </div>
 
+            {% set val_df = match[15]|int if match[15] else 0 %}
+            {% set df_dict = {0: 'Intocável', 1: 'Controlado', 2: 'Aceitável', 3: 'Preocupante', 4: 'Prejudicial', 5: 'Desastre'} %}
             <div style="background: #fee2e2; border: 1px solid #fca5a5; padding: 15px; border-radius: 10px; text-align: center; margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 13px; font-weight: bold; color: #b91c1c; text-transform: uppercase; letter-spacing: 1px;">⚠️ Duplas Faltas</span>
-                <div style="font-size: 28px; font-weight: 900; color: #dc2626;">{{ match[15] }}</div>
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <span style="font-size: 13px; font-weight: bold; color: #b91c1c; text-transform: uppercase; letter-spacing: 1px;">⚠️ Duplas Faltas</span>
+                    <span style="font-size: 11px; font-weight: bold; color: #ef4444; text-transform: uppercase;">{{ df_dict[val_df] }}</span>
+                </div>
+                <div style="font-size: 28px; font-weight: 900; color: #dc2626;">{{ val_df }}<span style="font-size: 14px; color: #fca5a5;">/5</span></div>
             </div>
         </div>
     </div>
@@ -245,7 +360,7 @@
                 labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
                 datasets: [{
                     label: 'Nível Técnico',
-                    data: [{{ match[10] }}, {{ match[11] }}, {{ match[12] }}, {{ match[16] }}, {{ match[17] }}, {{ match[18] }}, {{ match[19] }}, {{ match[20] }}, {{ match[21] }}, {{ match[22] }}],
+                    data: [{{ match[10] or 0 }}, {{ match[11] or 0 }}, {{ match[12] or 0 }}, {{ match[16] or 0 }}, {{ match[17] or 0 }}, {{ match[18] or 0 }}, {{ match[19] or 0 }}, {{ match[20] or 0 }}, {{ match[21] or 0 }}, {{ match[22] or 0 }}],
                     backgroundColor: 'rgba(196, 255, 14, 0.15)', borderColor: '#a3e635', borderWidth: 3, pointBackgroundColor: '#002855', pointRadius: 4, pointHoverRadius: 6
                 }]
             },
@@ -262,10 +377,10 @@
             data: {
                 labels: ['Acertos', 'Erros'],
                 datasets: [{
-                    data: [{{ match[13] }}, {{ 10 - match[13] }}],
+                    data: [{{ match[13] or 0 }}, {{ 10 - (match[13] or 0) }}],
                     backgroundColor: ['#0ea5e9', '#f1f5f9'],
                     borderWidth: 0,
-                    cutout: '80%' // Espessura da rosca
+                    cutout: '80%' 
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false, animation: { animateScale: true, animateRotate: true }, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
@@ -277,7 +392,7 @@
             data: {
                 labels: ['Acertos', 'Erros'],
                 datasets: [{
-                    data: [{{ match[14] }}, {{ 10 - match[14] }}],
+                    data: [{{ match[14] or 0 }}, {{ 10 - (match[14] or 0) }}],
                     backgroundColor: ['#f59e0b', '#f1f5f9'],
                     borderWidth: 0,
                     cutout: '80%'
