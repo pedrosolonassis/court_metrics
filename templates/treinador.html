@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dossiê Tático IA - Court Metrics{% endblock %}
+{% block page_title %}Coach IA (Análise de Padrões){% endblock %}
+{% block page_subtitle %}Algoritmo de varredura técnica baseado nos dados reais do seu estilo e nível de jogo.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ia-header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .filter-btn { padding: 8px 15px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: bold; cursor: pointer; transition: 0.2s; text-decoration: none; font-size: 13px;}
+    .filter-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+    
+    .perfil-box { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 30px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; gap: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15);}
+    .perfil-icon { background: #ffffff; width: 70px; height: 70px; border-radius: 16px; display: flex; justify-content: center; align-items: center; font-size: 36px; color: #0f172a; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+    
+    .grid-ia { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    
+    .quadrante { background: white; padding: 25px; border-radius: 16px; border-top: 4px solid #cbd5e1; box-shadow: 0 4px 15px rgba(0,0,0,0.04); height: 100%;}
+    .q-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;}
+    .q-header i { font-size: 22px; }
+    .q-header h3 { margin: 0; font-size: 16px; color: #0f172a; text-transform: uppercase; letter-spacing: 1px;}
+    
+    .q-blue { border-top-color: #3b82f6; } .q-blue i { color: #3b82f6; }
+    .q-green { border-top-color: #10b981; } .q-green i { color: #10b981; }
+    .q-red { border-top-color: #ef4444; } .q-red i { color: #ef4444; }
+    .q-purple { border-top-color: #8b5cf6; } .q-purple i { color: #8b5cf6; }
+
+    .bullet-list { padding-left: 0; list-style: none; margin: 0; }
+    .bullet-list li { padding: 10px 0 10px 25px; border-bottom: 1px dashed #e2e8f0; color: #334155; font-size: 14.5px; line-height: 1.6; position: relative;}
+    .bullet-list li:last-child { border-bottom: none; }
+    .bullet-list li::before { content: '■'; color: #cbd5e1; position: absolute; left: 0; font-size: 10px; top: 15px; }
+    
+    .alerta-ia { background: #fee2e2; color: #b91c1c; padding: 20px; border-radius: 12px; font-weight: bold; font-size: 15px; text-align: center; border: 1px solid #fca5a5;}
+
+    @media (max-width: 768px) {
+        .grid-ia { grid-template-columns: 1fr; }
+        .ia-header { flex-direction: column; gap: 15px; align-items: flex-start;}
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+    {% if erro %}
+        <div class="alerta-ia">
+            <i class='bx bx-lock' style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
+            {{ erro }}
+        </div>
+    {% else %}
+        
+        <div class="ia-header">
+            <div>
+                <h3 style="margin: 0; color: #0f172a; font-size: 16px;">
+                    {% if selected_opponent %}
+                        Dossiê Anti-{{ selected_opponent }} (Últimas {{ limit }})
+                    {% else %}
+                        Raio-X Global (Últimas {{ limit }} partidas)
+                    {% endif %}
+                </h3>
+                <span style="font-size: 12px; color: #64748b;">Nível Enfrentado: <strong>{{ relatorio.nivel_adversarios }}</strong></span>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <a href="?limit=3{% if selected_opponent %}&opponent={{ selected_opponent }}{% endif %}" class="filter-btn {% if limit == 3 %}active{% endif %}">3 Jogos</a>
+                <a href="?limit=5{% if selected_opponent %}&opponent={{ selected_opponent }}{% endif %}" class="filter-btn {% if limit == 5 %}active{% endif %}">5 Jogos</a>
+                <a href="?limit=10{% if selected_opponent %}&opponent={{ selected_opponent }}{% endif %}" class="filter-btn {% if limit == 10 %}active{% endif %}">10 Jogos</a>
+                <a href="?limit=15{% if selected_opponent %}&opponent={{ selected_opponent }}{% endif %}" class="filter-btn {% if limit == 15 %}active{% endif %}">15 Jogos</a>
+
+                <form method="GET" style="margin: 0; padding: 0; background: none; border: none; box-shadow: none; display: flex; height: 100%;">
+                    <input type="hidden" name="limit" value="{{ limit }}">
+                    <select name="opponent" onchange="this.form.submit()" class="filter-btn {% if selected_opponent %}active{% endif %}" style="margin: 0; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; padding-right: 30px; background-image: url('data:image/svg+xml;utf8,<svg fill=%22{% if selected_opponent %}%23ffffff{% else %}%23475569{% endif %}%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/><path d=%22M0 0h24v24H0z%22 fill=%22none%22/></svg>'); background-repeat: no-repeat; background-position: right 5px center;">
+                        <option value="" style="color: #475569; background: white;">Análise Global</option>
+                        {% for opp in unique_opponents %}
+                            <option value="{{ opp }}" style="color: #475569; background: white;" {% if selected_opponent == opp %}selected{% endif %}>vs {{ opp }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="perfil-box">
+            <div class="perfil-icon">
+                <i class='bx {{ relatorio.icone }}'></i>
+            </div>
+            <div>
+                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; margin-bottom: 5px;">
+                    {% if selected_opponent %}Seu DNA contra {{ selected_opponent }}{% else %}Seu DNA de Quadra{% endif %}
+                </div>
+                <h2 style="margin: 0 0 8px 0; font-size: 24px; color: #ffffff;">{{ relatorio.estilo }}</h2>
+                <p style="margin: 0; color: #cbd5e1; font-size: 15px; line-height: 1.5;">{{ relatorio.desc_estilo }}</p>
+            </div>
+        </div>
+
+        <div class="grid-ia">
+            <div class="quadrante q-blue">
+                <div class="q-header">
+                    <i class='bx bx-radar'></i>
+                    <h3>Análise de Desempenho</h3>
+                </div>
+                <ul class="bullet-list">
+                    {% for item in relatorio.analise %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="quadrante q-green">
+                <div class="q-header">
+                    <i class='bx bx-trending-up'></i>
+                    <h3>Força Motriz (Pontos Fortes)</h3>
+                </div>
+                <ul class="bullet-list">
+                    {% for item in relatorio.fortes %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="quadrante q-red">
+                <div class="q-header">
+                    <i class='bx bx-shield-x'></i>
+                    <h3>Riscos & O que Evitar</h3>
+                </div>
+                <ul class="bullet-list">
+                    {% for item in relatorio.evitar %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="quadrante q-purple">
+                <div class="q-header">
+                    <i class='bx bx-map-alt'></i>
+                    <h3>Plano Tático p/ Próximo Jogo</h3>
+                </div>
+                <ul class="bullet-list">
+                    {% for item in relatorio.estrategias %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        {% if relatorio.super_modulos %}
+        <div style="margin-top: 50px; padding-top: 35px; border-top: 2px dashed #cbd5e1;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                <div style="background: #0f172a; color: white; width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);">
+                    🧪
+                </div>
+                <h3 style="margin: 0; color: #0f172a; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">Laboratório de Alta Performance</h3>
+            </div>
+            
+            <div class="grid-ia">
+                {% for modulo in relatorio.super_modulos %}
+                <div style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); position: relative; overflow: hidden; border: 1px solid #e2e8f0; display: flex; flex-direction: column;">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: {{ modulo.cor }};"></div>
+                    
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px; margin-top: 5px;">
+                        <div style="width: 50px; height: 50px; border-radius: 12px; background: {{ modulo.cor }}15; color: {{ modulo.cor }}; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;">
+                            <i class='bx {{ modulo.icone }}'></i>
+                        </div>
+                        <h4 style="margin: 0; font-size: 17px; color: #1e293b; font-weight: 700;">{{ modulo.nome }}</h4>
+                    </div>
+                    <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6; flex-grow: 1;">
+                        {{ modulo.texto }}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -1,44 +1,106 @@
 {% extends 'base.html' %}
 
 {% block title %}Adversários - Court Metrics{% endblock %}
-{% block page_title %}Dossiê de Adversários{% endblock %}
-{% block page_subtitle %}Selecione um oponente para ver o Head-to-Head detalhado.{% endblock %}
+{% block page_title %}Head-to-Head (H2H){% endblock %}
+{% block page_subtitle %}Seu retrospecto contra cada adversário ou dupla que você já enfrentou.{% endblock %}
 
 {% block extra_css %}
 <style>
-    .rival-card { background: white; padding: 25px; border-radius: 12px; border-left: 5px solid var(--atp-blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; margin-bottom: 15px;}
-    .rival-card:hover { transform: translateX(5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-    .win-rate { font-size: 32px; font-weight: 900; }
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .opp-card {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .opp-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.08);
+        border-color: var(--atp-blue);
+    }
+    .opp-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .opp-avatar { width: 50px; height: 50px; background: var(--atp-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; }
+    .opp-name { font-size: 18px; font-weight: 900; color: var(--atp-blue); margin: 0; word-break: break-word; }
+    
+    .opp-stats { display: flex; justify-content: space-between; text-align: center; margin-bottom: 20px; }
+    .stat-col { flex: 1; }
+    .stat-val { font-size: 24px; font-weight: 900; color: var(--text-slate); }
+    .stat-label { font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; }
+
+    .btn-main { background: #f8fafc; color: var(--atp-blue); border: 1px solid #cbd5e1; text-align: center; text-decoration: none; padding: 12px; border-radius: 8px; font-weight: bold; transition: 0.2s; display: block; }
+    .opp-card:hover .btn-main { background: var(--atp-blue); color: white; border-color: var(--atp-blue); }
+
+    .progress-bg { width: 100%; height: 8px; background: #fee2e2; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+    .progress-fill { height: 100%; background: #10b981; border-radius: 4px; }
 </style>
 {% endblock %}
 
 {% block content %}
-    <div style="max-width: 800px;">
-        <div style="margin-bottom: 20px;">
-            <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
-        </div>
+<div class="container" style="max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
+    <div style="margin-bottom: 25px;">
+        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
+    </div>
 
+    {% if opponents %}
+        <div class="grid-cards">
         {% for opp in opponents %}
-            {% set win_pct = ((opp[2] / opp[1]) * 100)|int %}
-            <a href="/h2h/{{ opp[0] | urlencode }}" class="rival-card">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="width: 45px; height: 45px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                        {% if '&' in opp[0] %}👥{% else %}👤{% endif %}
+            {% set total = opp[1] %}
+            {% set wins = opp[2] %}
+            {% set losses = total - wins %}
+            
+            {% set win_pct = ((wins / total) * 100)|int if total > 0 else 0 %}
+
+            <div class="opp-card">
+                <div>
+                    <div class="opp-header">
+                        <div class="opp-avatar">{% if '&' in opp[0] %}👥{% else %}👤{% endif %}</div>
+                        <div>
+                            <h3 class="opp-name">{{ opp[0] }}</h3>
+                        </div>
                     </div>
-                    <div>
-                        <h2 style="margin: 0 0 5px 0; color: var(--atp-blue);">{{ opp[0] }}</h2>
-                        <span style="color: var(--text-slate); font-size: 14px; font-weight: bold;">{{ opp[1] }} Partidas Jogadas</span>
+
+                    <div class="opp-stats">
+                        <div class="stat-col">
+                            <div class="stat-val">{{ total }}</div>
+                            <div class="stat-label">Jogos</div>
+                        </div>
+                        <div class="stat-col">
+                            <div class="stat-val" style="color: #10b981;">{{ wins }}</div>
+                            <div class="stat-label">Vitórias</div>
+                        </div>
+                        <div class="stat-col">
+                            <div class="stat-val" style="color: #ef4444;">{{ losses }}</div>
+                            <div class="stat-label">Derrotas</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: bold;">
+                            <span style="color: #10b981;">{{ win_pct }}% Win</span>
+                            <span style="color: #ef4444;">{{ 100 - win_pct }}% Loss</span>
+                        </div>
+                        <div class="progress-bg">
+                            <div class="progress-fill" style="width: {{ win_pct }}%;"></div>
+                        </div>
                     </div>
                 </div>
-                <div style="text-align: right;">
-                    <div class="win-rate" style="color: {% if win_pct >= 50 %}#10b981{% else %}#ef4444{% endif %};">{{ win_pct }}%</div>
-                    <span style="font-size: 11px; color: var(--text-slate); font-weight: bold; text-transform: uppercase;">Taxa de Vitória</span>
-                </div>
-            </a>
-        {% else %}
-            <div style="background: white; padding: 40px; text-align: center; border-radius: 15px; color: var(--text-slate); border: 1px dashed #cbd5e1;">
-                <p style="font-size: 18px; margin-bottom: 10px;">Nenhum adversário registrado ainda.</p>
+
+                <a href="/h2h/{{ opp[0] | urlencode }}" class="btn-main">
+                    🔍 Ver Análise Completa H2H
+                </a>
             </div>
         {% endfor %}
-    </div>
+        </div>
+    {% else %}
+        <div style="background: white; padding: 40px; text-align: center; border-radius: 15px; color: var(--text-slate); border: 1px dashed #cbd5e1;">
+            <p style="font-size: 18px; margin-bottom: 10px;">Você ainda não registrou partidas contra nenhum adversário.</p>
+            <a href="/new_match" style="background: var(--atp-blue); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Registrar Primeira Partida</a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

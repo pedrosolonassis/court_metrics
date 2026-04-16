@@ -11,6 +11,11 @@
     
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .form-group { margin-bottom: 15px; }
+    
+    /* Classe adicionada para flex-box que vai empilhar no mobile */
+    .form-split { display: flex; gap: 10px; }
+    .form-split > div { flex: 1; }
+
     .form-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-slate); margin-bottom: 8px; }
     .form-control { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 500; box-sizing: border-box;}
     .form-control:focus { border-color: #38bdf8; background: white;}
@@ -64,6 +69,22 @@
 
     /* Esconde o input file original */
     #realFileInput { display: none; }
+
+    /* =========================================
+       MEDIA QUERIES PARA MOBILE (Responsividade)
+       ========================================= */
+    @media (max-width: 768px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .form-split { flex-direction: column; gap: 15px; } /* Quebra a linha de altura/peso no mobile */
+        
+        /* Ajustes do Modal Cropper para telas pequenas */
+        .img-container { height: 250px; }
+        
+        .cropper-actions { flex-direction: column; gap: 15px; }
+        .zoom-controls { width: 100%; justify-content: center; gap: 20px; }
+        .btn-zoom { width: 50px; height: 50px; font-size: 24px; } /* Botões maiores para toque fácil */
+        .btn-confirm-crop { width: 100%; padding: 15px; font-size: 16px; } /* Botão largo para fácil alcance */
+    }
 </style>
 {% endblock %}
 
@@ -157,12 +178,12 @@
                         <option value="Duas Mãos" {% if user.backhand_type == 'Duas Mãos' %}selected{% endif %}>Duas Mãos</option>
                     </select>
                 </div>
-                <div class="form-group" style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
+                <div class="form-group form-split">
+                    <div>
                         <label class="form-label">Altura (m)</label>
                         <input type="number" step="0.01" name="height" class="form-control" value="{{ user.height or '' }}" placeholder="Ex: 1.73">
                     </div>
-                    <div style="flex: 1;">
+                    <div>
                         <label class="form-label">Peso (kg)</label>
                         <input type="number" step="0.1" name="weight" class="form-control" value="{{ user.weight or '' }}" placeholder="Ex: 70.5">
                     </div>
@@ -204,7 +225,7 @@
     const imageElement = document.getElementById('imageToCrop');
     const fileInput = document.getElementById('realFileInput');
 
-    // 1. Quando o usuário seleciona um arquivo no PC
+    // 1. Quando o usuário seleciona um arquivo no PC/Celular
     function openCropper(event) {
         const file = event.target.files[0];
         if (file) {

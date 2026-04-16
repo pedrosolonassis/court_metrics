@@ -1,90 +1,136 @@
 {% extends 'base.html' %}
 
-{% block title %}Dossiê Head-to-Head - Court Metrics{% endblock %}
-{% block page_title %}Estatísticas de Adversário{% endblock %}
-{% block page_subtitle %}Sua performance histórica contra este oponente.{% endblock %}
+{% block title %}H2H vs {{ opponent }} - Court Metrics{% endblock %}
+{% block page_title %}Análise de Confronto (H2H){% endblock %}
+{% block page_subtitle %}Histórico detalhado e comparação de performance contra este rival.{% endblock %}
 
 {% block extra_css %}
 <style>
-    .stat-box { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; flex: 1; min-width: 200px; }
-    .val { font-size: 32px; font-weight: 900; margin: 10px 0 5px 0;}
-    .match-row { background: white; padding: 20px; border-radius: 10px; text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.2s; }
-    .match-row:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    /* Header Responsivo com Flex-Wrap */
+    .h2h-header { 
+        background: white; 
+        padding: 30px; 
+        border-radius: 16px; 
+        border-top: 5px solid var(--atp-blue); 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        margin-bottom: 25px;
+        display: flex; 
+        justify-content: space-between; 
+        align-items: flex-start; 
+        flex-wrap: wrap; /* Resolve a sobreposição no mobile */
+        gap: 20px; 
+    }
+
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+    @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
+
+    .stat-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center; }
+    .stat-label { font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; display: block; }
+    .stat-row { display: flex; justify-content: space-around; align-items: center; }
+    .stat-value { font-size: 24px; font-weight: 900; color: var(--atp-blue); }
+    .stat-vs { color: #cbd5e1; font-weight: bold; font-size: 14px; }
+
+    .intelligence-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 25px; display: flex; gap: 20px; align-items: center; }
+    .no-data-msg { background: #f1f5f9; border: 1px dashed #cbd5e1; color: #64748b; padding: 20px; border-radius: 12px; text-align: center; font-size: 14px; }
+
+    .surface-pill { padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+    .pill-dura { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .pill-saibro { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+
+    .match-line { background: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; text-decoration: none; color: inherit; }
+    .match-line:hover { border-color: var(--atp-blue); transform: translateX(5px); }
 </style>
 {% endblock %}
 
 {% block content %}
-{% set wins = matches|selectattr(5, 'equalto', 'Vitória')|list|length %}
-{% set total = matches|length %}
-{% set win_rate = ((wins / total) * 100)|int %}
-
-{% set total_rating = matches|sum(attribute=25) %}
-{% set avg_rating = (total_rating / total)|round(1) %}
-
-{% set total_win = matches|sum(attribute=23) %}
-{% set total_ue = matches|sum(attribute=24) %}
-
-<div class="container" style="max-width: 900px; margin: 0 auto; padding-bottom: 50px;">
-    <a href="/adversarios" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para Adversários</a>
+<div class="container" style="max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
     
-    <div style="background: var(--atp-blue); color: white; padding: 30px; border-radius: 16px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
-        <div>
-            <span style="font-size: 12px; font-weight: bold; opacity: 0.8; letter-spacing: 1px; text-transform: uppercase;">Head-to-Head</span>
-            <h1 style="margin: 5px 0; color: white !important;">Você vs {{ opponent }}</h1>
-            <p style="margin: 0; opacity: 0.9;">{{ total }} Confronto(s) Registrado(s)</p>
-        </div>
-        <div style="text-align: right;">
-            <div style="font-size: 48px; font-weight: 900; color: {% if win_rate >= 50 %}#d1ff00{% else %}#fca5a5{% endif %};">{{ win_rate }}%</div>
-            <span style="font-size: 12px; font-weight: bold; opacity: 0.8; text-transform: uppercase;">Taxa de Vitória</span>
-        </div>
+    <div style="margin-bottom: 20px;">
+        <a href="/adversarios" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para Adversários</a>
     </div>
 
-    <h3 style="color: var(--atp-blue); margin-top: 30px;">⚖️ Sua Performance vs {{ opponent }}</h3>
-    
-    <div style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
-        <div class="stat-box">
-            <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Rating ATP Médio</span>
-            <div class="val" style="color: var(--atp-blue);">{{ avg_rating }}</div>
-            <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[0]) }}</div>
-        </div>
-        <div class="stat-box">
-            <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Winners p/ Jogo</span>
-            <div class="val" style="color: #10b981;">{{ (total_win / total)|round(1) }}</div>
-            <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[1]) }}</div>
-        </div>
-        <div class="stat-box">
-            <span style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Erros Não Forçados</span>
-            <div class="val" style="color: #ef4444;">{{ (total_ue / total)|round(1) }}</div>
-            <div style="font-size: 11px; color: #94a3b8;">Sua Média Geral: {{ "%.1f"|format(career_avg[2]) }}</div>
-        </div>
-    </div>
-
-    <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
-        <h4 style="margin: 0 0 10px 0; color: var(--atp-blue); font-size: 18px;">💡 Inteligência Tática</h4>
-        <p style="color: #475569; line-height: 1.6; margin: 0;">
-            {% if (total_win / total) > career_avg[1] %}
-                Você consegue ser <strong>mais agressivo</strong> contra {{ opponent }} do que o seu normal, gerando mais winners. A tática de forçar o jogo está funcionando.
-            {% else %}
-                Você está gerando <strong>menos winners</strong> contra {{ opponent }} do que a sua média. Provavelmente ele(a) tem uma defesa sólida ou devolve bolas mais pesadas. Foque em construir melhor o ponto antes de atacar.
-            {% endif %}
-            
-            {% if (total_ue / total) > career_avg[2] %}
-                Cuidado: Seu índice de erros não forçados está <strong>acima do seu padrão</strong>. {{ opponent }} pode estar quebrando seu ritmo, talvez forçando você a bater bolas desconfortáveis. Tente usar mais o slice para cadenciar.
-            {% endif %}
-        </p>
-    </div>
-
-    <h3 style="color: var(--atp-blue);">📖 Histórico de Confrontos</h3>
-    <div style="display: flex; flex-direction: column; gap: 15px;">
-        {% for m in matches %}
-            <a href="/match/{{ m[0] }}" class="match-row" style="border-left: 5px solid {% if m[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %};">
-                <div>
-                    <div style="font-size: 12px; color: #94a3b8; font-weight: bold; margin-bottom: 5px;">📅 {{ m[27][8:10] }}/{{ m[27][5:7] }}/{{ m[27][0:4] }} • {{ m[4] }}</div>
-                    <strong style="color: var(--atp-blue); font-size: 18px;">{{ m[6] }}</strong>
+    <div class="h2h-header">
+        <div style="flex: 1; min-width: 250px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="width: 50px; height: 50px; background: var(--atp-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">
+                    {% if '&' in opponent %}👥{% else %}👤{% endif %}
                 </div>
-                <div style="font-weight: bold; color: {% if m[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %};">{{ m[5] }}</div>
-            </a>
-        {% endfor %}
+                <div>
+                    <h1 style="margin: 0; color: var(--atp-blue);">vs {{ opponent }}</h1>
+                    <span style="font-size: 14px; color: var(--text-slate); font-weight: bold;">Histórico de {{ matches|length }} partidas</span>
+                </div>
+            </div>
+        </div>
+
+        {% set wins = matches|selectattr(5, 'equalto', 'Vitória')|list|length %}
+        <div style="text-align: right; min-width: 150px;">
+            <div style="font-size: 36px; font-weight: 900; color: #10b981;">{{ wins }}V - {{ matches|length - wins }}D</div>
+            <div style="font-size: 12px; font-weight: bold; color: var(--text-slate); text-transform: uppercase;">Aproveitamento de {{ ((wins / matches|length) * 100)|int }}%</div>
+        </div>
     </div>
+
+    <h3 style="color: var(--atp-blue); margin-bottom: 15px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">⚖️ Sua Performance vs Este Rival</h3>
+    <div class="compare-grid">
+        <div class="stat-card">
+            <span class="stat-label">Rating Médio</span>
+            <div class="stat-row">
+                <div class="stat-value" style="color: #94a3b8;">{{ "%.1f"|format(career_avg[0] or 0) }}<br><small style="font-size: 9px;">CARREIRA</small></div>
+                <div class="stat-vs">VS</div>
+                {% set current_avg = (matches|sum(attribute=25) / matches|length) %}
+                <div class="stat-value">{{ "%.1f"|format(current_avg) }}<br><small style="font-size: 9px;">NESTE H2H</small></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Saldo de Winners (W - UE)</span>
+            <div class="stat-row">
+                {% set career_saldo = (career_avg[1] or 0) - (career_avg[2] or 0) %}
+                <div class="stat-value" style="color: #94a3b8;">{{ "%+d"|format(career_saldo|int) }}<br><small style="font-size: 9px;">CARREIRA</small></div>
+                <div class="stat-vs">VS</div>
+                {% set h2h_winners = matches|sum(attribute=23) / matches|length %}
+                {% set h2h_errors = matches|sum(attribute=24) / matches|length %}
+                <div class="stat-value">{{ "%+d"|format((h2h_winners - h2h_errors)|int) }}<br><small style="font-size: 9px;">NESTE H2H</small></div>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="color: var(--atp-blue); margin-bottom: 15px; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">💡 Inteligência Tática</h3>
+    {% if matches|length >= 3 %}
+        <div class="intelligence-box">
+            <span style="font-size: 32px;">🧠</span>
+            <div style="font-size: 15px; color: #475569; line-height: 1.6;">
+                {% if wins / matches|length >= 0.6 %}
+                    Você tem o controle psicológico deste confronto. Sua performance média de <strong>{{ "%.1f"|format(current_avg) }}</strong> indica que seu plano de jogo encaixa bem contra o estilo de {{ opponent }}.
+                {% elif wins / matches|length <= 0.4 %}
+                    Este adversário tem sido um desafio tático. Note que seu saldo de agressividade neste H2H é de <strong>{{ (h2h_winners - h2h_errors)|int }}</strong>. Talvez seja hora de reduzir os riscos e focar em consistência.
+                {% else %}
+                    O confronto está em equilíbrio total. As partidas são decididas nos detalhes. Mantenha o foco nos fundamentos que apresentaram maior nota nos últimos encontros.
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="no-data-msg">
+            <i class='bx bx-info-circle'></i> Amostra insuficiente. O Oráculo precisa de pelo menos <strong>3 jogos</strong> contra este adversário para traçar um padrão tático confiável.
+        </div>
+    {% endif %}
+
+    <h3 style="color: var(--atp-blue); margin: 35px 0 15px 0; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">🎾 Encontros Recentes</h3>
+    {% for match in matches %}
+    <a href="/match/{{ match[0] }}" class="match-line">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 12px; font-weight: bold; color: var(--text-slate); width: 80px;">{{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }}</div>
+            {% if 'Saibro' in match[4] %}
+                <span class="surface-pill pill-saibro">Saibro</span>
+            {% else %}
+                <span class="surface-pill pill-dura">Dura</span>
+            {% endif %}
+            <span style="font-size: 14px; color: #1e293b;">{{ match[3] }}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <span style="font-weight: 800; color: var(--atp-blue);">{{ match[6] | replace(' /', '') | replace('/ ', '') }}</span>
+            <span style="font-weight: bold; font-size: 13px; color: {% if match[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %}; min-width: 60px; text-align: right;">{{ match[5] }}</span>
+        </div>
+    </a>
+    {% endfor %}
+
 </div>
 {% endblock %}

@@ -614,20 +614,49 @@ def match_details(id):
 def export_csv():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC", (session["user_id"],))
+    # Selecionamos apenas as colunas úteis para análise de dados
+    c.execute("""
+        SELECT match_date, opponent, categoria, match_type, surface, result, score, 
+               match_format, game_format, partner, opp_partner,
+               forehand, backhand, serve, first_serve, second_serve, double_faults, return_serve,
+               slice, volley, smash, dropshot, footwork, strategy, winners, unforced_errors,
+               performance_rating, mental_focus, mental_resilience, clutch_bp_saved, clutch_bp_won,
+               momentum_lost_streak, mental_tags
+        FROM matches WHERE user_id = ? ORDER BY match_date DESC
+    """, (session["user_id"],))
     matches = c.fetchall()
-    column_names = [description[0] for description in c.description]
     conn.close()
 
+    # Cabeçalhos limpos e formatados
+    headers = [
+        "Data da Partida", "Adversario", "Categoria", "Tipo de Partida", "Superficie", "Resultado", "Placar",
+        "Formato Partida", "Formato Game", "Parceiro", "Parceiro Adversario",
+        "Nota Forehand", "Nota Backhand", "Nota Saque", "Nota 1o Saque", "Nota 2o Saque", "Duplas Faltas", "Nota Devolucao",
+        "Nota Slice", "Nota Voleio", "Nota Smash", "Nota Dropshot", "Nota Movimentacao", "Nota Estrategia", 
+        "Winners", "Erros Nao Forcados", "Rating de Performance",
+        "Foco Mental", "Resiliencia Mental", "BP Salvos", "BP Ganhos", "Momentum Perdido (Streak)", "Tags Mentais"
+    ]
+
     output = io.StringIO()
-    writer = csv.writer(output, delimiter=';')
-    writer.writerow(column_names)
-    writer.writerows(matches)
     
+    # ---------------------------------------------------------
+    # A LINHA MÁGICA: Força o Excel a reconhecer os acentos
+    output.write('\ufeff')
+    # ---------------------------------------------------------
+
+    # Usando vírgula como delimitador
+    writer = csv.writer(output, delimiter=',')
+    writer.writerow(headers)
+    writer.writerows(matches)
+
+    # Gera o nome do arquivo dinâmico baseado no usuário logado
+    username = session.get("username", "usuario").lower().replace(" ", "_")
+    filename = f"{username}_courtmetrics.csv"
+
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-disposition": "attachment; filename=meus_dados_tenis.csv"}
+        headers={"Content-disposition": f"attachment; filename={filename}"}
     )
 
 @app.route("/select_compare/<int:id>")
@@ -820,7 +849,7 @@ def insights():
 def simulador():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
-    c.execute("SELECT surface, performance_rating, winners, unforced_errors, mental_focus, mental_resilience, result FROM matches WHERE user_id = ?", (session["user_id"],))
+    c.execute("SELECT surface, performance_rating, winners, unforced_errors, mental_focus, mental_resilience, categoria, result FROM matches WHERE user_id = ?", (session["user_id"],))
     matches = c.fetchall()
     conn.close()
 
@@ -832,39 +861,326 @@ def simulador():
         sim_agressividade = float(request.form["winners"]) / (float(request.form["erros"]) + 1)
         sim_focus = int(request.form.get("focus", 3)) 
         sim_resilience = int(request.form.get("resilience", 3)) 
+        sim_classe = request.form.get("classe", "4ª Classe") 
+
+        # Escala matemática de classes para calcular o abismo técnico
+        hierarquia_classes = {'Iniciante': 1, '5ª Classe': 2, '4ª Classe': 3, '3ª Classe': 4, '2ª Classe': 5, '1ª Classe': 6}
 
         try:
             from sklearn.linear_model import LogisticRegression
+            from sklearn.preprocessing import StandardScaler
             import numpy as np
 
             X, y = [], []
+            niveis_jogados = []
+            
             for m in matches:
                 is_saibro = 1 if m[0] == 'Saibro' else 0
                 rating = m[1]
                 agr = m[2] / (m[3] + 1)
-                
                 foc = m[4] if (m[4] and m[4] > 0) else 3
                 res = m[5] if (m[5] and m[5] > 0) else 3
                 
+                # Descobre quem o usuário costuma enfrentar para achar o "Nível Verdadeiro" dele
+                cat_banco = m[6] if m[6] else '4ª Classe'
+                nivel = hierarquia_classes.get(cat_banco, 3)
+                niveis_jogados.append(nivel)
+                
                 X.append([is_saibro, rating, agr, foc, res])
-                y.append(1 if m[6] == 'Vitória' else 0)
+                y.append(1 if m[7] == 'Vitória' else 0)
+
+            # Média dos níveis enfrentados (Ex: se joga muito com 4ª Classe, a média é 3.0)
+            nivel_usuario = sum(niveis_jogados) / len(niveis_jogados) if niveis_jogados else 3
 
             if len(set(y)) < 2: return render_template("simulador.html", erro_dados="O Oráculo precisa de exemplos tanto de Vitórias quanto de Derrotas no seu histórico para aprender a diferença.")
 
-            model = LogisticRegression()
-            model.fit(X, y)
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+
+            model = LogisticRegression(class_weight='balanced')
+            model.fit(X_scaled, y)
 
             is_saibro_sim = 1 if sim_surface == 'Saibro' else 0
             cenario = np.array([[is_saibro_sim, sim_rating, sim_agressividade, sim_focus, sim_resilience]])
-            probabilidade = model.predict_proba(cenario)[0][1] * 100
+            cenario_scaled = scaler.transform(cenario)
+            
+            # 1. Pega a Probabilidade Técnica Pura da IA
+            prob_tecnica = model.predict_proba(cenario_scaled)[0][1] * 100
 
-            return render_template("simulador.html", probabilidade=round(probabilidade, 1), surface=sim_surface, rating=sim_rating, focus=sim_focus, resilience=sim_resilience)
+            # 2. O GRANDE AJUSTE: Handicap de Discrepância de Classe
+            nivel_simulado = hierarquia_classes.get(sim_classe, 3)
+            diferenca_nivel = nivel_usuario - nivel_simulado
+            
+            # Cada classe de diferença aplica um peso absurdo de 35% na probabilidade final
+            handicap = diferenca_nivel * 35.0 
+            
+            probabilidade_final = prob_tecnica + handicap
+
+            # 3. Trava a matemática entre 1% (Derrota iminente) e 99% (Passeio na quadra)
+            if probabilidade_final > 99.0: probabilidade_final = 99.0
+            elif probabilidade_final < 1.0: probabilidade_final = 1.0
+
+            # Gera texto de explicação (XAI) baseado no Handicap
+            gap_text = ""
+            if diferenca_nivel > 0: gap_text = f"+{round(handicap)}% de vantagem por superioridade técnica de classe"
+            elif diferenca_nivel < 0: gap_text = f"{round(handicap)}% de penalidade por inferioridade técnica de classe"
+            else: gap_text = "Nivelamento equilibrado com o seu histórico"
+
+            return render_template("simulador.html", probabilidade=round(probabilidade_final, 1), surface=sim_surface, rating=sim_rating, focus=sim_focus, resilience=sim_resilience, classe=sim_classe, gap_text=gap_text)
 
         except Exception as e:
             return render_template("simulador.html", erro_dados=f"Erro no Motor de IA: {str(e)}")
 
     return render_template("simulador.html")
 
+@app.route("/treinador", methods=["GET", "POST"])
+@login_required
+def treinador():
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC, id DESC", (session["user_id"],))
+    all_matches = c.fetchall()
+    conn.close()
+
+    if len(all_matches) < 3:
+        return render_template("treinador.html", erro="Calibração em andamento: Você precisa registrar pelo menos 3 partidas para a IA entender seu padrão global.")
+
+    # --- EXTRAÇÃO DE ADVERSÁRIOS ÚNICOS ---
+    opponents_set = set()
+    for m in all_matches:
+        op_name = f"{m['opponent']} & {m['opp_partner']}" if m['match_format'] and 'Duplas' in str(m['match_format']) else str(m['opponent'])
+        opponents_set.add(op_name)
+    unique_opponents = sorted(list(opponents_set))
+
+    # --- LEITURA DOS FILTROS ---
+    selected_opponent = request.args.get("opponent", "")
+    limit = int(request.args.get("limit", 3))
+
+    # --- FILTRAGEM DO CONFRONTO DIRETO ---
+    if selected_opponent:
+        filtered_matches = []
+        for m in all_matches:
+            op_name = f"{m['opponent']} & {m['opp_partner']}" if m['match_format'] and 'Duplas' in str(m['match_format']) else str(m['opponent'])
+            if op_name == selected_opponent:
+                filtered_matches.append(m)
+        
+        if len(filtered_matches) == 0:
+            return render_template("treinador.html", erro=f"Nenhum jogo encontrado contra {selected_opponent}.", unique_opponents=unique_opponents, selected_opponent=selected_opponent)
+        
+        matches = filtered_matches[:limit]
+        total_base = len(filtered_matches)
+    else:
+        matches = all_matches[:limit]
+        total_base = len(all_matches)
+
+    # --- FUNÇÕES DE CÁLCULO ---
+    def calc_avg(field, data_set=matches):
+        vals = [m[field] for m in data_set if m[field] is not None and m[field] > 0]
+        return sum(vals) / len(vals) if vals else 0.0
+
+    def calc_raw_avg(field, data_set=matches):
+        vals = [m[field] for m in data_set if m[field] is not None]
+        return sum(vals) / len(vals) if vals else 0.0
+
+    # --- MÉTRICAS DO JOGADOR ---
+    avg_fh = calc_avg("forehand")
+    avg_bh = calc_avg("backhand")
+    avg_serve = calc_avg("serve")
+    avg_return = calc_avg("return_serve")
+    avg_volley = calc_avg("volley")
+    avg_footwork = calc_avg("footwork")
+    avg_df = calc_raw_avg("double_faults")
+    avg_winners = calc_raw_avg("winners")
+    avg_ue = calc_raw_avg("unforced_errors")
+    
+    # --- ANÁLISE DE DIFICULDADE ---
+    hard_matches = sum(1 for m in matches if any(x in str(m["categoria"]).lower() for x in ["1", "2", "3", "a", "pro", "primeira", "segunda", "terceira", "aberta", "especial"]))
+    dificuldade_fator = hard_matches / len(matches) if matches else 0
+    nivel_adversarios = "Avançado (Classes Superiores)" if dificuldade_fator > 0.5 else "Intermediário / Equilibrado" if dificuldade_fator > 0 else "Padrão (Mesma Classe)"
+
+    # --- DEFINIÇÃO DO ESTILO DE JOGO ---
+    estilo_jogo = "All-Court (Jogador Completo)"
+    desc_estilo = "Você é um jogador versátil, que busca se adaptar a diferentes situações na quadra e domina transições."
+    icone_estilo = "bx-layer"
+
+    if avg_volley >= 7.5 and avg_serve >= 7.5:
+        estilo_jogo, desc_estilo, icone_estilo = "Saque e Voleio (Serve & Volley)", "Seu jogo é vertical e sufocante. Você usa o saque para abrir a quadra e sobe à rede para matar os pontos rápido.", "bx-navigation"
+    elif avg_winners >= (avg_ue * 0.7) and avg_fh >= 7.0:
+        estilo_jogo, desc_estilo, icone_estilo = "Fundo de Quadra Agressivo (Aggressive Baseliner)", "Você dita o ritmo do jogo. Sua principal arma são os golpes de fundo potentes, buscando dominar o centro.", "bx-target-lock"
+    elif avg_ue <= 3.5 and avg_footwork >= 7.5 and avg_return >= 7.0:
+        estilo_jogo, desc_estilo, icone_estilo = "Contra-Atacador (Counterpuncher)", "Sua defesa é um muro. Você vence pela consistência técnica, movimentação de elite e forçando o colapso adversário.", "bx-shield-alt-2"
+    elif avg_fh >= 6.0 and avg_bh >= 6.0 and avg_winners < avg_ue:
+        estilo_jogo, desc_estilo, icone_estilo = "Fundo de Quadra Tático", "Você constrói os pontos com paciência do fundo da quadra, usando altura, variação e profundidade.", "bx-cog"
+    # --- O DOCK TÁTICO PRINCIPAL ---
+    relatorio = {
+        "estilo": estilo_jogo, "desc_estilo": desc_estilo, "icone": icone_estilo, "nivel_adversarios": nivel_adversarios,
+        "analise": [], "fortes": [], "evitar": [], "estrategias": [], "super_modulos": []
+    }
+
+    # Ajuste de Narrativa se for um Nêmesis (Adversário Específico)
+    if selected_opponent:
+        relatorio["analise"].append(f"Dossiê Tático Isolado: Esta análise foi gerada cruzando apenas os dados dos seus confrontos diretos contra {selected_opponent}.")
+    else:
+        if dificuldade_fator > 0.5: relatorio["analise"].append(f"Enfrentando classes altas. O aumento de Erros Não Forçados ({round(avg_ue, 1)}/jogo) é um reflexo natural do peso de bola destes adversários.")
+        else: relatorio["analise"].append(f"Volume estabilizado. Sua média agressiva está em {round(avg_winners, 1)} winners por jogo neste recorte.")
+        
+    if avg_fh > (avg_bh + 1.5): relatorio["analise"].append("Assimetria: seu forehand dita a regra, enquanto o backhand atua apenas na manutenção.")
+    elif abs(avg_fh - avg_bh) <= 1.0 and avg_fh > 6.5: relatorio["analise"].append("Fundo de quadra blindado, sem lados vulneráveis óbvios para o adversário atacar.")
+
+    if avg_fh >= 7.0: relatorio["fortes"].append("Forehand Dominante: Sua direita está empurrando o adversário para trás da linha.")
+    if avg_serve >= 7.0: relatorio["fortes"].append("Serviço Bélico: O saque está garantindo pontos rápidos e ditando o controle.")
+    if avg_footwork >= 7.5: relatorio["fortes"].append("Movimentação de Elite: Suas pernas compensam os dias ruins. Chegar bem posicionado garante devoluções limpas.")
+    if len(relatorio["fortes"]) == 0: relatorio["fortes"].append("Equilíbrio Sólido: Padrão extremamente imprevisível de ser lido.")
+
+    if avg_df >= 3.0: relatorio["evitar"].append(f"Entregar Games no Saque: Com {round(avg_df, 1)} duplas faltas, você dá quase um game de graça. Aumente o spin do 2º saque.")
+    if avg_ue > (avg_winners * 1.5) and avg_ue > 5: relatorio["evitar"].append("Apressar a Definição: Pare de buscar as linhas muito cedo. Construa o ponto pelo centro.")
+    if avg_volley > 0 and avg_volley <= 5.5: relatorio["evitar"].append("Transições no Susto: Subir à rede sem uma boa bola de aproximação está te deixando vulnerável a passadas.")
+
+    if "Aggressive" in estilo_jogo: relatorio["estrategias"].append("Explore o backhand do adversário. Quando ele devolver curto, gire o corpo para bater o inside-out no lado vazio.")
+    elif "Counterpuncher" in estilo_jogo: relatorio["estrategias"].append("Levante a bola (moonballs) com muito topspin no lado esquerdo deles. Obrigue-os a gerar a própria força.")
+    elif "Serve & Volley" in estilo_jogo: relatorio["estrategias"].append("Use mais saques no corpo. Essa direção 'trava' o braço do oponente, garantindo devoluções lentas.")
+    else: relatorio["estrategias"].append("Padrão Seguro: Nos pontos cruciais, use a cruzada. Só puxe a paralela com os pés dentro da quadra.")
+    
+    if dificuldade_fator > 0.5 and not selected_opponent: relatorio["estrategias"].append("Adversários de níveis altos adoram ritmo. Use slices curtos para quebrar as pernas deles e tirar o peso.")
+
+    # ==========================================
+    # 🧠 SUPER CÉREBRO: OS 4 MÓDULOS AVANÇADOS
+    # ==========================================
+    import re
+
+    avg_bp_saved = calc_avg("clutch_bp_saved")
+    avg_bp_won = calc_avg("clutch_bp_won")
+
+    if avg_bp_saved >= 3.5 or avg_bp_won >= 3.5:
+        relatorio["super_modulos"].append({
+            "nome": "Termômetro Clutch", "icone": "bx-pulse", "cor": "#f43f5e",
+            "texto": f"O seu instinto assassino está afiado! Sua nota média sob pressão é excelente (Salvos: {round(avg_bp_saved, 1)}/5 | Convertidos: {round(avg_bp_won, 1)}/5). Você cresce na hora H."
+        })
+    elif (avg_bp_saved > 0 and avg_bp_saved <= 2.5) or (avg_bp_won > 0 and avg_bp_won <= 2.5) or avg_ue > 8:
+        salvos_txt = round(avg_bp_saved, 1) if avg_bp_saved > 0 else "N/A"
+        ganhos_txt = round(avg_bp_won, 1) if avg_bp_won > 0 else "N/A"
+        relatorio["super_modulos"].append({
+            "nome": "Termômetro Clutch", "icone": "bx-pulse", "cor": "#f43f5e",
+            "texto": f"Síndrome de Fechamento. O baixo desempenho nos break points (Notas: Salvos {salvos_txt}/5 | Convertidos {ganhos_txt}/5) indica que o braço está 'encurtando'. Jogue com mais topspin na hora da pressão."
+        })
+
+    notas_tecnicas = {"Forehand": avg_fh, "Backhand": avg_bh, "Saque": avg_serve, "Devolução": avg_return, "Voleio": avg_volley}
+    notas_validas = {k: v for k, v in notas_tecnicas.items() if v > 0}
+    if notas_validas:
+        pior_golpe = min(notas_validas, key=notas_validas.get)
+        nota_pior = round(notas_validas[pior_golpe], 1)
+        drill_txt = ""
+        if pior_golpe == "Backhand": drill_txt = "Treino: Peça para cruzarem bolas altas no seu lado esquerdo. Foque apenas em bater na subida, pegando a bola cedo para cortar o tempo."
+        elif pior_golpe == "Forehand": drill_txt = "Treino: Faça o drill 'Para-brisa'. Bata um forehand cruzado e o próximo na paralela, forçando a transferência de peso correta do corpo."
+        elif pior_golpe == "Saque": drill_txt = "Treino: Coloque dois cones a 1 metro das linhas de saque. Saque 20 bolas usando apenas o movimento do 2º saque (foco em kick e margem)."
+        elif pior_golpe == "Devolução": drill_txt = "Treino: Bloqueio de saque. Dê apenas MEIO passo para frente quando o adversário sacar, sem armar a raquete para trás."
+        elif pior_golpe == "Voleio": drill_txt = "Treino: Jogo de mini-tênis (só dentro dos quadrados de saque) sem deixar a bola pingar, para melhorar o reflexo e a mão."
+        
+        relatorio["super_modulos"].append({
+            "nome": "Prescrição de Treino", "icone": "bx-dumbbell", "cor": "#10b981",
+            "texto": f"Fundamento Crítico: {pior_golpe} (Nota {nota_pior}). {drill_txt}"
+        })
+
+    # Inteligência de Superfície (No confronto direto, só compara os jogos contra a pessoa)
+    base_superficie = matches if selected_opponent else all_matches
+    vitorias_dura = sum(1 for m in base_superficie if m["surface"] == "Quadra Dura" and m["result"] == "Vitória")
+    jogos_dura = sum(1 for m in base_superficie if m["surface"] == "Quadra Dura")
+    vitorias_saibro = sum(1 for m in base_superficie if m["surface"] == "Saibro" and m["result"] == "Vitória")
+    jogos_saibro = sum(1 for m in base_superficie if m["surface"] == "Saibro")
+    taxa_dura = (vitorias_dura / jogos_dura) * 100 if jogos_dura > 0 else 0
+    taxa_saibro = (vitorias_saibro / jogos_saibro) * 100 if jogos_saibro > 0 else 0
+
+    if abs(taxa_dura - taxa_saibro) > 20 and jogos_dura >= 2 and jogos_saibro >= 2:
+        melhor = "Quadra Dura" if taxa_dura > taxa_saibro else "Saibro"
+        pior = "Saibro" if melhor == "Quadra Dura" else "Quadra Dura"
+        txt_op = f"contra {selected_opponent}" if selected_opponent else ""
+        relatorio["super_modulos"].append({
+            "nome": "Radar de Superfície", "icone": "bx-map", "cor": "#f59e0b",
+            "texto": f"Atenção: Seu rendimento {txt_op} é drasticamente superior na {melhor}. Na {pior}, você perde sua efetividade. Se for jogar na {pior}, adapte sua movimentação para ralis mais longos."
+        })
+
+    tie_breaks = 0
+    decisivos = 0
+    for m in matches:
+        if not m["score"]: continue
+        sets = [s for s in m["score"].split() if '/' in s]
+        if (len(sets) == 3 and m["match_format"] and '5 Sets' not in m["match_format"]) or len(sets) == 5:
+            decisivos += 1
+        for s in sets:
+            s_clean = re.sub(r'\(.*?\)', '', s.replace('[', '').replace(']', ''))
+            parts = s_clean.split('/')
+            if len(parts) == 2:
+                try:
+                    p1, p2 = int(parts[0]), int(parts[1])
+                    if (p1 == 7 and p2 == 6) or (p1 == 6 and p2 == 7) or (p1 >= 10 and abs(p1-p2)>=2) or (p2 >= 10 and abs(p1-p2)>=2):
+                        tie_breaks += 1
+                except ValueError: pass
+    
+    if decisivos >= 1 or tie_breaks >= 1:
+        txt_op = f"O jogo de {selected_opponent} te arrasta" if selected_opponent else "Você está sendo arrastado"
+        relatorio["super_modulos"].append({
+            "nome": "Raio-X de Resistência", "icone": "bx-stopwatch", "cor": "#8b5cf6",
+            "texto": f"O algoritmo detectou {tie_breaks} Tie-breaks e {decisivos} Sets Decisivos recentes. {txt_op} para maratonas. Economize energia nos games de devolução e foque 100% nos seus saques."
+        })
+
+    # Módulo E: TERMÔMETRO DE CIRCUITO (Transição de Classes) - Ideia 3
+    if not selected_opponent: 
+        cat_stats = {}
+        for m in all_matches:
+            cat_name = m["categoria"].strip() if m["categoria"] else "Sem Categoria"
+            if cat_name not in cat_stats: cat_stats[cat_name] = {'v': 0, 'total': 0}
+            cat_stats[cat_name]['total'] += 1
+            if m["result"] == "Vitória": cat_stats[cat_name]['v'] += 1
+
+        # A IA agora entende a hierarquia: Quanto maior o peso, mais difícil a classe
+        def peso_classe(cat_str):
+            c = cat_str.lower()
+            if "1" in c or "primeira" in c or "pro" in c or "especial" in c: return 6
+            if "2" in c or "segunda" in c: return 5
+            if "3" in c or "terceira" in c: return 4
+            if "4" in c or "quarta" in c: return 3
+            if "5" in c or "quinta" in c: return 2
+            if "iniciante" in c or "principiante" in c: return 1
+            return 0 # Torneios sem classe definida
+
+        valid_cats = []
+        for cat, data in cat_stats.items():
+            if data['total'] >= 1 and cat != "Sem Categoria":
+                valid_cats.append({
+                    "nome": cat,
+                    "win_rate": round((data['v'] / data['total']) * 100),
+                    "peso": peso_classe(cat)
+                })
+
+        # Organiza as classes da mais fácil para a mais difícil
+        valid_cats.sort(key=lambda x: x["peso"])
+
+        if len(valid_cats) >= 2:
+            txt_stats = " | ".join([f"{c['nome']}: {c['win_rate']}%" for c in valid_cats])
+            
+            # Pega as duas classes mais difíceis que você jogou para comparar
+            c_alta = valid_cats[-1] 
+            c_baixa = valid_cats[-2] 
+
+            if c_alta["peso"] == 0 or c_baixa["peso"] == 0:
+                analise = " Observe os saltos entre as categorias para entender seu teto competitivo atual."
+            elif c_alta["win_rate"] < (c_baixa["win_rate"] - 15):
+                # Caso Normal: Bate nos mais fracos, sofre nos mais fortes
+                analise = f" Choque de Realidade: A queda de rendimento ao subir da {c_baixa['nome']} para a {c_alta['nome']} mostra que o peso de bola adversário está cobrando o preço. Foque em profundidade antes de tentar a definição final."
+            elif c_baixa["win_rate"] < (c_alta["win_rate"] - 15):
+                # O Seu Caso Especial: A Anomalia Tática (Sofre nos mais fracos)
+                analise = f" Anomalia Tática: Você vence {c_alta['win_rate']}% na {c_alta['nome']}, mas sofre na {c_baixa['nome']} ({c_baixa['win_rate']}%). Diagnóstico: Você joga melhor quando o adversário te dá RITMO. Em classes menores, as bolas vêm lentas e sem peso, forçando você a gerar a própria força e cometer erros. Treine atacar bolas flutuantes!"
+            else:
+                # Caso de Equilíbrio
+                analise = f" Consistência: Seu nível está sólido e estabilizado entre a {c_baixa['nome']} e a {c_alta['nome']}."
+
+            relatorio["super_modulos"].append({
+                "nome": "Termômetro de Circuito", "icone": "bx-bar-chart-alt-2", "cor": "#0ea5e9",
+                "texto": f"{txt_stats}.{analise}"
+            })
+
+    return render_template("treinador.html", relatorio=relatorio, limit=limit, total=total_base, unique_opponents=unique_opponents, selected_opponent=selected_opponent)
 @app.route("/sobre")
 @login_required
 def sobre():

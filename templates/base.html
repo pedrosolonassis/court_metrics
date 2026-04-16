@@ -177,9 +177,15 @@
             <a href="/insights" class="nav-item {% if request.path == '/insights' %}active{% endif %}">
                 <i class='bx bx-pie-chart-alt-2'></i> Estatísticas
             </a>
-            <a href="/adversarios" class="nav-item {% if request.path == '/adversarios' or '/h2h/' in request.path %}active{% endif %}">
+            
+           <a href="/adversarios" class="nav-item {% if request.path == '/adversarios' or '/h2h/' in request.path %}active{% endif %}">
                 <i class='bx bx-target-lock'></i> Dossiê H2H
             </a>
+            
+            <a href="/treinador" class="nav-item {% if request.path == '/treinador' %}active{% endif %}">
+                <i class='bx bx-check-shield'></i> Treinador IA
+            </a>
+
             <a href="/simulador" class="nav-item {% if request.path == '/simulador' %}active{% endif %}">
                 <i class='bx bx-brain'></i> Oráculo IA
             </a>

@@ -17,11 +17,22 @@
     .btn-main { background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px; height: 42px; padding: 0 20px;}
     .btn-main:hover { opacity: 0.9; }
 
-    .filter-bar { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-bar { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; }
     .filter-group { flex: 1; min-width: 160px; }
     .filter-label { font-size: 12px; font-weight: bold; color: var(--text-slate); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
     .filter-select { width: 100%; height: 42px; display: block; padding: 0 10px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background-color: #f8fafc; color: var(--atp-blue); font-weight: 600; box-sizing: border-box; font-family: inherit; }
     .filter-btn { height: 42px; padding: 0 20px; box-sizing: border-box; margin: 0; border: 1px solid transparent; }
+
+    /* Pills de Filtros Ativos */
+    .active-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; }
+    .filter-pill { background: #fef9c3; color: #854d0e; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; border: 1px solid #fde047; }
+    .filter-pill a { text-decoration: none; color: #a16207; font-size: 14px; line-height: 1; transition: 0.2s; }
+    .filter-pill a:hover { color: #ef4444; }
+
+    /* Indicadores Visuais de Superfície */
+    .surface-pill { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 5px; }
+    .pill-dura { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .pill-saibro { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
 </style>
 {% endblock %}
 
@@ -36,25 +47,25 @@
                 <label class="filter-label">Superfície</label>
                 <select name="surface" class="filter-select">
                     <option value="">Todas as Quadras</option>
-                    <option value="Quadra Dura" {% if filters is defined and filters.surface == 'Quadra Dura' %}selected{% endif %}>Quadra Dura (Rápida)</option>
-                    <option value="Saibro" {% if filters is defined and filters.surface == 'Saibro' %}selected{% endif %}>Saibro (Terra Batida)</option>
+                    <option value="Quadra Dura" {% if filters.surface == 'Quadra Dura' %}selected{% endif %}>Quadra Dura (Rápida)</option>
+                    <option value="Saibro" {% if filters.surface == 'Saibro' %}selected{% endif %}>Saibro (Terra Batida)</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label class="filter-label">Tipo de Jogo</label>
                 <select name="match_type" class="filter-select">
                     <option value="">Todos os Tipos</option>
-                    <option value="Ranking" {% if filters is defined and filters.match_type == 'Ranking' %}selected{% endif %}>Ranking</option>
-                    <option value="Torneio" {% if filters is defined and filters.match_type == 'Torneio' %}selected{% endif %}>Torneio</option>
-                    <option value="Amistoso" {% if filters is defined and filters.match_type == 'Amistoso' %}selected{% endif %}>Amistoso</option>
+                    <option value="Ranking" {% if filters.match_type == 'Ranking' %}selected{% endif %}>Ranking</option>
+                    <option value="Torneio" {% if filters.match_type == 'Torneio' %}selected{% endif %}>Torneio</option>
+                    <option value="Amistoso" {% if filters.match_type == 'Amistoso' %}selected{% endif %}>Amistoso</option>
                 </select>
             </div>
             <div class="filter-group">
                 <label class="filter-label">Formato</label>
                 <select name="match_format" class="filter-select">
                     <option value="">Simples & Duplas</option>
-                    <option value="Simples" {% if filters is defined and filters.match_format == 'Simples' %}selected{% endif %}>Simples</option>
-                    <option value="Duplas" {% if filters is defined and filters.match_format == 'Duplas' %}selected{% endif %}>Duplas</option>
+                    <option value="Simples" {% if filters.match_format == 'Simples' %}selected{% endif %}>Simples</option>
+                    <option value="Duplas" {% if filters.match_format == 'Duplas' %}selected{% endif %}>Duplas</option>
                 </select>
             </div>
             <div style="display: flex; gap: 10px;">
@@ -62,6 +73,27 @@
                 <a href="/history" class="btn-main filter-btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Limpar</a>
             </div>
         </form>
+
+        <div class="active-filters">
+            {% if filters.surface %}
+                <div class="filter-pill">
+                    Superfície: {{ filters.surface }}
+                    <a href="{{ url_for('history', match_type=filters.match_type, match_format=filters.match_format) }}">✕</a>
+                </div>
+            {% endif %}
+            {% if filters.match_type %}
+                <div class="filter-pill">
+                    Tipo: {{ filters.match_type }}
+                    <a href="{{ url_for('history', surface=filters.surface, match_format=filters.match_format) }}">✕</a>
+                </div>
+            {% endif %}
+            {% if filters.match_format %}
+                <div class="filter-pill">
+                    Formato: {{ filters.match_format }}
+                    <a href="{{ url_for('history', surface=filters.surface, match_type=filters.match_type) }}">✕</a>
+                </div>
+            {% endif %}
+        </div>
 
         <div class="grid-cards">
         {% for match in matches %}
@@ -75,7 +107,14 @@
                                 <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👤 vs {{ match[1] }}</strong>
                             {% endif %}
                             
-                            <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] | replace('Quadra Dura', 'Dura') }}</span>
+                            <span style="color: var(--text-slate); font-size: 13px;">
+                                {{ match[2] }} | {{ match[3] }}
+                                {% if 'Saibro' in match[4] %}
+                                    <span class="surface-pill pill-saibro">Saibro</span>
+                                {% else %}
+                                    <span class="surface-pill pill-dura">Dura</span>
+                                {% endif %}
+                            </span>
                             
                             {% set perf = match[25] %}
                             {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}

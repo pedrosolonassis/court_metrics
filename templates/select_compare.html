@@ -1,42 +1,91 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <title>Selecionar Partida - Court Metrics</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        :root { --atp-blue: #002855; --tennis-green: #d1ff00; --text-slate: #64748b; --bg-main: #f1f5f9; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg-main); padding: 20px; }
-        .match-card { background: white; padding: 20px; border-radius: 12px; border-left: 5px solid #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; text-decoration: none; color: inherit; }
-        .match-card:hover { transform: translateY(-2px); border-left-color: var(--atp-blue); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        .btn-main { background: var(--atp-blue); color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="container" style="max-width: 800px; margin: 0 auto;">
-        <a href="/match/{{ base_match[0] }}" style="color: var(--text-slate); text-decoration: none; font-weight: bold;">⬅ Cancelar Comparação</a>
-        
-        <div style="background: var(--atp-blue); color: white; padding: 20px; border-radius: 12px; margin-top: 20px; margin-bottom: 30px;">
-            <h3 style="margin: 0 0 5px 0; color: var(--tennis-green);">Jogo Base Selecionado:</h3>
-            <div style="font-size: 18px; font-weight: bold;">vs {{ base_match[1] }}</div>
-            <div style="font-size: 13px; opacity: 0.8;">📅 {{ base_match[27][8:10] }}/{{ base_match[27][5:7] }}/{{ base_match[27][0:4] }} • {{ base_match[5] }} • Rating: {{ "%.1f"|format(base_match[25]) }}</div>
-        </div>
+{% extends 'base.html' %}
 
-        <h2 style="color: var(--atp-blue);">Com qual partida deseja comparar?</h2>
-        
+{% block title %}Selecionar Partida - Court Metrics{% endblock %}
+{% block page_title %}Comparar Desempenho{% endblock %}
+{% block page_subtitle %}Escolha uma partida do seu histórico para contrastar com o jogo base.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .match-card { 
+        background: white; 
+        padding: 20px; 
+        border-radius: 12px; 
+        border-left: 5px solid #cbd5e1; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        margin-bottom: 15px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        transition: 0.2s; 
+        text-decoration: none; 
+        color: inherit; 
+    }
+    .match-card:hover { 
+        transform: translateY(-2px); 
+        border-left-color: var(--atp-blue); 
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1); 
+    }
+    
+    /* Quebra o card no celular para não amassar o texto */
+    @media (max-width: 600px) {
+        .match-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .match-card > div:last-child {
+            text-align: left !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 0 auto; padding-bottom: 50px;">
+    
+    <div style="margin-bottom: 20px;">
+        <a href="/match/{{ base_match[0] }}" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Cancelar Comparação</a>
+    </div>
+    
+    <div style="background: var(--atp-blue); color: white; padding: 25px; border-radius: 12px; margin-top: 10px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 5px 0; color: var(--tennis-green); font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Jogo Base Selecionado:</h3>
+        <div style="font-size: 24px; font-weight: bold; margin-bottom: 8px;">vs {{ base_match[1] }}</div>
+        <div style="font-size: 14px; opacity: 0.9;">
+            📅 {{ base_match[27][8:10] }}/{{ base_match[27][5:7] }}/{{ base_match[27][0:4] }} • {{ base_match[5] }} • Rating: {{ "%.1f"|format(base_match[25]) }}
+        </div>
+    </div>
+
+    <h3 style="color: var(--atp-blue); margin-bottom: 20px; font-size: 18px;">Com qual partida deseja comparar?</h3>
+    
+    {% if matches %}
         {% for match in matches %}
             <a href="/compare/{{ base_match[0] }}/{{ match[0] }}" class="match-card">
                 <div>
-                    <div style="font-size: 12px; color: #94a3b8; font-weight: bold;">📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] }}</div>
-                    <strong style="font-size: 18px; color: var(--atp-blue);">vs {{ match[1] }}</strong>
-                    <div style="font-size: 14px; color: var(--text-slate);">{{ match[5] }} • {{ match[6] }}</div>
+                    <div style="font-size: 12px; color: #94a3b8; font-weight: bold; margin-bottom: 5px;">📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }} • {{ match[4] | replace('Quadra Dura', 'Dura') }}</div>
+                    <strong style="font-size: 18px; color: var(--atp-blue); display: block; margin-bottom: 5px;">vs {{ match[1] }}</strong>
+                    
+                    {% set clean_score = match[6] | replace(' /', '') | replace('/ ', '') | trim %}
+                    {% if clean_score.endswith('/') %}
+                        {% set clean_score = clean_score[:-1] | trim %}
+                    {% endif %}
+                    
+                    <div style="font-size: 14px; color: var(--text-slate);">
+                        <strong style="color: {% if match[5] == 'Vitória' %}#10b981{% else %}#ef4444{% endif %};">{{ match[5] }}</strong> • {{ clean_score }}
+                    </div>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-size: 22px; font-weight: 900; color: #16a34a;">{{ "%.1f"|format(match[25]) }}</div>
-                    <span style="font-size: 11px; color: var(--text-slate);">RATING</span>
+                    <div style="font-size: 26px; font-weight: 900; color: {% if match[25] >= 7.0 %}#16a34a{% elif match[25] >= 6.0 %}#ea580c{% else %}#dc2626{% endif %};">
+                        {{ "%.1f"|format(match[25]) }}
+                    </div>
+                    <span style="font-size: 11px; color: var(--text-slate); font-weight: bold; text-transform: uppercase;">Rating</span>
                 </div>
             </a>
         {% endfor %}
-    </div>
-</body>
-</html>
+    {% else %}
+        <div style="background: white; padding: 40px; text-align: center; border-radius: 15px; color: var(--text-slate); border: 1px dashed #cbd5e1;">
+            <p style="font-size: 16px; margin: 0;">Você ainda não tem outras partidas registradas para realizar uma comparação.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
