@@ -145,10 +145,16 @@
 
     {% if matches|length > 0 %}
     <div style="background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;">🎾 Central de Fundamentos</h3>
-            
-            <select id="fundFilter" class="chart-filter" style="width: auto; padding: 6px 15px; border-radius: 8px;" onchange="updateFundamentals(this.value)">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 0px;">
+        
+        <div>
+            <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">🎾 Central de Fundamentos</h3>
+            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Clique no fundamento para ver a sua evolução detalhada.</p>
+        </div>
+
+        <div>
+            <select id="fundFilter" class="chart-filter" style="width: auto; padding: 8px 15px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 600; cursor: pointer;" onchange="updateFundamentals(this.value)">
                 <option value="3">Últimas 3 Partidas</option>
                 <option value="5">Últimas 5 Partidas</option>
                 <option value="10">Últimas 10 Partidas</option>
@@ -156,6 +162,8 @@
                 <option value="0" selected>Média da Carreira</option>
             </select>
         </div>
+
+    </div> <div style="display: grid; ...">
         
         {% set f_names = ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'] %}
         <div class="fundamentos-grid">
@@ -169,10 +177,11 @@
         </div>
     </div> 
     {% endif %} 
-
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-left: 4px solid var(--tennis-green); padding-left: 15px; margin-bottom: 20px;">
-        <h2 style="color: var(--atp-blue); margin: 0;">Histórico Recente</h2>
-        <a href="/history" style="color: var(--text-slate); font-weight: bold; font-size: 14px; text-decoration: none;">Ver Todos ➡</a>
+    </div> </div> <div style="margin-top: 50px;"> 
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; border-left: 4px solid var(--tennis-green); padding-left: 15px; margin-bottom: 20px;">
+            <h2 style="color: var(--atp-blue); margin: 0;">Histórico Recente</h2>
+            <a href="/history" style="color: var(--text-slate); font-weight: bold; font-size: 14px; text-decoration: none;">Ver Todos ➡</a>
+        </div>
     </div>
 
     {% if matches %}

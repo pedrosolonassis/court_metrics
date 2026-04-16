@@ -19,7 +19,7 @@
     .form-control { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 500; box-sizing: border-box;}
     .form-control:focus { border-color: #38bdf8; background: white;}
     
-    .btn-save { background: var(--atp-blue); color: white; padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+    .btn-save { background: var(--atp-blue); color: white; padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px;}
     .btn-save:hover { background: #001d3d; }
     
     .btn-outline { background: transparent; color: var(--text-slate); padding: 12px 20px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; cursor: pointer;}
@@ -66,6 +66,22 @@
 
     #realFileInput { display: none; }
 
+    /* ESTILO DA MENSAGEM DE SUCESSO */
+    .success-alert {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #15803d;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        display: none; /* Escondido por padrão, o JS vai ativar */
+        align-items: center;
+        gap: 15px;
+        font-weight: 500;
+        transition: opacity 0.5s ease;
+    }
+    .success-alert i { font-size: 24px; color: #16a34a; }
+
     @media (max-width: 768px) {
         .form-grid { grid-template-columns: 1fr; }
         .form-split { flex-direction: column; gap: 15px; } 
@@ -82,6 +98,14 @@
 
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto; padding-bottom: 50px;">
+
+    <div class="success-alert" id="successAlert">
+        <i class='bx bx-check-circle'></i>
+        <div>
+            <strong style="display: block; margin-bottom: 4px;">Alterações Salvas!</strong>
+            <span style="font-size: 14px; opacity: 0.9;">Seu perfil foi atualizado com sucesso e os dados já estão ativos.</span>
+        </div>
+    </div>
 
     <form method="POST" action="/perfil" enctype="multipart/form-data" id="profileForm">
         
@@ -212,7 +236,7 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
-            <button type="submit" class="btn-save">Salvar Alterações</button>
+            <button type="submit" class="btn-save" id="saveBtn">Salvar Alterações</button>
         </div>
 
     </form>
@@ -240,14 +264,47 @@
 
 {% block extra_js %}
 <script>
-    // Função para montar a data do Mês/Ano e jogar no input invisível pro Back-end
+    // ==========================================
+    // LÓGICA DA MENSAGEM DE SUCESSO (UX/UI)
+    // ==========================================
+    
+    // 1. Quando submeter o form, muda o botão e salva um "aviso" no navegador
+    document.getElementById('profileForm').addEventListener('submit', function() {
+        sessionStorage.setItem('profileSaved', 'true');
+        
+        const btn = document.getElementById('saveBtn');
+        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Salvando...";
+        btn.style.opacity = "0.7";
+        btn.style.pointerEvents = "none";
+    });
+
+    // 2. Quando a página recarregar, verifica se tem o "aviso" salvo. Se tiver, mostra o Alerta Verde!
+    document.addEventListener("DOMContentLoaded", function() {
+        if (sessionStorage.getItem('profileSaved') === 'true') {
+            const alertBox = document.getElementById('successAlert');
+            alertBox.style.display = 'flex';
+            
+            // Depois de 5 segundos, a mensagem some suavemente
+            setTimeout(() => {
+                alertBox.style.opacity = '0';
+                setTimeout(() => alertBox.style.display = 'none', 500);
+            }, 5000);
+            
+            // Limpa o aviso para não aparecer de novo se ele der só F5 na página
+            sessionStorage.removeItem('profileSaved');
+        }
+    });
+
+    // ==========================================
+    // RESTANTE DOS SCRIPTS (Data e Cropper)
+    // ==========================================
+
     function updatePlayingSince() {
         const month = document.getElementById('play_month').value;
         const year = document.getElementById('play_year').value;
         const hiddenInput = document.getElementById('real_playing_since');
         
         if (month && year && year.length === 4) {
-            // Salva no formato clássico de banco de dados para evitar conflitos (Sempre dia 01)
             hiddenInput.value = `${year}-${month}-01`;
         } else {
             hiddenInput.value = '';
