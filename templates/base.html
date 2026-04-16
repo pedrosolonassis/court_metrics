@@ -164,7 +164,7 @@
         <div class="nav-menu">
             <div class="nav-title">Principal</div>
             <a href="/" class="nav-item {% if request.path == '/' %}active{% endif %}">
-                <i class='bx bx-home-alt-2'></i> Dashboard
+                <i class='bx bx-home-alt-2'></i> Página Inicial
             </a>
             <a href="/new_match" class="nav-item {% if request.path == '/new_match' %}active{% endif %}">
                 <i class='bx bx-plus-circle'></i> Nova Partida
@@ -179,7 +179,7 @@
             </a>
             
            <a href="/adversarios" class="nav-item {% if request.path == '/adversarios' or '/h2h/' in request.path %}active{% endif %}">
-                <i class='bx bx-target-lock'></i> Dossiê H2H
+                <i class='bx bx-target-lock'></i> Meus adversários (H2H)
             </a>
             
             <a href="/treinador" class="nav-item {% if request.path == '/treinador' %}active{% endif %}">
@@ -247,7 +247,7 @@
                             </a>
                             {% else %}
                             <div style="padding: 25px 20px; text-align: center; color: #94a3b8; font-size: 13px;">
-                                Tudo limpo por aqui! Nenhuma nova notificação.
+                                Nenhuma nova notificação.
                             </div>
                             {% endfor %}
                         </div>

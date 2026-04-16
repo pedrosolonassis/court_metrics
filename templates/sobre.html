@@ -26,6 +26,9 @@
     .diff-card i { font-size: 24px; color: #10b981; margin-bottom: 10px; }
     .diff-card h4 { margin: 0 0 10px 0; color: var(--atp-blue); font-size: 15px; }
     .diff-card p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.5; }
+    
+    /* Classe para o 5º card ocupar o espaço todo e não deixar a grade assimétrica */
+    .full-span { grid-column: 1 / -1; }
 
     /* Responsividade para o Grid de Diferenciais e Container no Celular */
     @media (max-width: 768px) {
@@ -47,11 +50,7 @@
             <h3><i class='bx bx-book-open'></i> A Motivação</h3>
             <p>A ideia do Court Metrics surgiu de uma frustração comum nas quadras amadoras. Jogadores dedicados (competindo em níveis de 3ª ou 4ª classe) terminam suas partidas sabendo se ganharam ou perderam, mas raramente entendem o <strong>porquê</strong>. O tênis é um esporte de detalhes, onde um leve ajuste na devolução ou um foco maior no primeiro saque pode mudar o rumo de um campeonato inteiro.</p>
             <p>Unindo a paixão pelo esporte com o olhar técnico da Análise de Dados, percebi que o mercado estava cheio de aplicativos focados apenas em registrar o placar final ou promover rankings sociais. Ninguém estava olhando para o "DNA Técnico" do jogador de forma acessível.</p>
-            
-            <div class="highlight-box">
-                <p>"Se profissionais usam estatísticas avançadas para moldar suas táticas, por que os amadores deveriam jogar às cegas? O objetivo era construir uma ponte entre o feeling da quadra e a precisão analítica."</p>
-                <span class="highlight-author">— Pedro Solon, criador do Court Metrics</span>
-            </div>
+       
         </div>
 
         <div class="story-section">
@@ -78,6 +77,12 @@
                     <i class='bx bx-brain'></i>
                     <h4>Oráculo IA (Machine Learning)</h4>
                     <p>Um modelo preditivo treinado exclusivamente com o seu histórico para calcular a probabilidade de vitória antes mesmo de você pisar no saibro ou na quadra dura.</p>
+                </div>
+                
+                <div class="diff-card full-span">
+                    <i class='bx bx-message-rounded-dots'></i>
+                    <h4>Treinador IA (Feedback Generativo)</h4>
+                    <p>Nosso assistente virtual age como o seu treinador de bolso. Após cada partida registrada, ele cruza os seus números de agressividade, tática e controle emocional para gerar conselhos e insights precisos, focados exclusivamente em corrigir suas falhas e potencializar seus pontos fortes.</p>
                 </div>
             </div>
         </div>

@@ -1,33 +1,54 @@
 {% extends 'base.html' %}
-
+ 
 {% block title %}Evolução: {{ nome }} - Court Metrics{% endblock %}
 {% block page_title %}Análise de Fundamento{% endblock %}
-{% block page_subtitle %}Acompanhe o seu progresso técnico nesta habilidade específica.{% endblock %}
-
+{% block page_subtitle %}Acompanhe o seu progresso técnico nesta habilidade.{% endblock %}
+ 
 {% block extra_css %}
 <style>
     .kpi-card { background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; text-align: center; flex: 1; min-width: 200px; }
     .kpi-title { font-size: 12px; text-transform: uppercase; color: var(--text-slate); font-weight: bold; margin-bottom: 10px; display: block;}
     .kpi-val { font-size: 42px; font-weight: 900; color: var(--atp-blue); margin: 0; }
-    
     .tip-box { background: #f8fafc; border-left: 5px solid #f59e0b; padding: 25px; border-radius: 0 12px 12px 0; margin-top: 30px; }
+ 
+    /* Botões de filtro do gráfico */
+    .filter-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn {
+        padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
+        border: 1.5px solid #cbd5e1; background: #f8fafc; color: var(--text-slate);
+        cursor: pointer; transition: all 0.15s ease;
+    }
+    .filter-btn:hover { border-color: var(--atp-blue); color: var(--atp-blue); background: white; }
+    .filter-btn.active { background: var(--atp-blue); color: white; border-color: var(--atp-blue); }
 </style>
 {% endblock %}
-
+ 
 {% block content %}
-
+ 
+{#
+    RAIZ DO BUG:
+    Com {% extends %}, variáveis Jinja calculadas em um {% block %} não ficam
+    disponíveis em outros blocks. O `idx` era calculado no content, mas usado
+    em extra_js — naquele escopo ele valia None/0, zerando todos os pontos.
+ 
+    CORREÇÃO:
+    Os dados são construídos aqui no block content (onde idx está disponível)
+    e injetados como variáveis JS globais via <script>. O extra_js apenas lê
+    window.fundData e window.fundLabels, sem depender do Jinja.
+#}
+ 
 {% set map = {'Forehand': 10, 'Backhand': 11, 'Saque': 12, 'Devolução': 16, 'Slice': 17, 'Voleio': 18, 'Smash': 19, 'Dropshot': 20, 'Footwork': 21, 'Estratégia': 22} %}
 {% set idx = map.get(nome, 10) %}
-
+ 
 {% set valores = [] %}
 {% for m in matches %}
-    {% set _ = valores.append(m[idx] or 0) %}
+    {% set _ = valores.append(m[idx] if m[idx] is not none else 0) %}
 {% endfor %}
-
+ 
 {% set media = (valores|sum / valores|length)|round(1) if valores else 0 %}
 {% set maxima = valores|max if valores else 0 %}
 {% set minima = valores|min if valores else 0 %}
-
+ 
 {% set dicas = {
     'Forehand': 'O peso do seu jogo agressivo depende da confiança aqui. Bata na bola subindo, use o top spin pesado para empurrar o adversário para trás da linha e ditar o ritmo do ponto.',
     'Backhand': 'Mantenha o contato na frente do corpo. Se for o seu lado mais fraco de ataque, foque em consistência e profundidade ao invés de buscar a paralela perfeita.',
@@ -40,13 +61,20 @@
     'Footwork': 'O tênis moderno se joga com as pernas. Passinhos de ajuste contínuos garantem que você chegue inteiro na bola, o que é vital para fugir da esquerda e bater de direita (inside-out).',
     'Estratégia': 'Estratégia é adaptação. Se o plano A de dominar da base não funcionar, não insista no erro. Identifique o ponto fraco do outro lado e explore isso com paciência.'
 } %}
-
-<div class="container" style="max-width: 900px; margin: 0 auto; padding-bottom: 50px;">
-    
+ 
+{# Injeta os dados corretamente no escopo JS enquanto idx ainda está disponível no Jinja #}
+<script>
+    window.fundData   = [{% for m in matches %}{{ m[idx] if m[idx] is not none else 0 }},{% endfor %}];
+    window.fundLabels = [{% for m in matches %}'J{{ loop.index }}',{% endfor %}];
+    window.fundNome   = "{{ nome }}";
+</script>
+ 
+<div style="max-width: 900px; padding-bottom: 50px;">
+ 
     <div style="margin-bottom: 20px;">
-        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Dashboard</a>
+        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o página inicial</a>
     </div>
-
+ 
     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
         <div style="background: var(--atp-blue); color: var(--tennis-green); width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px;">🎾</div>
         <div>
@@ -54,7 +82,7 @@
             <p style="color: var(--text-slate); margin: 0;">Evolução técnica ao longo do tempo.</p>
         </div>
     </div>
-
+ 
     <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
         <div class="kpi-card">
             <span class="kpi-title">Média Histórica</span>
@@ -69,14 +97,23 @@
             <p class="kpi-val" style="color: #ef4444;">{{ minima }}</p>
         </div>
     </div>
-
+ 
     <div style="background: white; padding: 30px; border-radius: 15px; border: 1px solid #e2e8f0;">
-        <h3 style="margin: 0 0 20px 0; color: var(--atp-blue); text-transform: uppercase; font-size: 14px;">📈 Gráfico de Evolução ({{ nome }})</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: var(--atp-blue); text-transform: uppercase; font-size: 14px;">📈 Gráfico de Evolução ({{ nome }})</h3>
+            <div class="filter-btn-group" id="filterGroup">
+                <button class="filter-btn" onclick="filtrar(3,  this)">Últimas 3</button>
+                <button class="filter-btn" onclick="filtrar(5,  this)">Últimas 5</button>
+                <button class="filter-btn" onclick="filtrar(10, this)">Últimas 10</button>
+                <button class="filter-btn" onclick="filtrar(15, this)">Últimas 15</button>
+                <button class="filter-btn active" onclick="filtrar(0, this)">Todas</button>
+            </div>
+        </div>
         <div style="height: 350px;">
             <canvas id="fundChart"></canvas>
         </div>
     </div>
-
+ 
     <div class="tip-box">
         <h3 style="margin: 0 0 10px 0; color: #b45309; display: flex; align-items: center; gap: 10px;">
             <span>💡</span> Insight Tático do Treinador
@@ -85,27 +122,28 @@
             {{ dicas.get(nome, "Mantenha o foco no treinamento constante e na repetição consciente dos movimentos para consolidar a memória muscular.") }}
         </p>
     </div>
-
+ 
 </div>
 {% endblock %}
-
+ 
 {% block extra_js %}
 <script>
-    window.onload = function() {
+    let fundChart = null;
+ 
+    function buildChart(labels, data) {
         Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
         const ctx = document.getElementById('fundChart').getContext('2d');
-        
-        // Puxando os dados ordenados cronologicamente do Python/Jinja
-        const fundData = [{% for m in matches %}{{ m[idx] or 0 }},{% endfor %}];
-        const labels = [{% for m in matches %}'J{{ loop.index }}',{% endfor %}];
-
-        new Chart(ctx, {
+ 
+        // Destrói instância anterior antes de criar nova (evita sobreposição de gráficos)
+        if (fundChart) { fundChart.destroy(); }
+ 
+        fundChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Nota: {{ nome }}',
-                    data: fundData,
+                    label: 'Nota: ' + window.fundNome,
+                    data: data,
                     borderColor: '#0ea5e9',
                     backgroundColor: 'rgba(14, 165, 233, 0.1)',
                     borderWidth: 4,
@@ -117,15 +155,36 @@
                     pointBorderWidth: 2
                 }]
             },
-            options: { 
-                responsive: true, maintainAspectRatio: false,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { 
+                scales: {
                     y: { min: 0, max: 10, ticks: { stepSize: 1 }, grid: { borderDash: [5, 5] } },
-                    x: { grid: { display: false } } 
+                    x: { grid: { display: false } }
                 }
             }
         });
     }
+ 
+    function filtrar(n, btn) {
+        // Atualiza estado visual dos botões
+        document.querySelectorAll('#filterGroup .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+ 
+        const allData   = window.fundData;
+        const allLabels = window.fundLabels;
+ 
+        // n = 0 significa "Todas"; n > 0 pega os últimos n elementos
+        const data   = (n > 0) ? allData.slice(-n)   : allData;
+        const labels = (n > 0) ? allLabels.slice(-n) : allLabels;
+ 
+        buildChart(labels, data);
+    }
+ 
+    // Inicializa com todas as partidas
+    window.onload = function() {
+        buildChart(window.fundLabels, window.fundData);
+    };
 </script>
 {% endblock %}

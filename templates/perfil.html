@@ -12,7 +12,6 @@
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .form-group { margin-bottom: 15px; }
     
-    /* Classe adicionada para flex-box que vai empilhar no mobile */
     .form-split { display: flex; gap: 10px; }
     .form-split > div { flex: 1; }
 
@@ -40,7 +39,6 @@
     }
     .btn-change-photo:hover { background: #059669; }
 
-    /* Modal do Cropper (Escondido por padrão) */
     .cropper-modal {
         display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
         background: rgba(15, 23, 42, 0.9); z-index: 2000; align-items: center; justify-content: center;
@@ -57,7 +55,6 @@
     .img-container { height: 350px; background-color: #0f172a; margin-bottom: 20px; border-radius: 8px; overflow: hidden; }
     .img-container img { display: block; max-width: 100%; }
     
-    /* Faz a máscara do Cropper ficar redonda */
     .cropper-view-box, .cropper-face { border-radius: 50%; }
     
     .cropper-actions { display: flex; justify-content: space-between; align-items: center; }
@@ -67,23 +64,18 @@
     .btn-confirm-crop { background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px;}
     .btn-confirm-crop:hover { background: #059669; }
 
-    /* Esconde o input file original */
     #realFileInput { display: none; }
 
-    /* =========================================
-       MEDIA QUERIES PARA MOBILE (Responsividade)
-       ========================================= */
     @media (max-width: 768px) {
         .form-grid { grid-template-columns: 1fr; }
-        .form-split { flex-direction: column; gap: 15px; } /* Quebra a linha de altura/peso no mobile */
+        .form-split { flex-direction: column; gap: 15px; } 
         
-        /* Ajustes do Modal Cropper para telas pequenas */
         .img-container { height: 250px; }
         
         .cropper-actions { flex-direction: column; gap: 15px; }
         .zoom-controls { width: 100%; justify-content: center; gap: 20px; }
-        .btn-zoom { width: 50px; height: 50px; font-size: 24px; } /* Botões maiores para toque fácil */
-        .btn-confirm-crop { width: 100%; padding: 15px; font-size: 16px; } /* Botão largo para fácil alcance */
+        .btn-zoom { width: 50px; height: 50px; font-size: 24px; } 
+        .btn-confirm-crop { width: 100%; padding: 15px; font-size: 16px; } 
     }
 </style>
 {% endblock %}
@@ -159,9 +151,37 @@
             <h3 class="section-title">Informações sobre meu jogo</h3>
             <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Jogo desde (Data de Início)</label>
-                    <input type="date" name="playing_since" class="form-control" value="{{ user.playing_since or '' }}">
+                    <label class="form-label">Jogo desde (Mês/Ano)</label>
+                    
+                    {% set ps_val = user.playing_since or '' %}
+                    {% set ps_year = ps_val[:4] if ps_val|length >= 4 else '' %}
+                    {% set ps_month = ps_val[5:7] if ps_val|length >= 7 else '' %}
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <select id="play_month" class="form-control" style="margin-bottom: 0; flex: 1;" onchange="updatePlayingSince()">
+                            <option value="" disabled {% if not ps_month %}selected{% endif %}>Mês</option>
+                            <option value="01" {% if ps_month == '01' %}selected{% endif %}>Janeiro</option>
+                            <option value="02" {% if ps_month == '02' %}selected{% endif %}>Fevereiro</option>
+                            <option value="03" {% if ps_month == '03' %}selected{% endif %}>Março</option>
+                            <option value="04" {% if ps_month == '04' %}selected{% endif %}>Abril</option>
+                            <option value="05" {% if ps_month == '05' %}selected{% endif %}>Maio</option>
+                            <option value="06" {% if ps_month == '06' %}selected{% endif %}>Junho</option>
+                            <option value="07" {% if ps_month == '07' %}selected{% endif %}>Julho</option>
+                            <option value="08" {% if ps_month == '08' %}selected{% endif %}>Agosto</option>
+                            <option value="09" {% if ps_month == '09' %}selected{% endif %}>Setembro</option>
+                            <option value="10" {% if ps_month == '10' %}selected{% endif %}>Outubro</option>
+                            <option value="11" {% if ps_month == '11' %}selected{% endif %}>Novembro</option>
+                            <option value="12" {% if ps_month == '12' %}selected{% endif %}>Dezembro</option>
+                        </select>
+                        
+                        <span style="font-size: 18px; color: #94a3b8; font-weight: bold;">/</span>
+                        
+                        <input type="number" id="play_year" class="form-control" style="margin-bottom: 0; flex: 1;" placeholder="Ex: 2020" value="{{ ps_year }}" min="1950" max="2050" oninput="updatePlayingSince()">
+                    </div>
+                    
+                    <input type="hidden" name="playing_since" id="real_playing_since" value="{{ ps_val }}">
                 </div>
+                
                 <div class="form-group">
                     <label class="form-label">Forehand</label>
                     <select name="forehand_hand" class="form-control">
@@ -220,33 +240,42 @@
 
 {% block extra_js %}
 <script>
+    // Função para montar a data do Mês/Ano e jogar no input invisível pro Back-end
+    function updatePlayingSince() {
+        const month = document.getElementById('play_month').value;
+        const year = document.getElementById('play_year').value;
+        const hiddenInput = document.getElementById('real_playing_since');
+        
+        if (month && year && year.length === 4) {
+            // Salva no formato clássico de banco de dados para evitar conflitos (Sempre dia 01)
+            hiddenInput.value = `${year}-${month}-01`;
+        } else {
+            hiddenInput.value = '';
+        }
+    }
+
     let cropper = null;
     const modal = document.getElementById('cropModal');
     const imageElement = document.getElementById('imageToCrop');
     const fileInput = document.getElementById('realFileInput');
 
-    // 1. Quando o usuário seleciona um arquivo no PC/Celular
     function openCropper(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Abre o Modal
                 modal.classList.add('active');
-                // Coloca a imagem no preview do Modal
                 imageElement.src = e.target.result;
                 
-                // Se já tinha um cropper ativo, destrói para criar um novo
                 if (cropper) { cropper.destroy(); }
                 
-                // Inicia o plugin de corte
                 cropper = new Cropper(imageElement, {
-                    aspectRatio: 1, // Força a ser um quadrado perfeito (para o círculo)
-                    viewMode: 1,    // Restringe o crop box dentro do canvas
-                    dragMode: 'move',// Permite arrastar a imagem
+                    aspectRatio: 1, 
+                    viewMode: 1,    
+                    dragMode: 'move',
                     autoCropArea: 0.8,
-                    cropBoxMovable: false, // Trava a caixa, o usuário move a imagem
-                    cropBoxResizable: false, // Trava o tamanho da caixa
+                    cropBoxMovable: false, 
+                    cropBoxResizable: false, 
                     background: false
                 });
             };
@@ -254,38 +283,27 @@
         }
     }
 
-    // 2. Quando clica no 'X' para cancelar
     function closeCropper() {
         modal.classList.remove('active');
-        fileInput.value = ""; // Limpa a seleção
+        fileInput.value = ""; 
         if (cropper) { cropper.destroy(); }
     }
 
-    // 3. Quando clica no botão verde "Confirmar Corte"
     function confirmCrop() {
         if (!cropper) return;
 
-        // Pega a área cortada e gera um novo arquivo de imagem
         cropper.getCroppedCanvas({
-            width: 400, // Tamanho final da imagem salva
+            width: 400, 
             height: 400
         }).toBlob((blob) => {
-            // A. Mostra a prévia cortada na tela imediatamente
             const url = URL.createObjectURL(blob);
             document.getElementById('photoPreview').innerHTML = `<img src="${url}" alt="Foto Cortada">`;
             
-            // B. O Truque Mágico: Precisamos colocar esse 'blob' (arquivo cortado) dentro do form
-            // Como não dá para jogar direto no input file (medida de segurança dos navegadores),
-            // nós vamos interceptar o submit do formulário e injetar esse arquivo lá.
-            
-            // Cria um arquivo virtual File a partir do Blob gerado pelo Cropper
             let file = new File([blob], "profile_cropped.png", {type: "image/png", lastModified: new Date().getTime()});
             let container = new DataTransfer();
             container.items.add(file);
-            // Substitui o arquivo original do input (aquela foto inteira) pela versão redondinha cortada
             fileInput.files = container.files;
             
-            // Fecha o Modal
             modal.classList.remove('active');
             if (cropper) { cropper.destroy(); }
 

@@ -2,7 +2,7 @@
 
 {% block title %}Comparação de Partidas - Court Metrics{% endblock %}
 {% block page_title %}Análise de Evolução{% endblock %}
-{% block page_subtitle %}Compare duas partidas e veja seus deltas de performance.{% endblock %}
+{% block page_subtitle %}Compare duas partidas e veja suas performances.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -15,7 +15,6 @@
         .grid-2 { grid-template-columns: 1fr; }
     }
     
-    /* Classe nova para garantir responsividade nos Deltas (4 colunas no PC, 2 no Celular) */
     .delta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
     @media (max-width: 768px) {
         .delta-grid { grid-template-columns: repeat(2, 1fr); }
@@ -51,7 +50,7 @@
     </div>
 
     <div class="compare-box">
-        <h3 style="text-align: center; margin-top: 0; margin-bottom: 20px; color: var(--atp-blue); text-transform: uppercase;">📊 Deltas de Performance</h3>
+        <h3 style="text-align: center; margin-top: 0; margin-bottom: 20px; color: var(--atp-blue); text-transform: uppercase;">📊 Performance Comparada</h3>
         <div class="delta-grid">
             
             {% set d_rating = m2[25] - m1[25] %}
@@ -72,7 +71,7 @@
 
             {% set d_err = m2[24] - m1[24] %}
             <div class="delta-box">
-                <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">Erros Não Forç.</div>
+                <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase;">Erros Não Forçados</div>
                 <div class="delta-val {% if d_err < 0 %}delta-pos{% elif d_err > 0 %}delta-neg{% else %}delta-neu{% endif %}">
                     {% if d_err > 0 %}+{% endif %}{{ d_err }}
                 </div>
@@ -92,7 +91,16 @@
 
     <div class="compare-box" style="display: flex; flex-direction: column; align-items: center;">
         <h3 style="margin-top: 0; color: var(--atp-blue); text-transform: uppercase;">🕸️ Sobreposição de Raio-X Técnico</h3>
-        <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 20px;">A expansão da malha verde mostra onde você evoluiu em relação ao jogo base.</p>
+        
+        {% set diff_rating = m2[25] - m1[25] %}
+        {% if diff_rating > 0 %}
+            <p style="font-size: 14px; color: #15803d; margin-top: -10px; margin-bottom: 20px;">📈 A expansão da malha verde mostra onde você <strong>evoluiu</strong> em relação ao jogo base.</p>
+        {% elif diff_rating < 0 %}
+            <p style="font-size: 14px; color: #b91c1c; margin-top: -10px; margin-bottom: 20px;">📉 A retração da malha verde indica onde seu rendimento técnico <strong>caiu</strong> em relação ao jogo base.</p>
+        {% else %}
+            <p style="font-size: 14px; color: #64748b; margin-top: -10px; margin-bottom: 20px;">⚖️ A malha verde ilustra as variações em um jogo de <strong>nível técnico equivalente</strong> ao base.</p>
+        {% endif %}
+
         <div style="height: 450px; width: 100%; max-width: 700px;">
             <canvas id="dualRadarChart"></canvas>
         </div>
