@@ -27,7 +27,7 @@
     .chart-container { background: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; }
     
     .serve-input { width: 100%; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; border: none; outline: none; margin-top: 5px; background: transparent; }
-    
+
     .form-control { width: 100%; height: 42px; padding: 0 12px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #f8fafc; color: #002855; font-weight: 600; box-sizing: border-box; outline: none; font-family: inherit; font-size: 14px; }
     .form-control:focus { border-color: #002855; }
 
@@ -49,7 +49,6 @@
     .btn-main { background: var(--atp-blue); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; transition: opacity 0.2s; border: none; cursor: pointer; font-size: 14px; padding: 0 20px; }
     .btn-main:hover { opacity: 0.9; }
 
-    /* --- NOVOS ESTILOS: JOGO MENTAL E TAGS --- */
     .range-slider-container { display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 5px;}
     .range-slider-container input[type="range"] { flex: 1; accent-color: var(--atp-blue); }
     .range-val { font-size: 20px; font-weight: 900; color: var(--atp-blue); min-width: 30px; text-align: center; }
@@ -60,8 +59,25 @@
     .mental-tag.selected { background: var(--atp-blue); color: white; border-color: var(--atp-blue); }
     #hiddenTagsInput { display: none; }
 
-    /* Estilo do Dropdown de Resultado Automático */
-    .result-dropdown { font-weight: 900; border: none; border-radius: 8px; padding: 0 15px; height: 36px; text-transform: uppercase; font-size: 13px; outline: none; cursor: pointer;}
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ==============================================================
+       NOVO BLOCO: BLINDAGEM DE RESPONSIVIDADE PARA CELULAR
+       ============================================================== */
+    @media (max-width: 768px) {
+        .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 15px; }
+        
+        .performance-container { grid-template-columns: 1fr !important; gap: 20px; }
+        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } /* Mantém 2 colunas para os números 0-10 */
+        
+        .chart-container { margin-top: 10px; padding: 10px; width: 100%; overflow: hidden; box-sizing: border-box; }
+        #liveRadarChart { max-width: 100%; height: auto !important; }
+        
+        .player-info { flex: 0 0 100px; } /* Dá mais espaço para os inputs de placar */
+        .player-info > div:last-child { display: none; } /* Esconde texto secundário do placar no mobile */
+        
+        .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
+    }
 </style>
 {% endblock %}
 
