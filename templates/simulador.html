@@ -6,7 +6,7 @@
 
 {% block extra_css %}
 <style>
-    .sim-container { background: white; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); max-width: 800px; margin: 0 auto; }
+    .sim-container { background: white; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); max-width: 800px; margin: 0 auto; box-sizing: border-box; }
     .sim-header { border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 25px; }
     .sim-header h3 { margin: 0; color: #6d28d9; display: flex; align-items: center; gap: 10px; font-size: 20px;}
     .sim-header p { color: #64748b; font-size: 14px; margin-top: 10px; line-height: 1.5;}
@@ -48,19 +48,57 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* CORREÇÃO 4: responsividade mobile completa do simulador */
+    /* CORREÇÃO MOBILE DEFINITIVA */
     @media (max-width: 768px) {
-        .sim-container { 
-            padding: 20px 15px;   /* reduz padding lateral — era 40px, causava overflow */
-            margin: 0;            /* remove margens que empurravam para fora */
-            border-radius: 12px;
+        /* Força o container a nunca ultrapassar a largura da tela */
+        .sim-container {
+            padding: 16px 12px;
+            margin: 0;
+            border-radius: 10px;
+            /* Garante que nada interno vaze para a direita */
+            overflow-x: hidden;
+            width: 100%;
+            box-sizing: border-box;
         }
-        .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
-        .result-pct { font-size: 48px; }
-        .xai-list { padding-left: 15px; }
-        .xai-list li { font-size: 13px; word-break: break-word; overflow-wrap: break-word; }
-        .xai-box { padding: 15px; }
-        .btn-submit { font-size: 14px; letter-spacing: 0.5px; }
+
+        /* Grids viram coluna única */
+        .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 12px; }
+
+        /* Percentual menor para não forçar largura */
+        .result-pct { font-size: 44px; }
+        .result-box { padding: 20px 12px; }
+
+        /* Texto dos bullets quebra normalmente — sem overflow */
+        .xai-list {
+            padding-left: 14px;
+        }
+        .xai-list li {
+            font-size: 13px;
+            /* Quebra qualquer palavra longa, incluindo URLs e textos coloridos inline */
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            hyphens: auto;
+        }
+        /* Span coloridos dentro dos li também respeitam a largura */
+        .xai-list li strong,
+        .xai-list li span {
+            display: inline;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .xai-box { padding: 14px 12px; }
+        .xai-box h4 { font-size: 14px; flex-wrap: wrap; }
+
+        /* Sliders: garantem que não excedam largura */
+        .slider-win, .slider-err { max-width: 100%; box-sizing: border-box; }
+        .range-slider-container { flex-wrap: nowrap; gap: 10px; padding: 8px 10px; }
+
+        .btn-submit { font-size: 13px; letter-spacing: 0; padding: 14px 10px; }
+
+        /* Cabeçalhos do simulador */
+        .sim-header h3 { font-size: 16px; flex-wrap: wrap; }
+        .sim-header p { font-size: 13px; }
     }
 </style>
 {% endblock %}

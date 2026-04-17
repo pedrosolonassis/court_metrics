@@ -143,8 +143,9 @@
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
                 <select name="surface" class="form-control">
-                    <option value="Quadra Dura">Quadra Dura (Rápida)</option>
-                    <option value="Saibro">Saibro</option>
+                    <option value="" disabled {% if not surface %}selected{% endif %}>Selecione a quadra...</option>
+                    <option value="Dura" {% if surface == 'Dura' %}selected{% endif %}>Dura (Rápida)</option>
+                    <option value="Saibro" {% if surface == 'Saibro' %}selected{% endif %}>Saibro</option>
                 </select>
             </div>
             
@@ -265,7 +266,7 @@
             <div class="rating-cards">
                 <div class="rating-box box-neutral"><label>Forehand</label><input type="number" name="forehand" id="inp-forehand" value="0" min="0" max="10" class="fund-input"></div>
                 <div class="rating-box box-neutral"><label>Backhand</label><input type="number" name="backhand" id="inp-backhand" value="0" min="0" max="10" class="fund-input"></div>
-                <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="0" min="0" max="10" class="fund-input" onchange="toggleServeDetails()"></div>
+                <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="0" min="0" max="10" class="fund-input" oninput="toggleServeDetails()"></div>
                 <div class="rating-box box-neutral"><label>Devolução</label><input type="number" name="return_serve" id="inp-return" value="0" min="0" max="10" class="fund-input"></div>
                 <div class="rating-box box-neutral"><label>Slice</label><input type="number" name="slice" id="inp-slice" value="0" min="0" max="10" class="fund-input"></div>
                 <div class="rating-box box-neutral"><label>Voleio</label><input type="number" name="volley" id="inp-volley" value="0" min="0" max="10" class="fund-input"></div>
@@ -581,12 +582,12 @@
     ];
     const CATEGORIAS_DUPLAS = [
         { value: '',        label: 'Selecione a categoria...', disabled: true },
-        { value: 'Soma 2',  label: 'Soma 2 (Melhor)' },
+        { value: 'Soma 2',  label: 'Soma 2' },
         { value: 'Soma 4',  label: 'Soma 4' },
         { value: 'Soma 6',  label: 'Soma 6' },
         { value: 'Soma 8',  label: 'Soma 8' },
         { value: 'Soma 10', label: 'Soma 10' },
-        { value: 'Iniciante', label: 'Iniciante (Duplas)' },
+        { value: 'Iniciante', label: 'Iniciante' },
     ];
 
     function updateCategoriaSelect(isDuplas, valorAtual) {
@@ -632,7 +633,9 @@
     }
 
     function toggleServeDetails() {
-        var serveVal = document.getElementById('inp-serve').value;
+        // parseInt garante comparação numérica correta no mobile
+        // onchange → oninput: dispara em tempo real no teclado numérico do celular
+        var serveVal = parseInt(document.getElementById('inp-serve').value, 10) || 0;
         document.getElementById('serve-details').style.display = serveVal > 0 ? 'block' : 'none';
     }
 

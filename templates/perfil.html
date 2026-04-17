@@ -56,8 +56,48 @@
     /* CORREÇÃO 3: fundo preto puro para não deixar a imagem transparente */
     .img-container { height: 350px; background-color: #000000; margin-bottom: 20px; border-radius: 8px; overflow: hidden; }
     .img-container img { display: block; max-width: 100%; }
-    
-    .cropper-view-box, .cropper-face { border-radius: 50%; }
+
+    /* ================================================================
+       FIX DEFINITIVO DO CROPPER.JS — ELIMINA O PADRÃO XADREZ
+       O Cropper injeta várias classes com opacidade e background.
+       Sobrescrevemos TODAS para garantir imagem opaca e escura.
+    ================================================================ */
+
+    /* 1. Remove o padrão xadrez do fundo (injetado via background-image SVG) */
+    .cropper-bg {
+        background-image: none !important;
+        background-color: #000 !important;
+    }
+
+    /* 2. O canvas que renderiza a imagem não deve ter opacidade reduzida */
+    .cropper-canvas,
+    .cropper-canvas > img {
+        opacity: 1 !important;
+    }
+
+    /* 3. A máscara cinza fora da área de corte — deixar bem escura */
+    .cropper-modal {
+        opacity: 0.85 !important;
+        background: #000 !important;
+    }
+
+    /* 4. Área de corte (o círculo em si) — borda branca visível */
+    .cropper-view-box {
+        outline: 2px solid #fff !important;
+        outline-color: rgba(255, 255, 255, 0.85) !important;
+        border-radius: 50%;
+    }
+    .cropper-face {
+        border-radius: 50%;
+        background-color: transparent !important;
+        opacity: 1 !important;
+    }
+
+    /* 5. Drag-box não deve cobrir a imagem */
+    .cropper-drag-box {
+        opacity: 0 !important;
+        background: transparent !important;
+    }
     
     .cropper-actions { display: flex; justify-content: space-between; align-items: center; }
     .zoom-controls { display: flex; gap: 10px; }
@@ -336,8 +376,15 @@
                     autoCropArea: 0.8,
                     cropBoxMovable: false,
                     cropBoxResizable: false,
-                    // CORREÇÃO 3: removido background:false — causava transparência da imagem no modal
-                    // O Cropper.js agora usa seu próprio fundo, tornando a imagem bem visível
+                    // Garante que o fundo do cropper seja preto, não transparente
+                    background: true,
+                    ready: function() {
+                        // Força opacidade total no canvas da imagem após o cropper montar
+                        const canvas = document.querySelector('.cropper-canvas');
+                        const canvasImg = document.querySelector('.cropper-canvas img');
+                        if (canvas) canvas.style.opacity = '1';
+                        if (canvasImg) canvasImg.style.opacity = '1';
+                    }
                 });
             };
             reader.readAsDataURL(file);

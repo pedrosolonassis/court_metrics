@@ -100,13 +100,12 @@
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
-                <select name="categoria" class="form-control">
-                    <option value="1ª Classe" {% if match['categoria'] == '1ª Classe' %}selected{% endif %}>1ª Classe</option>
-                    <option value="2ª Classe" {% if match['categoria'] == '2ª Classe' %}selected{% endif %}>2ª Classe</option>
-                    <option value="3ª Classe" {% if match['categoria'] == '3ª Classe' %}selected{% endif %}>3ª Classe</option>
-                    <option value="4ª Classe" {% if match['categoria'] == '4ª Classe' %}selected{% endif %}>4ª Classe</option>
-                    <option value="5ª Classe" {% if match['categoria'] == '5ª Classe' %}selected{% endif %}>5ª Classe</option>
-                    <option value="Iniciante" {% if match['categoria'] == 'Iniciante' %}selected{% endif %}>Iniciante</option>
+                {# PROBLEMA 6: id para manipulação JS; valor atual preservado via data-attribute #}
+                <select name="categoria" id="categoria_select"
+                        class="form-control"
+                        data-current="{{ match['categoria'] }}"
+                        data-format="{{ match['match_format'] }}">
+                    {# Opções preenchidas pelo JS no onload, já com o valor correto selecionado #}
                 </select>
             </div>
         </div>
@@ -146,7 +145,7 @@
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
                 <select name="surface" class="form-control">
-                    <option value="Quadra Dura" {% if match['surface'] == 'Quadra Dura' %}selected{% endif %}>Quadra Dura (Rápida)</option>
+                    <option value="Dura" {% if match['surface'] == 'Dura' %}selected{% endif %}>Dura (Rápida)</option>
                     <option value="Saibro" {% if match['surface'] == 'Saibro' %}selected{% endif %}>Saibro</option>
                 </select>
             </div>
@@ -635,6 +634,43 @@
     });
 
     // === LÓGICA DO RESTO DO SEU FORMULÁRIO ===
+
+    // PROBLEMA 6: listas de categorias por formato
+    const CATEGORIAS_SIMPLES = [
+        { value: '1ª Classe', label: '1ª Classe' },
+        { value: '2ª Classe', label: '2ª Classe' },
+        { value: '3ª Classe', label: '3ª Classe' },
+        { value: '4ª Classe', label: '4ª Classe' },
+        { value: '5ª Classe', label: '5ª Classe' },
+        { value: 'Iniciante', label: 'Iniciante' },
+    ];
+    const CATEGORIAS_DUPLAS = [
+        { value: 'Soma 2',    label: 'Soma 2' },
+        { value: 'Soma 4',    label: 'Soma 4' },
+        { value: 'Soma 6',    label: 'Soma 6' },
+        { value: 'Soma 8',    label: 'Soma 8' },
+        { value: 'Soma 10',   label: 'Soma 10' },
+        { value: 'Iniciante', label: 'Iniciante' },
+    ];
+
+    function updateCategoriaSelect(isDuplas, valorAtual) {
+        const sel = document.getElementById('categoria_select');
+        const lista = isDuplas ? CATEGORIAS_DUPLAS : CATEGORIAS_SIMPLES;
+        sel.innerHTML = '';
+        lista.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = opt.value;
+            el.textContent = opt.label;
+            // Seleciona o valor atual se existir na lista, senão seleciona o primeiro
+            if (opt.value === valorAtual) el.selected = true;
+            sel.appendChild(el);
+        });
+        // Se o valor atual não existe na lista do formato escolhido, seleciona o primeiro
+        if (!lista.some(o => o.value === valorAtual)) {
+            sel.selectedIndex = 0;
+        }
+    }
+
     function toggleDoubles() {
         const format = document.getElementById('match_format').value;
         const doublesBox = document.getElementById('doubles-opponents');
@@ -642,8 +678,12 @@
         const doublePartnerDiv = document.getElementById('doubles-partner-div');
         const inpSingleOpp = document.getElementById('inp_opp_single');
         const inpDoubleOpp1 = document.getElementById('inp_opp1');
+        const isDuplas = format === 'Duplas';
 
-        if (format === 'Duplas') {
+        // Atualiza opções de categoria para o novo formato, sem valor pré-selecionado (usuário escolhe)
+        updateCategoriaSelect(isDuplas, '');
+
+        if (isDuplas) {
             doublesBox.style.display = 'block'; singleOppDiv.style.display = 'none'; doublePartnerDiv.style.display = 'block';
             inpSingleOpp.removeAttribute('required'); inpSingleOpp.name = "ignore_opp";
             inpDoubleOpp1.name = "opponent"; inpDoubleOpp1.setAttribute('required', 'true');
@@ -685,6 +725,13 @@
 
     window.onload = function() {
         toggleServeDetails();
+
+        // PROBLEMA 6: inicializa o select de categoria com as opções corretas
+        // para o formato já salvo no banco, preservando o valor atual
+        const catSelect = document.getElementById('categoria_select');
+        const currentFormat = catSelect.dataset.format;
+        const currentCat = catSelect.dataset.current;
+        updateCategoriaSelect(currentFormat === 'Duplas', currentCat);
 
         const savedTagsStr = document.getElementById('hiddenTagsInput').value;
         if (savedTagsStr) {
