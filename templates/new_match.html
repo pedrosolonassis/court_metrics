@@ -74,8 +74,7 @@
         #liveRadarChart { max-width: 100%; height: auto !important; }
         
         .player-info { flex: 0 0 100px; } /* Dá mais espaço para os inputs de placar */
-        .player-info > div:last-child { display: none; } /* Esconde texto secundário do placar no mobile */
-        
+            
         .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
     }
 </style>
@@ -96,7 +95,9 @@
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
-                <select name="categoria" class="form-control">
+                {# PROBLEMA 6: select recebe id para ser trocado dinamicamente pelo JS ao mudar para Duplas #}
+                <select name="categoria" id="categoria_select" class="form-control">
+                    <option value="" disabled selected>Selecione a classe...</option>
                     <option value="1ª Classe">1ª Classe</option>
                     <option value="2ª Classe">2ª Classe</option>
                     <option value="3ª Classe">3ª Classe</option>
@@ -341,22 +342,22 @@
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">B.P. SALVOS (SEU SAQUE):</label>
                 <select name="clutch_bp_saved" class="form-control">
                     <option value="0">0: Não Lembro / N.A.</option>
-                    <option value="5">5: Intransponível (Salvei TODAS)</option>
-                    <option value="4">4: Parede (Salvei QUASE todas)</option>
+                    <option value="5">5: Intransponível (Salvei todos)</option>
+                    <option value="4">4: Parede (Salvei a maioria)</option>
                     <option value="3">3: Equilibrado (Salvei metade)</option>
                     <option value="2">2: Vulnerável (Cedi a maioria)</option>
-                    <option value="1">1: Colapso (Fui quebrado em TODAS)</option>
+                    <option value="1">1: Colapso (Fui quebrado em todos)</option>
                 </select>
             </div>
             <div class="form-group">
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">QUEBRAS (SAQUE DELE):</label>
                 <select name="clutch_bp_won" class="form-control">
                     <option value="0">0: Não Lembro / N.A.</option>
-                    <option value="5">5: Cirúrgico (Aproveitei TODAS)</option>
-                    <option value="4">4: Matador (Aproveitei QUASE todas)</option>
+                    <option value="5">5: Cirúrgico (Aproveitei todos)</option>
+                    <option value="4">4: Matador (Aproveitei a maioria)</option>
                     <option value="3">3: Equilibrado (Aproveitei metade)</option>
                     <option value="2">2: Ineficiente (Perdi a maioria)</option>
-                    <option value="1">1: Desastre (Desperdicei TODAS)</option>
+                    <option value="1">1: Desastre (Desperdicei todos)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -376,12 +377,13 @@
             <label style="font-size: 13px; font-weight: bold; color: #64748b;">TAGS DE CONTEXTO EMOCIONAL (Opcional):</label>
             <div class="tag-selector" id="tagSelector">
                 <div class="mental-tag" onclick="toggleTag(this)">Tensão no Saque</div>
-                <div class="mental-tag" onclick="toggleTag(this)">Irritação (Juiz/Vento)</div>
-                <div class="mental-tag" onclick="toggleTag(this)">Braço Encolhido (Medo)</div>
+                <div class="mental-tag" onclick="toggleTag(this)">Irritação</div>
+                <div class="mental-tag" onclick="toggleTag(this)">Braço Encolhido</div>
                 <div class="mental-tag" onclick="toggleTag(this)">Cansaço Físico afetou a Mente</div>
                 <div class="mental-tag" onclick="toggleTag(this)">Confiante nos Pontos Importantes</div>
                 <div class="mental-tag" onclick="toggleTag(this)">Relaxamento após abrir vantagem</div>
                 <div class="mental-tag" onclick="toggleTag(this)">Lutei até a última bola</div>
+                <div class="mental-tag" onclick="toggleTag(this)">Cabeça fora da quadra</div>
             </div>
             <input type="hidden" name="mental_tags" id="hiddenTagsInput">
         </div>
@@ -565,6 +567,47 @@
         }
     });
 
+    // PROBLEMA 6: categorias de simples e duplas são diferentes
+    // Simples: 1ª a 5ª Classe + Iniciante
+    // Duplas: Iniciante, Soma 10, 8, 6, 4, 2 (Soma 2 é a melhor categoria)
+    const CATEGORIAS_SIMPLES = [
+        { value: '',          label: 'Selecione a classe...',  disabled: true },
+        { value: '1ª Classe', label: '1ª Classe' },
+        { value: '2ª Classe', label: '2ª Classe' },
+        { value: '3ª Classe', label: '3ª Classe' },
+        { value: '4ª Classe', label: '4ª Classe' },
+        { value: '5ª Classe', label: '5ª Classe' },
+        { value: 'Iniciante', label: 'Iniciante' },
+    ];
+    const CATEGORIAS_DUPLAS = [
+        { value: '',        label: 'Selecione a categoria...', disabled: true },
+        { value: 'Soma 2',  label: 'Soma 2 (Melhor)' },
+        { value: 'Soma 4',  label: 'Soma 4' },
+        { value: 'Soma 6',  label: 'Soma 6' },
+        { value: 'Soma 8',  label: 'Soma 8' },
+        { value: 'Soma 10', label: 'Soma 10' },
+        { value: 'Iniciante', label: 'Iniciante (Duplas)' },
+    ];
+
+    function updateCategoriaSelect(isDuplas, valorAtual) {
+        const sel = document.getElementById('categoria_select');
+        const lista = isDuplas ? CATEGORIAS_DUPLAS : CATEGORIAS_SIMPLES;
+        sel.innerHTML = '';
+        lista.forEach(opt => {
+            const el = document.createElement('option');
+            el.value = opt.value;
+            el.textContent = opt.label;
+            if (opt.disabled) { el.disabled = true; }
+            // Se tiver valor atual e bater, seleciona; senão seleciona o placeholder
+            if (valorAtual && opt.value === valorAtual) {
+                el.selected = true;
+            } else if (!valorAtual && opt.disabled) {
+                el.selected = true;
+            }
+            sel.appendChild(el);
+        });
+    }
+
     function toggleDoubles() {
         const format = document.getElementById('match_format').value;
         const doublesBox = document.getElementById('doubles-opponents');
@@ -572,8 +615,12 @@
         const doublePartnerDiv = document.getElementById('doubles-partner-div');
         const inpSingleOpp = document.getElementById('inp_opp_single');
         const inpDoubleOpp1 = document.getElementById('inp_opp1');
+        const isDuplas = format === 'Duplas';
 
-        if (format === 'Duplas') {
+        // Troca as opções de categoria conforme o formato
+        updateCategoriaSelect(isDuplas, '');
+
+        if (isDuplas) {
             doublesBox.style.display = 'block'; singleOppDiv.style.display = 'none'; doublePartnerDiv.style.display = 'block';
             inpSingleOpp.removeAttribute('required'); inpSingleOpp.name = "ignore_opp";
             inpDoubleOpp1.name = "opponent"; inpDoubleOpp1.setAttribute('required', 'true');

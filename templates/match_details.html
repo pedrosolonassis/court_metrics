@@ -72,9 +72,11 @@
 {% set v_es = match[22]|int if match[22] else 0 %}
 
 {% set golpes = [(v_fh, 'Forehand'), (v_bh, 'Backhand'), (v_sq, 'Saque'), (v_dv, 'Devolução'), (v_sl, 'Slice'), (v_vl, 'Voleio'), (v_sm, 'Smash'), (v_dp, 'Dropshot'), (v_fw, 'Footwork'), (v_es, 'Estratégia')] %}
-{% set sorted_golpes = golpes|sort(attribute='0', reverse=true) %}
-{% set melhor_golpe = sorted_golpes[0] %}
-{% set pior_golpe = sorted_golpes[-1] %}
+{# CORREÇÃO 1: filtra notas 0 antes de ordenar — 0 significa "não avaliado", não nota ruim #}
+{% set golpes_validos = golpes | selectattr('0', 'gt', 0) | list %}
+{% set sorted_golpes = golpes_validos | sort(attribute='0', reverse=true) %}
+{% set melhor_golpe = sorted_golpes[0] if sorted_golpes else (0, 'N/A') %}
+{% set pior_golpe = sorted_golpes[-1] if sorted_golpes else (0, 'N/A') %}
 
 <div class="container" style="max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
     

@@ -44,10 +44,12 @@
 {% for m in matches %}
     {% set _ = valores.append(m[idx] if m[idx] is not none else 0) %}
 {% endfor %}
- 
-{% set media = (valores|sum / valores|length)|round(1) if valores else 0 %}
-{% set maxima = valores|max if valores else 0 %}
-{% set minima = valores|min if valores else 0 %}
+
+{# CORREÇÃO 1: filtra zeros — 0 = "não avaliado", não deve entrar em min/max/média #}
+{% set valores_validos = valores | select('gt', 0) | list %}
+{% set media = (valores_validos|sum / valores_validos|length)|round(1) if valores_validos else 0 %}
+{% set maxima = valores_validos|max if valores_validos else 0 %}
+{% set minima = valores_validos|min if valores_validos else 0 %}
  
 {% set dicas = {
     'Forehand': 'O peso do seu jogo agressivo depende da confiança aqui. Bata na bola subindo, use o top spin pesado para empurrar o adversário para trás da linha e ditar o ritmo do ponto.',
@@ -62,9 +64,9 @@
     'Estratégia': 'Estratégia é adaptação. Se o plano A de dominar da base não funcionar, não insista no erro. Identifique o ponto fraco do outro lado e explore isso com paciência.'
 } %}
  
-{# Injeta os dados corretamente no escopo JS enquanto idx ainda está disponível no Jinja #}
+{# CORREÇÃO 1: zeros viram null — Chart.js não plota o ponto, evitando distorção visual #}
 <script>
-    window.fundData   = [{% for m in matches %}{{ m[idx] if m[idx] is not none else 0 }},{% endfor %}];
+    window.fundData   = [{% for m in matches %}{% set v = m[idx] if m[idx] is not none else 0 %}{{ v if v > 0 else 'null' }},{% endfor %}];
     window.fundLabels = [{% for m in matches %}'J{{ loop.index }}',{% endfor %}];
     window.fundNome   = "{{ nome }}";
 </script>
@@ -152,7 +154,8 @@
                     pointRadius: 6,
                     pointBackgroundColor: '#0284c7',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2
+                    pointBorderWidth: 2,
+                    spanGaps: false  // CORREÇÃO 1: não conecta pontos onde a nota era 0 (null)
                 }]
             },
             options: {

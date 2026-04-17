@@ -47,6 +47,21 @@
     .error-box { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 20px; border-radius: 12px; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: 500;}
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* CORREÇÃO 4: responsividade mobile completa do simulador */
+    @media (max-width: 768px) {
+        .sim-container { 
+            padding: 20px 15px;   /* reduz padding lateral — era 40px, causava overflow */
+            margin: 0;            /* remove margens que empurravam para fora */
+            border-radius: 12px;
+        }
+        .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+        .result-pct { font-size: 48px; }
+        .xai-list { padding-left: 15px; }
+        .xai-list li { font-size: 13px; word-break: break-word; overflow-wrap: break-word; }
+        .xai-box { padding: 15px; }
+        .btn-submit { font-size: 14px; letter-spacing: 0.5px; }
+    }
 </style>
 {% endblock %}
 
@@ -70,6 +85,7 @@
             <div class="form-group">
                 <label>Superfície do Jogo</label>
                 <select name="surface" class="form-control" required>
+                    <option value="" disabled {% if not surface %}selected{% endif %}>Selecione a quadra...</option>
                     <option value="Quadra Dura" {% if surface == 'Quadra Dura' %}selected{% endif %}>Quadra Dura (Rápida)</option>
                     <option value="Saibro" {% if surface == 'Saibro' %}selected{% endif %}>Saibro</option>
                 </select>
@@ -77,6 +93,7 @@
             <div class="form-group">
                 <label>Classe Adversária</label>
                 <select name="classe" class="form-control" required>
+                    <option value="" disabled {% if not classe %}selected{% endif %}>Selecione a classe...</option>
                     <option value="1ª Classe" {% if classe == '1ª Classe' %}selected{% endif %}>1ª Classe</option>
                     <option value="2ª Classe" {% if classe == '2ª Classe' %}selected{% endif %}>2ª Classe</option>
                     <option value="3ª Classe" {% if classe == '3ª Classe' %}selected{% endif %}>3ª Classe</option>
