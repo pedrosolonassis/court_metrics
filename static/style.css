@@ -17,7 +17,7 @@ body {
     background-color: var(--bg-fundo);
     color: var(--texto-escuro);
     margin: 0;
-    padding: 20px;
+    padding: 0; /* CORREÇÃO: era padding: 20px — conflitava com o padding do main-content do base.html */
 }
 
 /* 3. Container Principal (Centraliza o conteúdo na tela) */
@@ -49,30 +49,13 @@ h1, h2, h3 {
     background-color: var(--verde-tenis);
 }
 
-/* 5. Formulário (Estilo de Dashboard) — APENAS para páginas legadas que usam .legacy-form */
-/* Os templates modernos (simulador, new_match, etc.) têm seus próprios estilos de form */
-/* CORREÇÃO: adicionado reset para forms dentro de containers modernos, evitando
-   que o padding/border-top globais quebrem o layout mobile desses templates */
+/* 5. Formulário (Estilo de Dashboard) */
 form {
     background-color: var(--bg-card);
     padding: 25px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     border-top: 4px solid var(--azul-piscina);
-}
-
-/* Reset para formulários dentro de containers modernos (sim-container, form-section, etc.)
-   Esses containers já gerenciam seu próprio estilo e não devem herdar o form global */
-.sim-container form,
-.form-section form,
-.settings-section form,
-.feedback-container form,
-.auth-card form {
-    background-color: transparent;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    border-top: none;
 }
 
 label {
@@ -92,16 +75,32 @@ input[type="text"], select, textarea {
     font-family: inherit;
 }
 
-/* 6. Lista de Jogos (Transformando em Cards) */
+/* 6. Lista de Jogos (Transformando em Cards) — APENAS para listas dentro de .legacy-list */
+/* CORREÇÃO CRÍTICA: os estilos globais de ul/li estavam sendo aplicados em TODOS os <ul>
+   do site, incluindo o .xai-list do simulador, bullet-list do treinador, etc.
+   O grid com minmax(400px) forçava overflow em telas de ~390px no mobile.
+   Solução: restringir esses estilos apenas a listas dentro de .match-list-container,
+   e resetar ul/li para comportamento padrão fora desse contexto. */
+
+/* Reset global — ul/li voltam ao comportamento neutro */
 ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
+}
+
+li {
+    line-height: 1.6;
+}
+
+/* Grid de cards só para a lista principal de partidas */
+.match-list-container ul {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 20px;
 }
 
-li {
+.match-list-container li {
     background-color: var(--bg-card);
     padding: 20px;
     border-radius: 8px;
@@ -110,8 +109,7 @@ li {
     line-height: 1.6;
 }
 
-/* Intercalando a cor da borda lateral para dar um efeito visual bacana */
-li:nth-child(even) {
+.match-list-container li:nth-child(even) {
     border-left: 5px solid var(--azul-piscina);
 }
 

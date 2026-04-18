@@ -457,12 +457,18 @@ def fundamento(nome):
 @login_required
 def new_match():
     if request.method == "POST":
-        opponent = request.form["opponent"]
-        categoria = request.form["categoria"]
-        match_type = request.form["match_type"]
-        surface = request.form["surface"]
-        result = request.form["result"]
-        match_format = request.form.get("match_format", "1 Set")
+        # Usando .get() para NUNCA dar Erro 400 Bad Request
+        opponent = request.form.get("opponent", "Desconhecido")
+        categoria = request.form.get("categoria", "Sem Classe")
+        match_type = request.form.get("match_type", "Amistoso")
+        surface = request.form.get("surface", "Quadra Dura")
+        result = request.form.get("result", "Derrota")
+        
+        # Resolvendo o conflito de nomes: juntando Simples/Duplas com o Modelo de Sets
+        simples_duplas = request.form.get("simples_duplas", "Simples")
+        set_model = request.form.get("set_model", "1 Set")
+        match_format = f"{simples_duplas} - {set_model}"
+        
         game_format = request.form.get("game_format", "6")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")
@@ -524,12 +530,17 @@ def edit_match(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     if request.method == "POST":
-        opponent = request.form["opponent"]
-        categoria = request.form["categoria"]
-        match_type = request.form["match_type"]
-        surface = request.form["surface"]
-        result = request.form["result"]
-        match_format = request.form.get("match_format", "1 Set")
+        # Usando .get() para blindagem total
+        opponent = request.form.get("opponent", "Desconhecido")
+        categoria = request.form.get("categoria", "Sem Classe")
+        match_type = request.form.get("match_type", "Amistoso")
+        surface = request.form.get("surface", "Quadra Dura")
+        result = request.form.get("result", "Derrota")
+        
+        simples_duplas = request.form.get("simples_duplas", "Simples")
+        set_model = request.form.get("set_model", "1 Set")
+        match_format = f"{simples_duplas} - {set_model}"
+        
         game_format = request.form.get("game_format", "6")
         partner = request.form.get("partner", "")
         opp_partner = request.form.get("opp_partner", "")

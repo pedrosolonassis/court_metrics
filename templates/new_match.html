@@ -61,19 +61,16 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ==============================================================
-       NOVO BLOCO: BLINDAGEM DE RESPONSIVIDADE PARA CELULAR
-       ============================================================== */
     @media (max-width: 768px) {
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 15px; }
         
         .performance-container { grid-template-columns: 1fr !important; gap: 20px; }
-        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } /* Mantém 2 colunas para os números 0-10 */
+        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } 
         
         .chart-container { margin-top: 10px; padding: 10px; width: 100%; overflow: hidden; box-sizing: border-box; }
         #liveRadarChart { max-width: 100%; height: auto !important; }
         
-        .player-info { flex: 0 0 100px; } /* Dá mais espaço para os inputs de placar */
+        .player-info { flex: 0 0 100px; } 
             
         .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
     }
@@ -92,15 +89,14 @@
         <div class="grid-2">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">FORMATO DO JOGO:</label>
-                <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
+                <select name="simples_duplas" id="match_format" class="form-control" onchange="toggleDoubles()">
                     <option value="Simples">Simples</option>
                     <option value="Duplas">Duplas</option>
                 </select>
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
-                {# PROBLEMA 6: select recebe id para ser trocado dinamicamente pelo JS ao mudar para Duplas #}
-                <select name="categoria" id="categoria_select" class="form-control">
+                <select name="categoria" id="categoria_select" class="form-control" required>
                     <option value="" disabled selected>Selecione a classe...</option>
                     <option value="1ª Classe">1ª Classe</option>
                     <option value="2ª Classe">2ª Classe</option>
@@ -146,9 +142,9 @@
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
-                <select name="surface" class="form-control">
+                <select name="surface" class="form-control" required>
                     <option value="" disabled {% if not surface %}selected{% endif %}>Selecione a quadra...</option>
-                    <option value="Dura" {% if surface == 'Dura' %}selected{% endif %}>Dura (Rápida)</option>
+                    <option value="Quadra Dura" {% if surface == 'Quadra Dura' %}selected{% endif %}>Dura (Rápida)</option>
                     <option value="Saibro" {% if surface == 'Saibro' %}selected{% endif %}>Saibro</option>
                 </select>
             </div>
@@ -176,7 +172,7 @@
         <div class="grid-2" style="margin-bottom: 20px;">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE SETS:</label>
-                <select id="set_model" name="match_format" class="form-control" onchange="renderScoreInputs()">
+                <select id="set_model" name="set_model" class="form-control" onchange="renderScoreInputs()" required>
                     <option value="" selected disabled>Escolha o modelo de sets...</option>
                     <option value="1 Set">1 Set</option>
                     <option value="2 Sets + Super Tiebreak">2 Sets + Super Tiebreak</option>
@@ -187,7 +183,7 @@
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE GAMES:</label>
-                <select id="game_model" name="game_format" class="form-control" onchange="renderScoreInputs()">
+                <select id="game_model" name="game_format" class="form-control" onchange="renderScoreInputs()" required>
                     <option value="" selected disabled>Escolha o modelo de games...</option>
                     <option value="4">4 games (com tie-break no 4x4)</option>
                     <option value="5">5 games (com tie-break no 5x5)</option>
@@ -572,9 +568,6 @@
         }
     });
 
-    // PROBLEMA 6: categorias de simples e duplas são diferentes
-    // Simples: 1ª a 5ª Classe + Iniciante
-    // Duplas: Iniciante, Soma 10, 8, 6, 4, 2 (Soma 2 é a melhor categoria)
     const CATEGORIAS_SIMPLES = [
         { value: '',          label: 'Selecione a classe...',  disabled: true },
         { value: '1ª Classe', label: '1ª Classe' },
@@ -603,7 +596,6 @@
             el.value = opt.value;
             el.textContent = opt.label;
             if (opt.disabled) { el.disabled = true; }
-            // Se tiver valor atual e bater, seleciona; senão seleciona o placeholder
             if (valorAtual && opt.value === valorAtual) {
                 el.selected = true;
             } else if (!valorAtual && opt.disabled) {
@@ -622,7 +614,6 @@
         const inpDoubleOpp1 = document.getElementById('inp_opp1');
         const isDuplas = format === 'Duplas';
 
-        // Troca as opções de categoria conforme o formato
         updateCategoriaSelect(isDuplas, '');
 
         if (isDuplas) {
@@ -637,8 +628,6 @@
     }
 
     function toggleServeDetails() {
-        // parseInt garante comparação numérica correta no mobile
-        // onchange → oninput: dispara em tempo real no teclado numérico do celular
         var serveVal = parseInt(document.getElementById('inp-serve').value, 10) || 0;
         document.getElementById('serve-details').style.display = serveVal > 0 ? 'block' : 'none';
     }
