@@ -39,6 +39,10 @@
     .fund-nota { font-size: 26px; font-weight: 900; margin-bottom: 4px; }
     .fund-status { font-size: 10px; font-weight: bold; text-transform: uppercase; }
 
+    .fund-neutral { background-color: #f8fafc; border-color: #cbd5e1; }
+    .fund-neutral .fund-nota { color: #64748b; }
+    .fund-neutral .fund-status { color: #94a3b8; }
+
     .fund-red { background-color: #fef2f2; border-color: #fca5a5; }
     .fund-red .fund-nota { color: #b91c1c; }
     .fund-red .fund-status { color: #dc2626; }
@@ -98,14 +102,14 @@
         <div class="insight-card" style="background: var(--atp-blue); color: white; padding: 25px; border-radius: 15px; text-align: center;">
             <span style="font-size: 12px; text-transform: uppercase; opacity: 0.7; font-weight: bold; letter-spacing: 1px;">Média Performance</span>
             <h2 style="font-size: 42px; margin: 10px 0; color: var(--tennis-green);">
-                {% set total_perf = matches|sum(attribute=25) %}
+                {% set total_perf = matches|sum(attribute='performance_rating') %}
                 {% if matches|length > 0 %}{{ "%.1f"|format(total_perf / matches|length) }}{% else %} 0.0 {% endif %}
             </h2>
             <span style="font-size: 11px;">Ranking Ponderado ATP</span>
         </div>
         <div class="insight-card" style="background: white; padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0;">
             <span style="font-size: 12px; text-transform: uppercase; color: var(--text-slate); font-weight: bold;">Taxa de Vitória</span>
-            {% set wins = matches|selectattr(5, 'equalto', 'Vitória')|list|length %}
+            {% set wins = matches|selectattr('result', 'equalto', 'Vitória')|list|length %}
             <h2 style="font-size: 42px; margin: 10px 0; color: #10b981;">
                 {% if matches|length > 0 %}{{ ((wins / matches|length) * 100)|int }}%{% else %} 0% {% endif %}
             </h2>
@@ -118,7 +122,7 @@
             <h2 style="font-size: 26px; margin: 15px 0; color: var(--atp-blue); text-transform: uppercase;">
                 {% if matches|length > 0 %}
                     {% set last = matches[0] %}
-                    {% set stats = [(last[10], 'Forehand'), (last[11], 'Backhand'), (last[12], 'Saque'), (last[16], 'Devolução'), (last[17], 'Slice'), (last[18], 'Voleio'), (last[19], 'Smash'), (last[20], 'Dropshot'), (last[21], 'Footwork'), (last[22], 'Estratégia')] %}
+                    {% set stats = [(last['forehand'], 'Forehand'), (last['backhand'], 'Backhand'), (last['serve'], 'Saque'), (last['return_serve'], 'Devolução'), (last['slice'], 'Slice'), (last['volley'], 'Voleio'), (last['smash'], 'Smash'), (last['dropshot'], 'Dropshot'), (last['footwork'], 'Footwork'), (last['strategy'], 'Estratégia')] %}
                     {{ (stats|sort(reverse=true))[0][1] }}
                 {% else %} -- {% endif %}
             </h2>
@@ -146,38 +150,39 @@
     {% if matches|length > 0 %}
     <div style="background: white; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; margin-bottom: 40px;">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 0px;">
-        
-        <div>
-            <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">🎾 Central de Fundamentos</h3>
-            <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Clique no fundamento para ver a sua evolução detalhada.</p>
-        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
+            <div>
+                <h3 style="margin: 0; color: var(--atp-blue); font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">🎾 Central de Fundamentos</h3>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Clique no fundamento para ver a sua evolução detalhada.</p>
+            </div>
 
-        <div>
-            <select id="fundFilter" class="chart-filter" style="width: auto; padding: 8px 15px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 600; cursor: pointer;" onchange="updateFundamentals(this.value)">
-                <option value="3">Últimas 3 Partidas</option>
-                <option value="5">Últimas 5 Partidas</option>
-                <option value="10">Últimas 10 Partidas</option>
-                <option value="15">Últimas 15 Partidas</option>
-                <option value="0" selected>Média da Carreira</option>
-            </select>
-        </div>
-
-    </div> <div style="display: grid; ...">
+            <div>
+                <select id="fundFilter" class="chart-filter" style="width: auto; padding: 8px 15px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; background: #f8fafc; color: var(--atp-blue); font-weight: 600; cursor: pointer;" onchange="updateFundamentals(this.value)">
+                    <option value="3">Últimas 3 Partidas</option>
+                    <option value="5">Últimas 5 Partidas</option>
+                    <option value="10">Últimas 10 Partidas</option>
+                    <option value="15">Últimas 15 Partidas</option>
+                    <option value="0" selected>Média da Carreira</option>
+                </select>
+            </div>
+        </div> 
         
-        {% set f_names = ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'] %}
-        <div class="fundamentos-grid">
-            {% for i in range(10) %}
-                <a href="/fundamento/{{ f_names[i] }}" id="fund-card-{{ i }}" class="fundamento-card">
-                    <span class="fund-nome">{{ f_names[i] }}</span>
-                    <span class="fund-nota" id="fund-val-{{ i }}">0.0</span>
-                    <div class="fund-status" id="fund-label-{{ i }}">Aguardando...</div>
-                </a>
-            {% endfor %}
-        </div>
+        <div style="display: grid; ...">
+            {% set f_names = ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'] %}
+            <div class="fundamentos-grid">
+                {% for i in range(10) %}
+                    <a href="/fundamento/{{ f_names[i] }}" id="fund-card-{{ i }}" class="fundamento-card">
+                        <span class="fund-nome">{{ f_names[i] }}</span>
+                        <span class="fund-nota" id="fund-val-{{ i }}">0.0</span>
+                        <div class="fund-status" id="fund-label-{{ i }}">Aguardando...</div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div> 
     </div> 
     {% endif %} 
-    </div> </div> <div style="margin-top: 50px;"> 
+    
+    <div style="margin-top: 50px;"> 
         <div style="display: flex; justify-content: space-between; align-items: flex-end; border-left: 4px solid var(--tennis-green); padding-left: 15px; margin-bottom: 20px;">
             <h2 style="color: var(--atp-blue); margin: 0;">Histórico Recente</h2>
             <a href="/history" style="color: var(--text-slate); font-weight: bold; font-size: 14px; text-decoration: none;">Ver Todos ➡</a>
@@ -191,14 +196,14 @@
                 <div>
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
                         <div style="line-height: 1.7; flex: 1; min-width: 0;">
-                            {% if match[7] == 'Duplas' %}
-                                <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👥 vs {{ match[1] }} & {{ match[9] }}</strong>
+                            {% if match['match_format'] and 'Duplas' in match['match_format'] %}
+                                <strong style="color: var(--atp-blue); font-size: 16px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👥 vs {{ match['opponent'] }} & {{ match['opp_partner'] }}</strong>
                             {% else %}
-                                <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👤 vs {{ match[1] }}</strong>
+                                <strong style="color: var(--atp-blue); font-size: 17px; display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">👤 vs {{ match['opponent'] }}</strong>
                             {% endif %}
-                            <span style="color: var(--text-slate); font-size: 13px;">{{ match[2] }} | {{ match[3] }} | {{ match[4] | replace('Quadra Dura', 'Dura') }}</span>
+                            <span style="color: var(--text-slate); font-size: 13px;">{{ match['categoria'] }} | {{ match['match_type'] }} | {{ match['surface'] | replace('Quadra Dura', 'Dura') }}</span>
                             
-                            {% set perf = match[25] %}
+                            {% set perf = match['performance_rating'] %}
                             {% if perf >= 9.0 %}{% set pc, pb, pt = '#0e7490', '#cffafe', '#67e8f9' %}
                             {% elif perf >= 8.0 %}{% set pc, pb, pt = '#047857', '#d1fae5', '#6ee7b7' %}
                             {% elif perf >= 7.0 %}{% set pc, pb, pt = '#4d7c0f', '#ecfccb', '#bef264' %}
@@ -212,13 +217,13 @@
 
                         <div style="text-align: right; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end;">
                             <div style="font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; margin-bottom: 4px;">
-                                📅 {{ match[27][8:10] }}/{{ match[27][5:7] }}/{{ match[27][0:4] }}
+                                📅 {{ match['match_date'][8:10] }}/{{ match['match_date'][5:7] }}/{{ match['match_date'][0:4] }}
                             </div>
-                            <span class="{% if match[5] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">
-                                {{ match[5] }}
+                            <span class="{% if match['result'] == 'Vitória' %}badge-vitoria{% else %}badge-derrota{% endif %}">
+                                {{ match['result'] }}
                             </span>
                             
-                            {% set clean_score = match[6] | replace(' /', '') | replace('/ ', '') | trim %}
+                            {% set clean_score = match['score'] | replace(' /', '') | replace('/ ', '') | trim %}
                             {% if clean_score.endswith('/') %}
                                 {% set clean_score = clean_score[:-1] | trim %}
                             {% endif %}
@@ -229,7 +234,7 @@
                     </div>
                 </div>
 
-                <a href="/match/{{ match[0] }}" class="btn-main" style="width: 100%; background: #f8fafc; color: var(--atp-blue); border: 1px solid #cbd5e1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; box-sizing: border-box; margin-top: 15px;">
+                <a href="/match/{{ match['id'] }}" class="btn-main" style="width: 100%; background: #f8fafc; color: var(--atp-blue); border: 1px solid #cbd5e1; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; box-sizing: border-box; margin-top: 15px;">
                     🔍 Ver Detalhes e Estatísticas
                 </a>
             </div>
@@ -250,13 +255,13 @@
 {% block extra_js %}
 <script>
     // === VARIÁVEIS GLOBAIS ===
-    const allPerfData = [{% for match in matches[:15]|reverse %}{{ match[25] }}{% if not loop.last %},{% endif %}{% endfor %}];
-    const allPerfLabels = [{% for match in matches[:15]|reverse %}'{{ match[27][8:10] }}/{{ match[27][5:7] }}'{% if not loop.last %},{% endif %}{% endfor %}];
+    const allPerfData = [{% for match in matches[:15]|reverse %}{{ match['performance_rating'] }}{% if not loop.last %},{% endif %}{% endfor %}];
+    const allPerfLabels = [{% for match in matches[:15]|reverse %}'{{ match['match_date'][8:10] }}/{{ match['match_date'][5:7] }}'{% if not loop.last %},{% endif %}{% endfor %}];
     
     // Exportando a matriz de fundamentos (10 índices) de TODOS os jogos
     const allFundData = [
         {% for m in matches %}
-            [{{ m[10] }}, {{ m[11] }}, {{ m[12] }}, {{ m[16] }}, {{ m[17] }}, {{ m[18] }}, {{ m[19] }}, {{ m[20] }}, {{ m[21] }}, {{ m[22] }}]{% if not loop.last %},{% endif %}
+            [{{ m['forehand'] }}, {{ m['backhand'] }}, {{ m['serve'] }}, {{ m['return_serve'] }}, {{ m['slice'] }}, {{ m['volley'] }}, {{ m['smash'] }}, {{ m['dropshot'] }}, {{ m['footwork'] }}, {{ m['strategy'] }}]{% if not loop.last %},{% endif %}
         {% endfor %}
     ];
 
@@ -313,17 +318,28 @@
         }
         if (limit === 0) return; // Evita erro se o banco estiver vazio
 
-        // Soma os 10 fundamentos baseados apenas na fatia selecionada (0 até limit)
+        // Arrays para guardar a SOMA das notas e a QUANTIDADE de vezes que foi avaliado
         let sums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+        // Varre os jogos limitados pelo filtro
         for(let i = 0; i < limit; i++) {
             for(let j = 0; j < 10; j++) {
-                sums[j] += allFundData[i][j];
+                let nota = allFundData[i][j];
+                
+                // A MÁGICA ACONTECE AQUI: Só entra na matemática se a nota for maior que 0
+                if (nota > 0) {
+                    sums[j] += nota;
+                    counts[j]++; // Regista que este fundamento teve uma avaliação válida neste jogo
+                }
             }
         }
 
-        // Calcula a média e aplica a gamificação
+        // Calcula a média justa e aplica a gamificação
         for(let j = 0; j < 10; j++) {
-            let avg = sums[j] / limit;
+            // Se o fundamento teve avaliações, divide pelo número de avaliações. Se não, fica 0.0.
+            let avg = counts[j] > 0 ? (sums[j] / counts[j]) : 0.0;
+            
             let card = document.getElementById('fund-card-' + j);
             let valEl = document.getElementById('fund-val-' + j);
             let labelEl = document.getElementById('fund-label-' + j);
@@ -337,8 +353,10 @@
             let textLabel = "";
             let icon = "";
 
-            // Lógica exata
-            if (avg < 6.0) {
+            // Lógica de gamificação (as notas 0.0 sem avaliação caem aqui no vermelho ou pode isolar se quiser)
+            if (avg === 0.0) {
+                colorClass = "fund-neutral"; textLabel = "Sem Avaliação"; icon = "➖ ";
+            } else if (avg < 6.0) {
                 colorClass = "fund-red"; textLabel = "Precisa de Treino"; icon = "⚠️ ";
             } else if (avg < 7.0) {
                 colorClass = "fund-orange"; textLabel = "Precisa de Atenção"; icon = "👀 ";
