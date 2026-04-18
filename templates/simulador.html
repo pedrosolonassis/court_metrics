@@ -48,65 +48,60 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* CORREÇÃO MOBILE — CONTENÇÃO TOTAL DE OVERFLOW */
+    /* Neutraliza o estilo global do style.css no formulário interno (proteção extra) */
+    .sim-container form {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        box-shadow: none;
+        border-top: none;
+    }
+
     @media (max-width: 768px) {
+        /* Com base.html corrigido (padding: 15px 12px) e style.css neutralizado,
+           o sim-container apenas remove seu padding lateral próprio */
         .sim-container {
-            padding: 16px 12px;
+            padding: 20px 0;
             margin: 0;
-            border-radius: 10px;
-            overflow: hidden;          /* bloqueia qualquer vazamento interno */
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
+            border: none;
+            box-shadow: none;
+            background: transparent;
+            border-radius: 0;
         }
 
-        /* Grids viram coluna única */
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 12px; }
 
-        /* Percentual menor */
         .result-pct { font-size: 44px; }
-        .result-box { padding: 20px 12px; overflow: hidden; }
+        .result-box { padding: 20px 0; }
 
-        /* xai-box contém tudo */
         .xai-box {
-            padding: 14px 10px;
+            padding: 16px 12px;
             overflow: hidden;
             max-width: 100%;
+            box-sizing: border-box;
         }
-        .xai-box h4 {
-            font-size: 13px;
-            flex-wrap: wrap;
-            word-break: break-word;
-        }
+        .xai-box h4 { font-size: 13px; flex-wrap: wrap; word-break: break-word; }
 
-        /* Lista e itens — quebra garantida em todos os níveis */
-        .xai-list {
-            padding-left: 12px;
-            overflow: hidden;
-            max-width: 100%;
-        }
+        .xai-list { padding-left: 14px; max-width: 100%; }
         .xai-list li {
-            font-size: 12px;
+            font-size: 13px;
             line-height: 1.6;
-            max-width: 100%;
-            overflow: hidden;
             word-break: break-word;
             overflow-wrap: anywhere;
-            hyphens: auto;
         }
-        /* Qualquer elemento inline dentro dos li herda a quebra */
+        /* Garante que todos os elementos inline dentro dos bullets também quebrem */
         .xai-list li * {
             word-break: break-word !important;
             overflow-wrap: anywhere !important;
-            max-width: 100%;
             white-space: normal !important;
         }
 
-        /* Sliders contidos */
         .slider-win, .slider-err { max-width: 100%; box-sizing: border-box; }
-        .range-slider-container { flex-wrap: nowrap; gap: 10px; padding: 8px 10px; }
-
-        .btn-submit { font-size: 13px; letter-spacing: 0; padding: 14px 10px; }
+        .range-slider-container { gap: 10px; padding: 8px 10px; }
+        .btn-submit { font-size: 14px; letter-spacing: 0; padding: 14px 10px; }
         .sim-header h3 { font-size: 16px; flex-wrap: wrap; }
         .sim-header p { font-size: 13px; }
     }

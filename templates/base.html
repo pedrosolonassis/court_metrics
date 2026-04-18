@@ -109,7 +109,14 @@
             .sidebar { transform: translateX(-100%); }
             .sidebar.show { transform: translateX(0); }
             
-            .main-content { margin-left: 0; width: 100%; padding: 20px 15px; }
+            /* CORREÇÃO: padding lateral reduzido e overflow travado para evitar conteúdo cortado */
+            .main-content { 
+                margin-left: 0; 
+                width: 100%; 
+                padding: 15px 12px;   /* era 20px 15px — reduzido para dar mais espaço ao conteúdo */
+                overflow-x: hidden;   /* bloqueia qualquer filho que tente vazar para a direita */
+                box-sizing: border-box;
+            }
             
             .menu-toggle { display: block; }
             

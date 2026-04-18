@@ -49,13 +49,30 @@ h1, h2, h3 {
     background-color: var(--verde-tenis);
 }
 
-/* 5. Formulário (Estilo de Dashboard) */
+/* 5. Formulário (Estilo de Dashboard) — APENAS para páginas legadas que usam .legacy-form */
+/* Os templates modernos (simulador, new_match, etc.) têm seus próprios estilos de form */
+/* CORREÇÃO: adicionado reset para forms dentro de containers modernos, evitando
+   que o padding/border-top globais quebrem o layout mobile desses templates */
 form {
     background-color: var(--bg-card);
     padding: 25px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     border-top: 4px solid var(--azul-piscina);
+}
+
+/* Reset para formulários dentro de containers modernos (sim-container, form-section, etc.)
+   Esses containers já gerenciam seu próprio estilo e não devem herdar o form global */
+.sim-container form,
+.form-section form,
+.settings-section form,
+.feedback-container form,
+.auth-card form {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border-top: none;
 }
 
 label {
