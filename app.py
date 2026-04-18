@@ -288,19 +288,23 @@ def logout():
 @login_required
 def home():
     conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row  # Isso permite acessar os campos pelo nome (ex: m['forehand'])
     c = conn.cursor()
     c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC, id DESC", (session["user_id"],))
-    matches = c.fetchall()
+    matches_raw = c.fetchall()
+    
+    # Converte as linhas do banco para dicionários para facilitar o uso no Jinja
+    matches = [dict(m) for m in matches_raw]
     
     c.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
     user_row = c.fetchone()
-    col_names = [description[0] for description in c.description]
-    user_data = dict(zip(col_names, user_row)) if user_row else {}
+    user_data = dict(user_row) if user_row else {}
     conn.close()
 
+    # --- LÓGICA DE ÚLTIMA PARTIDA E TEMPO DE JOGO ---
     ultima_partida = "Sem registros"
     if matches:
-        last_date_str = matches[0][27] 
+        last_date_str = matches[0]['match_date'] 
         try:
             last_date = datetime.strptime(last_date_str, '%Y-%m-%d').date()
             hoje = datetime.today().date()
@@ -322,7 +326,43 @@ def home():
         except:
             pass
 
-    return render_template("index.html", matches=matches, user_data=user_data, tempo_joga=tempo_joga, ultima_partida=ultima_partida)
+    # ==========================================================
+    # --- CORREÇÃO DA CENTRAL DE FUNDAMENTOS (MÉDIAS JUSTAS) ---
+    # ==========================================================
+    
+    # Lista com o nome exato das colunas de fundamentos no banco de dados
+    fundamentos_cols = [
+        'forehand', 'backhand', 'serve', 'return_serve', 'slice', 
+        'volley', 'smash', 'dropshot', 'footwork', 'strategy'
+    ]
+    
+    # Dicionário que vai guardar as médias já calculadas para enviar pro HTML
+    # Ex: {'forehand': 7.5, 'smash': 4.2, ...}
+    medias_fundamentos = {}
+
+    for fund in fundamentos_cols:
+        soma_notas = 0
+        qtd_avaliacoes = 0
+        
+        for m in matches:
+            nota = m.get(fund)
+            # Se a nota existe e é maior que zero, ela entra no cálculo da média!
+            if nota is not None and nota > 0:
+                soma_notas += nota
+                qtd_avaliacoes += 1
+                
+        # Se ele avaliou pelo menos 1 vez, faz a divisão justa. Senão, é zero.
+        if qtd_avaliacoes > 0:
+            medias_fundamentos[fund] = round(soma_notas / qtd_avaliacoes, 1)
+        else:
+            medias_fundamentos[fund] = 0.0
+
+    return render_template("index.html", 
+                           matches=matches, 
+                           user_data=user_data, 
+                           tempo_joga=tempo_joga, 
+                           ultima_partida=ultima_partida,
+                           medias_fundamentos=medias_fundamentos)  # Passando as médias prontas
 
 @app.route("/perfil", methods=["GET", "POST"])
 @login_required
