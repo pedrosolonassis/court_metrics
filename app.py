@@ -13,10 +13,14 @@ app = Flask(__name__)
 app.secret_key = "chave_super_secreta_court_metrics" # Necessário para segurança da sessão
 
 # --- CONFIGURAÇÃO DA PASTA DE UPLOADS (FOTOS DE PERFIL E FEEDBACK) ---
-UPLOAD_FOLDER = 'static/uploads/profiles'
-FEEDBACK_FOLDER = 'static/uploads/feedback'
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads', 'profiles')
+FEEDBACK_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads', 'feedback')
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['FEEDBACK_FOLDER'] = FEEDBACK_FOLDER
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(FEEDBACK_FOLDER, exist_ok=True)
 

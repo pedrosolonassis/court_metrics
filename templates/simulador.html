@@ -39,64 +39,74 @@
     .result-pct { font-size: 64px; font-weight: 900; line-height: 1; margin-bottom: 10px; }
     .result-desc { font-size: 14px; color: #475569; }
     
-    .xai-box { text-align: left; margin-top: 25px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+    .xai-box { text-align: left; margin-top: 25px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); overflow: hidden; max-width: 100%; }
     .xai-box h4 { margin: 0 0 15px 0; color: #002855; font-size: 15px; display: flex; align-items: center; gap: 8px;}
-    .xai-list { margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.7; }
-    .xai-list li { margin-bottom: 10px; }
+    .xai-list { margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.7; max-width: 100%; overflow: hidden; }
+    .xai-list li { margin-bottom: 10px; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
 
     .error-box { background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; padding: 20px; border-radius: 12px; font-size: 14px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-weight: 500;}
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* CORREÇÃO MOBILE DEFINITIVA */
+    /* CORREÇÃO MOBILE — CONTENÇÃO TOTAL DE OVERFLOW */
     @media (max-width: 768px) {
-        /* Força o container a nunca ultrapassar a largura da tela */
         .sim-container {
             padding: 16px 12px;
             margin: 0;
             border-radius: 10px;
-            /* Garante que nada interno vaze para a direita */
-            overflow-x: hidden;
+            overflow: hidden;          /* bloqueia qualquer vazamento interno */
             width: 100%;
+            max-width: 100%;
             box-sizing: border-box;
         }
 
         /* Grids viram coluna única */
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 12px; }
 
-        /* Percentual menor para não forçar largura */
+        /* Percentual menor */
         .result-pct { font-size: 44px; }
-        .result-box { padding: 20px 12px; }
+        .result-box { padding: 20px 12px; overflow: hidden; }
 
-        /* Texto dos bullets quebra normalmente — sem overflow */
+        /* xai-box contém tudo */
+        .xai-box {
+            padding: 14px 10px;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .xai-box h4 {
+            font-size: 13px;
+            flex-wrap: wrap;
+            word-break: break-word;
+        }
+
+        /* Lista e itens — quebra garantida em todos os níveis */
         .xai-list {
-            padding-left: 14px;
+            padding-left: 12px;
+            overflow: hidden;
+            max-width: 100%;
         }
         .xai-list li {
-            font-size: 13px;
-            /* Quebra qualquer palavra longa, incluindo URLs e textos coloridos inline */
+            font-size: 12px;
+            line-height: 1.6;
+            max-width: 100%;
+            overflow: hidden;
             word-break: break-word;
             overflow-wrap: anywhere;
             hyphens: auto;
         }
-        /* Span coloridos dentro dos li também respeitam a largura */
-        .xai-list li strong,
-        .xai-list li span {
-            display: inline;
-            word-break: break-word;
-            overflow-wrap: anywhere;
+        /* Qualquer elemento inline dentro dos li herda a quebra */
+        .xai-list li * {
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            max-width: 100%;
+            white-space: normal !important;
         }
 
-        .xai-box { padding: 14px 12px; }
-        .xai-box h4 { font-size: 14px; flex-wrap: wrap; }
-
-        /* Sliders: garantem que não excedam largura */
+        /* Sliders contidos */
         .slider-win, .slider-err { max-width: 100%; box-sizing: border-box; }
         .range-slider-container { flex-wrap: nowrap; gap: 10px; padding: 8px 10px; }
 
         .btn-submit { font-size: 13px; letter-spacing: 0; padding: 14px 10px; }
-
-        /* Cabeçalhos do simulador */
         .sim-header h3 { font-size: 16px; flex-wrap: wrap; }
         .sim-header p { font-size: 13px; }
     }
@@ -105,6 +115,11 @@
 
 {% block content %}
 <div class="sim-container">
+    
+    <div style="margin-bottom: 20px;">
+        <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para a página inicial</a>
+    </div>
+
     <div class="sim-header">
         <h3><i class='bx bx-test-tube'></i> Monte seu Cenário</h3>
         <p>A Inteligência Artificial vai analisar todo o seu histórico passado usando <em>Machine Learning</em> (Regressão Logística) para calcular sua chance de vitória neste cenário específico, unindo técnica e mentalidade.</p>
@@ -218,7 +233,7 @@
             <div class="xai-box">
                 <h4><i class='bx bx-bulb' style="color: #f59e0b; font-size: 20px;"></i> Por que o Oráculo chegou nesse número?</h4>
                 <ul class="xai-list">
-                    <li><strong>Abismo de Classes (Handicap):</strong> O modelo calculou seu Nível Verdadeiro pelo histórico e aplicou uma regra implacável para a <strong>{{ classe }}</strong>. Essa discrepância técnica gerou um ajuste direto de <strong><span style="color: {% if '+' in gap_text %}#10b981{% elif '-' in gap_text %}#ef4444{% else %}#f59e0b{% endif %};">{{ gap_text }}</span></strong> sobre a probabilidade base gerada pelo Machine Learning.</li>
+                    <li><strong>Abismo de Classes (Handicap):</strong> O modelo calculou seu Nível Verdadeiro pelo histórico e aplicou uma regra implacável para a <strong>{{ classe }}</strong>. Essa discrepância técnica gerou um ajuste direto de <strong><span style="color: {% if '+' in gap_text %}#10b981{% elif '-' in gap_text %}#ef4444{% else %}#f59e0b{% endif %}; word-break: break-word; overflow-wrap: anywhere; display: inline;">{{ gap_text }}</span></strong> sobre a probabilidade base gerada pelo Machine Learning.</li>
                     
                     {% set w = request.form.get('winners', 0)|int %}
                     {% set e = request.form.get('erros', 0)|int %}
