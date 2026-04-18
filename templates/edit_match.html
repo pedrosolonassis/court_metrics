@@ -61,17 +61,20 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* ==============================================================
+       NOVO BLOCO: BLINDAGEM DE RESPONSIVIDADE PARA CELULAR
+       ============================================================== */
     @media (max-width: 768px) {
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 15px; }
         
         .performance-container { grid-template-columns: 1fr !important; gap: 20px; }
-        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } 
+        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } /* Mantém 2 colunas para os números 0-10 */
         
         .chart-container { margin-top: 10px; padding: 10px; width: 100%; overflow: hidden; box-sizing: border-box; }
         #liveRadarChart { max-width: 100%; height: auto !important; }
         
-        .player-info { flex: 0 0 100px; } 
-        .player-info > div:last-child { display: none; } 
+        .player-info { flex: 0 0 100px; } /* Dá mais espaço para os inputs de placar */
+        .player-info > div:last-child { display: none; } /* Esconde texto secundário do placar no mobile */
         
         .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
     }
@@ -90,27 +93,45 @@
         <div class="grid-2">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">FORMATO DO JOGO:</label>
-                <select name="simples_duplas" id="match_format" class="form-control" onchange="toggleDoubles()">
-                    <option value="Simples" {% if match['match_format'] and 'Duplas' not in match['match_format'] %}selected{% endif %}>Simples</option>
-                    <option value="Duplas" {% if match['match_format'] and 'Duplas' in match['match_format'] %}selected{% endif %}>Duplas</option>
+                <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
+                    <option value="Simples" {% if match['match_format'] == 'Simples' %}selected{% endif %}>Simples</option>
+                    <option value="Duplas" {% if match['match_format'] == 'Duplas' %}selected{% endif %}>Duplas</option>
                 </select>
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
+                {# PROBLEMA 6: id para manipulação JS; valor atual preservado via data-attribute #}
+                {# CORREÇÃO: adicionadas opções inline como fallback caso o JS não execute no mobile #}
                 <select name="categoria" id="categoria_select"
-                        class="form-control" required
+                        class="form-control"
                         data-current="{{ match['categoria'] }}"
                         data-format="{{ match['match_format'] }}">
+                    {% set cat = match['categoria'] or '' %}
+                    {% if match['match_format'] == 'Duplas' %}
+                        <option value="Soma 2"    {% if cat == 'Soma 2' %}selected{% endif %}>Soma 2 (Melhor)</option>
+                        <option value="Soma 4"    {% if cat == 'Soma 4' %}selected{% endif %}>Soma 4</option>
+                        <option value="Soma 6"    {% if cat == 'Soma 6' %}selected{% endif %}>Soma 6</option>
+                        <option value="Soma 8"    {% if cat == 'Soma 8' %}selected{% endif %}>Soma 8</option>
+                        <option value="Soma 10"   {% if cat == 'Soma 10' %}selected{% endif %}>Soma 10</option>
+                        <option value="Iniciante" {% if cat == 'Iniciante' %}selected{% endif %}>Iniciante (Duplas)</option>
+                    {% else %}
+                        <option value="1ª Classe" {% if cat == '1ª Classe' %}selected{% endif %}>1ª Classe</option>
+                        <option value="2ª Classe" {% if cat == '2ª Classe' %}selected{% endif %}>2ª Classe</option>
+                        <option value="3ª Classe" {% if cat == '3ª Classe' %}selected{% endif %}>3ª Classe</option>
+                        <option value="4ª Classe" {% if cat == '4ª Classe' %}selected{% endif %}>4ª Classe</option>
+                        <option value="5ª Classe" {% if cat == '5ª Classe' %}selected{% endif %}>5ª Classe</option>
+                        <option value="Iniciante" {% if cat == 'Iniciante' %}selected{% endif %}>Iniciante</option>
+                    {% endif %}
                 </select>
             </div>
         </div>
 
-        <div id="doubles-opponents" style="display: {% if match['match_format'] and 'Duplas' in match['match_format'] %}block{% else %}none{% endif %}; margin-top: 15px; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px dashed #fca5a5;">
+        <div id="doubles-opponents" style="display: {% if match['match_format'] == 'Duplas' %}block{% else %}none{% endif %}; margin-top: 15px; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px dashed #fca5a5;">
             <h4 style="margin: 0 0 10px 0; color: #7f1d1d;">👥 Dupla Adversária</h4>
             <div class="grid-2">
                 <div>
                     <label style="font-size: 12px; font-weight: bold;">Adversário 1:</label>
-                    <input type="text" id="inp_opp1" name="{% if match['match_format'] and 'Duplas' in match['match_format'] %}opponent{% else %}ignore_opp{% endif %}" class="form-control" value="{{ match['opponent'] if match['match_format'] and 'Duplas' in match['match_format'] else '' }}">
+                    <input type="text" id="inp_opp1" name="{% if match['match_format'] == 'Duplas' %}opponent{% else %}ignore_opp{% endif %}" class="form-control" value="{{ match['opponent'] if match['match_format'] == 'Duplas' else '' }}">
                 </div>
                 <div>
                     <label style="font-size: 12px; font-weight: bold;">Adversário 2 (Parceiro):</label>
@@ -120,11 +141,11 @@
         </div>
 
         <div class="grid-2" style="margin-top: 15px;">
-            <div id="singles-opp-div" style="display: {% if match['match_format'] and 'Duplas' in match['match_format'] %}none{% else %}block{% endif %};">
+            <div id="singles-opp-div" style="display: {% if match['match_format'] == 'Duplas' %}none{% else %}block{% endif %};">
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">ADVERSÁRIO PRINCIPAL:</label>
-                <input type="text" id="inp_opp_single" name="{% if match['match_format'] and 'Duplas' not in match['match_format'] %}opponent{% else %}ignore_opp{% endif %}" class="form-control" value="{{ match['opponent'] if match['match_format'] and 'Duplas' not in match['match_format'] else '' }}">
+                <input type="text" id="inp_opp_single" name="{% if match['match_format'] != 'Duplas' %}opponent{% else %}ignore_opp{% endif %}" class="form-control" value="{{ match['opponent'] if match['match_format'] != 'Duplas' else '' }}">
             </div>
-            <div id="doubles-partner-div" style="display: {% if match['match_format'] and 'Duplas' in match['match_format'] %}block{% else %}none{% endif %};">
+            <div id="doubles-partner-div" style="display: {% if match['match_format'] == 'Duplas' %}block{% else %}none{% endif %};">
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">SEU PARCEIRO:</label>
                 <input type="text" name="partner" class="form-control" value="{{ match['partner'] or '' }}">
             </div>
@@ -139,8 +160,8 @@
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
-                <select name="surface" class="form-control" required>
-                    <option value="Quadra Dura" {% if match['surface'] == 'Quadra Dura' or match['surface'] == 'Dura' %}selected{% endif %}>Dura (Rápida)</option>
+                <select name="surface" class="form-control">
+                    <option value="Dura" {% if match['surface'] == 'Dura' %}selected{% endif %}>Dura (Rápida)</option>
                     <option value="Saibro" {% if match['surface'] == 'Saibro' %}selected{% endif %}>Saibro</option>
                 </select>
             </div>
@@ -158,7 +179,7 @@
             
             <div style="display: flex; align-items: center; gap: 10px;">
                 <label style="margin: 0; font-size: 13px; font-weight: bold; color: #64748b;">RESULTADO:</label>
-                <select name="result" id="result-select" class="result-dropdown" style="background: #f1f5f9; color: #64748b; padding: 8px; border-radius: 8px; outline: none; border: 1px solid #cbd5e1; font-weight: bold;">
+                <select name="result" id="result-select" class="result-dropdown" style="background: #f1f5f9; color: #64748b;">
                     <option value="Vitória" {% if match['result'] == 'Vitória' %}selected{% endif %}>VITÓRIA 🎉</option>
                     <option value="Derrota" {% if match['result'] == 'Derrota' %}selected{% endif %}>DERROTA 🏳️</option>
                     <option value="Empate" {% if match['result'] == 'Empate' %}selected{% endif %}>EMPATE</option>
@@ -169,38 +190,38 @@
         <div class="grid-2" style="margin-bottom: 20px;">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE SETS:</label>
-                <select id="set_model" name="set_model" class="form-control" onchange="renderScoreInputs()" required>
+                <select id="set_model" class="form-control" onchange="renderScoreInputs()">
                     <option value="" disabled>Escolha o modelo de sets...</option>
-                    <option value="1 Set" {% if match['match_format'] and '1 Set' in match['match_format'] %}selected{% endif %}>1 Set</option>
-                    <option value="2 Sets + Super Tiebreak" {% if match['match_format'] and '2 Sets' in match['match_format'] %}selected{% endif %}>2 Sets + Super Tiebreak</option>
-                    <option value="3 Sets" {% if match['match_format'] and '3 Sets' in match['match_format'] %}selected{% endif %}>3 Sets Completos</option>
-                    <option value="4 Sets + Super Tiebreak" {% if match['match_format'] and '4 Sets' in match['match_format'] %}selected{% endif %}>4 Sets + Super Tiebreak</option>
-                    <option value="5 Sets" {% if match['match_format'] and '5 Sets' in match['match_format'] %}selected{% endif %}>5 Sets (Grand Slam)</option>
+                    <option value="1 Set">1 Set</option>
+                    <option value="2 Sets + Super Tiebreak">2 Sets + Super Tiebreak</option>
+                    <option value="3 Sets">3 Sets Completos</option>
+                    <option value="4 Sets + Super Tiebreak">4 Sets + Super Tiebreak</option>
+                    <option value="5 Sets">5 Sets (Grand Slam)</option>
                 </select>
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE GAMES:</label>
-                <select id="game_model" name="game_format" class="form-control" onchange="renderScoreInputs()" required>
+                <select id="game_model" name="game_format" class="form-control" onchange="renderScoreInputs()">
                     <option value="" disabled>Escolha o modelo de games...</option>
                     <option value="4" {% if match['game_format'] == '4' %}selected{% endif %}>4 games (com tie-break no 4x4)</option>
                     <option value="5" {% if match['game_format'] == '5' %}selected{% endif %}>5 games (com tie-break no 5x5)</option>
-                    <option value="6" {% if match['game_format'] == '6' or not match['game_format'] %}selected{% endif %}>6 games (com tie-break no 6x6)</option>
+                    <option value="6" {% if match['game_format'] == '6' %}selected{% endif %}>6 games (com tie-break no 6x6)</option>
                     <option value="7" {% if match['game_format'] == '7' %}selected{% endif %}>7 games (com tie-break no 7x7)</option>
                     <option value="8" {% if match['game_format'] == '8' %}selected{% endif %}>8 games (com tie-break no 8x8)</option>
                 </select>
             </div>
         </div>
 
-        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; overflow-x: auto;">
+        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
             
             <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
-                <div class="player-info" style="font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
+                <div style="flex: 0 0 180px; font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
                 <div id="set_headers" style="display: flex; gap: 20px; flex: 1;"></div>
             </div>
 
             <div class="player-row">
                 <div class="player-info">
-                    <div style="width: 35px; height: 35px; background: var(--atp-blue); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">👤</div>
+                    <div style="width: 35px; height: 35px; background: var(--atp-blue); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;">👤</div>
                     <div>
                         <div style="font-weight: bold; color: var(--atp-blue); font-size: 14px;">Você</div>
                         <div style="font-size: 11px; color: #94a3b8;">Jogador 1</div>
@@ -211,7 +232,7 @@
 
             <div class="player-row">
                 <div class="player-info">
-                    <div style="width: 35px; height: 35px; background: #ef4444; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">🆚</div>
+                    <div style="width: 35px; height: 35px; background: #ef4444; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px;">🆚</div>
                     <div>
                         <div style="font-weight: bold; color: var(--atp-blue); font-size: 14px;" id="opp_label">Adversário</div>
                         <div style="font-size: 11px; color: #94a3b8;">Oponente</div>
@@ -260,7 +281,7 @@
             <div class="rating-cards">
                 <div class="rating-box box-neutral"><label>Forehand</label><input type="number" name="forehand" id="inp-forehand" value="{{ match['forehand'] }}" min="0" max="10" class="fund-input"></div>
                 <div class="rating-box box-neutral"><label>Backhand</label><input type="number" name="backhand" id="inp-backhand" value="{{ match['backhand'] }}" min="0" max="10" class="fund-input"></div>
-                <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="{{ match['serve'] }}" min="0" max="10" class="fund-input" oninput="toggleServeDetails()"></div>
+                <div class="rating-box box-neutral"><label>Saque</label><input type="number" name="serve" id="inp-serve" value="{{ match['serve'] }}" min="0" max="10" class="fund-input" onchange="toggleServeDetails()"></div>
                 <div class="rating-box box-neutral"><label>Devolução</label><input type="number" name="return_serve" id="inp-return" value="{{ match['return_serve'] }}" min="0" max="10" class="fund-input"></div>
                 <div class="rating-box box-neutral"><label>Slice</label><input type="number" name="slice" id="inp-slice" value="{{ match['slice'] }}" min="0" max="10" class="fund-input"></div>
                 <div class="rating-box box-neutral"><label>Voleio</label><input type="number" name="volley" id="inp-volley" value="{{ match['volley'] }}" min="0" max="10" class="fund-input"></div>
@@ -285,9 +306,9 @@
                     </div>
                     
                     <div style="margin-top: 15px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; padding: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <label style="font-size: 12px; font-weight: bold; color: #b91c1c; margin: 0; text-transform: uppercase;">⚠️ Duplas Faltas</label>
-                            <select name="double_faults" class="form-control" style="color: #b91c1c; border-color: #fca5a5; font-weight: bold; width: auto; flex: 1;">
+                            <select name="double_faults" class="form-control" style="color: #b91c1c; border-color: #fca5a5; font-weight: bold; width: auto; flex: 1; margin-left: 15px;">
                                 <option value="0" {% if match['double_faults'] == 0 %}selected{% endif %}>0: Intocável (Nenhuma)</option>
                                 <option value="1" {% if match['double_faults'] == 1 %}selected{% endif %}>1: Controlado (1 a 2)</option>
                                 <option value="2" {% if match['double_faults'] == 2 %}selected{% endif %}>2: Aceitável (3 a 4)</option>
@@ -488,11 +509,11 @@
             } else {
                 if(pTb && pTb.style.display !== 'none' && (pTb.value !== "" || oTb.value !== "")) {
                     let loserTb = Math.min(parseInt(pTb.value) || 0, parseInt(oTb.value) || 0);
-                    // LÓGICA DO TIE-BREAK:
+                    // NOVA LÓGICA DO TIE-BREAK AQUI:
                     if (p > o) {
-                        setStr = `${p}/${o}(${loserTb})`; 
+                        setStr = `${p}/${o}(${loserTb})`; // Parênteses no perdedor
                     } else if (o > p) {
-                        setStr = `(${loserTb})${p}/${o}`; 
+                        setStr = `(${loserTb})${p}/${o}`; // Parênteses no perdedor
                     } else {
                         setStr = `${p}/${o}(${loserTb})`; 
                     }
@@ -503,9 +524,12 @@
             finalScoreString += setStr + " ";
         }
 
+        // 1. Atualiza o input escondido com segurança
         const finalScoreInput = document.getElementById('final_score');
         if (finalScoreInput) finalScoreInput.value = finalScoreString.trim();
 
+        // 2. Atualiza a Badge ou o Dropdown sem dar Crash no Javascript
+        const badge = document.getElementById('status-badge');
         const resultSelect = document.getElementById('result-select');
         const hiddenInput = document.getElementById('result-hidden');
 
@@ -513,6 +537,12 @@
         if (setsPlayer > setsOpp) resStatus = "Vitória";
         else if (setsOpp > setsPlayer) resStatus = "Derrota";
         else if (finalScoreString.trim() !== "") resStatus = "Empate";
+
+        if (badge) {
+            if (resStatus === "Vitória") { badge.innerText = "VITÓRIA 🎉"; badge.style.background = "#dcfce7"; badge.style.color = "#15803d"; badge.style.borderColor = "#86efac"; }
+            else if (resStatus === "Derrota") { badge.innerText = "DERROTA 🏳️"; badge.style.background = "#fee2e2"; badge.style.color = "#b91c1c"; badge.style.borderColor = "#fca5a5"; }
+            else { badge.innerText = "AGUARDANDO..."; badge.style.background = "#f1f5f9"; badge.style.color = "#64748b"; badge.style.borderColor = "#e2e8f0"; }
+        }
 
         if (resultSelect) {
             resultSelect.value = resStatus;
@@ -531,19 +561,27 @@
         if (numSets === 0) return;
 
         let isSuperTb = sets[numSets-1].includes('[');
-        // O valor base já foi injetado pelo Jinja no HTML (no <select>), mas validamos o JS
-        
+        if (numSets === 1) document.getElementById('set_model').value = "1 Set";
+        else if (numSets === 3 && isSuperTb) document.getElementById('set_model').value = "2 Sets + Super Tiebreak";
+        else if (numSets === 3 && !isSuperTb) document.getElementById('set_model').value = "3 Sets";
+        else if (numSets === 5 && isSuperTb) document.getElementById('set_model').value = "4 Sets + Super Tiebreak";
+        else if (numSets === 5 && !isSuperTb) document.getElementById('set_model').value = "5 Sets";
+        else document.getElementById('set_model').value = "3 Sets";
+
+        if (!document.getElementById('game_model').value) {
+            document.getElementById('game_model').value = "6";
+        }
+
         renderScoreInputs();
 
         sets.forEach((s, idx) => {
             let setNum = idx + 1;
             if (s.includes('[')) {
                 let pts = s.replace('[','').replace(']','').split('/');
-                let inputP = document.querySelector(`.p-score[data-set="${setNum}"]`);
-                let inputO = document.querySelector(`.o-score[data-set="${setNum}"]`);
-                if(inputP) inputP.value = pts[0];
-                if(inputO) inputO.value = pts[1];
+                document.querySelector(`.p-score[data-set="${setNum}"]`).value = pts[0];
+                document.querySelector(`.o-score[data-set="${setNum}"]`).value = pts[1];
             } else {
+                // REGEX PARA SEPARAR O (4) NÃO IMPORTA SE TÁ NO COMEÇO OU NO FIM
                 let tb = "";
                 let main = s;
                 if (s.includes('(')) {
@@ -553,11 +591,8 @@
                 }
                 
                 let pts = main.split('/');
-                let inputP = document.querySelector(`.p-score[data-set="${setNum}"]`);
-                let inputO = document.querySelector(`.o-score[data-set="${setNum}"]`);
-                
-                if(inputP) inputP.value = pts[0];
-                if(inputO) inputO.value = pts[1];
+                document.querySelector(`.p-score[data-set="${setNum}"]`).value = pts[0];
+                document.querySelector(`.o-score[data-set="${setNum}"]`).value = pts[1];
                 
                 if (tb !== "") {
                     let p1 = parseInt(pts[0]);
@@ -614,6 +649,9 @@
         }
     });
 
+    // === LÓGICA DO RESTO DO SEU FORMULÁRIO ===
+
+    // PROBLEMA 6: listas de categorias por formato
     const CATEGORIAS_SIMPLES = [
         { value: '1ª Classe', label: '1ª Classe' },
         { value: '2ª Classe', label: '2ª Classe' },
@@ -639,11 +677,11 @@
             const el = document.createElement('option');
             el.value = opt.value;
             el.textContent = opt.label;
-            // Seleciona o valor atual se existir na lista
+            // Seleciona o valor atual se existir na lista, senão seleciona o primeiro
             if (opt.value === valorAtual) el.selected = true;
             sel.appendChild(el);
         });
-        // Se o valor atual não existe na lista, seleciona o primeiro
+        // Se o valor atual não existe na lista do formato escolhido, seleciona o primeiro
         if (!lista.some(o => o.value === valorAtual)) {
             sel.selectedIndex = 0;
         }
@@ -658,6 +696,7 @@
         const inpDoubleOpp1 = document.getElementById('inp_opp1');
         const isDuplas = format === 'Duplas';
 
+        // Atualiza opções de categoria para o novo formato, sem valor pré-selecionado (usuário escolhe)
         updateCategoriaSelect(isDuplas, '');
 
         if (isDuplas) {
@@ -703,11 +742,12 @@
     window.onload = function() {
         toggleServeDetails();
 
-        // Inicializa o select de categoria com as opções corretas
+        // PROBLEMA 6: inicializa o select de categoria com as opções corretas
+        // para o formato já salvo no banco, preservando o valor atual
         const catSelect = document.getElementById('categoria_select');
         const currentFormat = catSelect.dataset.format;
         const currentCat = catSelect.dataset.current;
-        updateCategoriaSelect(currentFormat && currentFormat.includes('Duplas'), currentCat);
+        updateCategoriaSelect(currentFormat === 'Duplas', currentCat);
 
         const savedTagsStr = document.getElementById('hiddenTagsInput').value;
         if (savedTagsStr) {
@@ -719,6 +759,7 @@
             });
         }
         
+        // Aqui está a mágica: ele pega o score do banco e já preenche o seu formulário visual LetzPlay
         preFillScore(document.getElementById('final_score').value);
 
         const ctx = document.getElementById('liveRadarChart').getContext('2d');

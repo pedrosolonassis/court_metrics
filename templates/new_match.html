@@ -89,14 +89,15 @@
         <div class="grid-2">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">FORMATO DO JOGO:</label>
-                <select name="simples_duplas" id="match_format" class="form-control" onchange="toggleDoubles()">
+                {# CORREÇÃO: era name="simples_duplas" — não batia com o app.py que busca "match_format" #}
+                <select name="match_format" id="match_format" class="form-control" onchange="toggleDoubles()">
                     <option value="Simples">Simples</option>
                     <option value="Duplas">Duplas</option>
                 </select>
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">CATEGORIA:</label>
-                <select name="categoria" id="categoria_select" class="form-control" required>
+                <select name="categoria" id="categoria_select" class="form-control">
                     <option value="" disabled selected>Selecione a classe...</option>
                     <option value="1ª Classe">1ª Classe</option>
                     <option value="2ª Classe">2ª Classe</option>
@@ -142,10 +143,10 @@
             </div>
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">TIPO DE QUADRA:</label>
-                <select name="surface" class="form-control" required>
-                    <option value="" disabled {% if not surface %}selected{% endif %}>Selecione a quadra...</option>
-                    <option value="Quadra Dura" {% if surface == 'Quadra Dura' %}selected{% endif %}>Dura (Rápida)</option>
-                    <option value="Saibro" {% if surface == 'Saibro' %}selected{% endif %}>Saibro</option>
+                <select name="surface" class="form-control">
+                    <option value="" disabled selected>Selecione a quadra...</option>
+                    <option value="Quadra Dura">Dura (Rápida)</option>
+                    <option value="Saibro">Saibro</option>
                 </select>
             </div>
             
