@@ -45,9 +45,9 @@
     {% set _ = valores.append(m[idx] if m[idx] is not none else 0) %}
 {% endfor %}
 
-{# CORREÇÃO 1: filtra zeros — 0 = "não avaliado", não deve entrar em min/max/média #}
+{# CORREÇÃO: zeros = "não avaliado" — excluídos de média, mínimo e máximo #}
 {% set valores_validos = valores | select('gt', 0) | list %}
-{% set media = (valores_validos|sum / valores_validos|length)|round(1) if valores_validos else 0 %}
+{% set media  = (valores_validos|sum / valores_validos|length)|round(1) if valores_validos else 0 %}
 {% set maxima = valores_validos|max if valores_validos else 0 %}
 {% set minima = valores_validos|min if valores_validos else 0 %}
  
@@ -64,7 +64,7 @@
     'Estratégia': 'Estratégia é adaptação. Se o plano A de dominar da base não funcionar, não insista no erro. Identifique o ponto fraco do outro lado e explore isso com paciência.'
 } %}
  
-{# CORREÇÃO 1: zeros viram null — Chart.js não plota o ponto, evitando distorção visual #}
+{# CORREÇÃO: zeros viram null — Chart.js não plota o ponto, evitando distorção visual e da média #}
 <script>
     window.fundData   = [{% for m in matches %}{% set v = m[idx] if m[idx] is not none else 0 %}{{ v if v > 0 else 'null' }},{% endfor %}];
     window.fundLabels = [{% for m in matches %}'J{{ loop.index }}',{% endfor %}];
@@ -155,7 +155,7 @@
                     pointBackgroundColor: '#0284c7',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
-                    spanGaps: false  // CORREÇÃO 1: não conecta pontos onde a nota era 0 (null)
+                    spanGaps: false  // não conecta pontos onde a nota era 0 (null) — jogo não avaliado
                 }]
             },
             options: {
