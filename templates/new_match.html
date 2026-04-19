@@ -78,7 +78,7 @@
 {% endblock %}
 
 {% block content %}
-<form action="/new_match" method="POST" style="max-width: 1000px;" onsubmit="calculateTieBreak()">
+<form action="/new_match" method="POST" style="max-width: 1000px;" id="newMatchForm" onsubmit="onFormSubmit(event)">
     
     <div style="margin-bottom: 20px;">
         <a href="/" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para a página inicial</a>
@@ -407,6 +407,94 @@
             document.activeElement.blur();
         }
     });
+
+    // ================================================================
+    // IDEIA 7 — AVISO ANTES DE SAIR SEM SALVAR
+    // ================================================================
+    let isDirty = false;  // false = formulário limpo (nada alterado ainda)
+
+    // Marca o form como "sujo" na primeira interação do usuário
+    document.getElementById('newMatchForm').addEventListener('input', () => { isDirty = true; });
+    document.getElementById('newMatchForm').addEventListener('change', () => { isDirty = true; });
+
+    // Aviso nativo do browser ao fechar aba / navegar para URL externa
+    window.addEventListener('beforeunload', function(e) {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = ''; // necessário para Chrome mostrar o aviso
+        }
+    });
+
+    // Intercepta o link "⬅ Voltar" (navegação interna) com diálogo customizado
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (isDirty) {
+                e.preventDefault();
+                const destino = this.href;
+                // Cria modal de confirmação customizado (mais bonito que o confirm() nativo)
+                showLeaveModal(destino);
+            }
+        });
+    });
+
+    // Ao submeter o form: executa calculateTieBreak, marca como limpo e salva
+    function onFormSubmit(e) {
+        calculateTieBreak();  // lógica original de placar
+        isDirty = false;      // limpa o flag — não bloqueia o POST
+    }
+
+    // ================================================================
+    // MODAL DE CONFIRMAÇÃO CUSTOMIZADO
+    // ================================================================
+    function showLeaveModal(destino) {
+        // Cria o overlay do modal
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeInModal 0.2s ease;
+        `;
+
+        overlay.innerHTML = `
+            <div style="background: white; border-radius: 16px; padding: 35px; max-width: 420px; width: 90%;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; position: relative;">
+                <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                <h3 style="margin: 0 0 10px 0; color: #002855; font-size: 20px;">Sair sem salvar?</h3>
+                <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 25px 0;">
+                    Você preencheu dados desta partida que ainda não foram salvos.<br>
+                    Se sair agora, <strong>tudo será perdido</strong>.
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button id="btnFicar"
+                        style="background: #002855; color: white; border: none; padding: 12px 28px;
+                               border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; flex: 1; min-width: 140px;">
+                        Continuar editando
+                    </button>
+                    <button id="btnSair"
+                        style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px 28px;
+                               border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; flex: 1; min-width: 140px;">
+                        Sair mesmo assim
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        document.getElementById('btnFicar').onclick = () => document.body.removeChild(overlay);
+        document.getElementById('btnSair').onclick  = () => { isDirty = false; window.location.href = destino; };
+
+        // Clique fora do modal também fecha (mantém o usuário na página)
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) document.body.removeChild(overlay);
+        });
+    }
+
+    // Animação do modal
+    const style = document.createElement('style');
+    style.textContent = `@keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }`;
+    document.head.appendChild(style);
 
     // === LÓGICA VERTICAL DO PLACAR LETZPLAY ===
     function renderScoreInputs() {

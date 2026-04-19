@@ -68,13 +68,27 @@
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 15px; }
         
         .performance-container { grid-template-columns: 1fr !important; gap: 20px; }
-        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } /* Mantém 2 colunas para os números 0-10 */
+        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
         
         .chart-container { margin-top: 10px; padding: 10px; width: 100%; overflow: hidden; box-sizing: border-box; }
         #liveRadarChart { max-width: 100%; height: auto !important; }
-        
-        .player-info { flex: 0 0 100px; } /* Dá mais espaço para os inputs de placar */
-        .player-info > div:last-child { display: none; } /* Esconde texto secundário do placar no mobile */
+
+        /* FIX PLACAR MOBILE: player-info menor para dar espaço aos inputs de sets */
+        .player-info { flex: 0 0 70px; gap: 6px; }
+        /* Esconde textos secundários ("Jogador 1", "Oponente") — só ícone + nome */
+        .player-info > div:last-child { display: none; }
+        /* Ícones menores */
+        .player-info > div:first-child { width: 28px !important; height: 28px !important; font-size: 13px !important; flex-shrink: 0; }
+        /* Nome do jogador menor */
+        .player-info > div:nth-child(2) > div:first-child { font-size: 12px !important; }
+
+        /* Score area: scroll horizontal quando não couber tudo */
+        #dynamic_score_area { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 12px 8px; }
+        /* Cabeçalho e inputs de cada set mais compactos */
+        #set_headers > div { min-width: 60px !important; }
+        #p_inputs > div, #o_inputs > div { min-width: 60px !important; }
+        .score-input { width: 42px !important; height: 42px !important; font-size: 18px !important; }
+        .tb-input { width: 30px !important; height: 30px !important; font-size: 12px !important; }
         
         .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
     }
@@ -82,7 +96,7 @@
 {% endblock %}
 
 {% block content %}
-<form action="/edit/{{ match['id'] }}" method="POST" style="max-width: 1000px;" onsubmit="calculateTieBreak()">
+<form action="/edit/{{ match['id'] }}" method="POST" style="max-width: 1000px;" id="editMatchForm" onsubmit="onFormSubmit(event)">
     
     <div style="margin-bottom: 20px;">
         <a href="/history" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Histórico</a>
@@ -190,13 +204,14 @@
         <div class="grid-2" style="margin-bottom: 20px;">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE SETS:</label>
-                <select id="set_model" class="form-control" onchange="renderScoreInputs()">
+                {# FIX: adicionado name="match_format" — sem ele o formato não era enviado ao backend #}
+                <select id="set_model" name="match_format" class="form-control" onchange="renderScoreInputs()">
                     <option value="" disabled>Escolha o modelo de sets...</option>
-                    <option value="1 Set">1 Set</option>
-                    <option value="2 Sets + Super Tiebreak">2 Sets + Super Tiebreak</option>
-                    <option value="3 Sets">3 Sets Completos</option>
-                    <option value="4 Sets + Super Tiebreak">4 Sets + Super Tiebreak</option>
-                    <option value="5 Sets">5 Sets (Grand Slam)</option>
+                    <option value="1 Set" {% if match['match_format'] == '1 Set' %}selected{% endif %}>1 Set</option>
+                    <option value="2 Sets + Super Tiebreak" {% if match['match_format'] == '2 Sets + Super Tiebreak' %}selected{% endif %}>2 Sets + Super Tiebreak</option>
+                    <option value="3 Sets" {% if match['match_format'] == '3 Sets' %}selected{% endif %}>3 Sets Completos</option>
+                    <option value="4 Sets + Super Tiebreak" {% if match['match_format'] == '4 Sets + Super Tiebreak' %}selected{% endif %}>4 Sets + Super Tiebreak</option>
+                    <option value="5 Sets" {% if match['match_format'] == '5 Sets' %}selected{% endif %}>5 Sets (Grand Slam)</option>
                 </select>
             </div>
             <div>
@@ -212,7 +227,7 @@
             </div>
         </div>
 
-        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
             
             <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
                 <div style="flex: 0 0 180px; font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
@@ -422,6 +437,76 @@
         }
     });
 
+    // ================================================================
+    // IDEIA 7 — AVISO ANTES DE SAIR SEM SALVAR
+    // Mesmo mecanismo do new_match, adaptado para edição
+    // ================================================================
+    let isDirty = false;
+
+    document.getElementById('editMatchForm').addEventListener('input',  () => { isDirty = true; });
+    document.getElementById('editMatchForm').addEventListener('change', () => { isDirty = true; });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (isDirty) {
+                e.preventDefault();
+                showLeaveModal(this.href);
+            }
+        });
+    });
+
+    function onFormSubmit(e) {
+        calculateTieBreak();
+        isDirty = false;
+    }
+
+    function showLeaveModal(destino) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.7); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeInModal 0.2s ease;
+        `;
+
+        overlay.innerHTML = `
+            <div style="background: white; border-radius: 16px; padding: 35px; max-width: 420px; width: 90%;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                <h3 style="margin: 0 0 10px 0; color: #002855; font-size: 20px;">Sair sem salvar?</h3>
+                <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 25px 0;">
+                    Você fez alterações nesta partida que ainda não foram salvas.<br>
+                    Se sair agora, <strong>as edições serão perdidas</strong>.
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button id="btnFicar"
+                        style="background: #f59e0b; color: white; border: none; padding: 12px 28px;
+                               border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; flex: 1; min-width: 140px;">
+                        Continuar editando
+                    </button>
+                    <button id="btnSair"
+                        style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px 28px;
+                               border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; flex: 1; min-width: 140px;">
+                        Sair mesmo assim
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        document.getElementById('btnFicar').onclick = () => document.body.removeChild(overlay);
+        document.getElementById('btnSair').onclick  = () => { isDirty = false; window.location.href = destino; };
+        overlay.addEventListener('click', e => { if (e.target === overlay) document.body.removeChild(overlay); });
+    }
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }`;
+    document.head.appendChild(style);
+
     // === LÓGICA DO PLACAR DINÂMICO E PREENCHIMENTO AUTOMÁTICO ===
     function renderScoreInputs() {
         const setModel = document.getElementById('set_model').value;
@@ -442,17 +527,19 @@
         else if(setModel.includes('5 Sets')) numSets = 5;
 
         let headersHtml = ''; let pInputsHtml = ''; let oInputsHtml = '';
+        const isMobile = window.innerWidth <= 768;
+        const minW = isMobile ? '60px' : '90px';
 
         for(let i=1; i<=numSets; i++) {
             let isSuperTb = setModel.includes('Super Tiebreak') && i === numSets;
             let title = isSuperTb ? 'SUPER TB' : i + 'º SET';
 
-            headersHtml += `<div style="flex: 1; min-width: 90px; text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8;">${title}</div>`;
-            pInputsHtml += `<div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
+            headersHtml += `<div style="flex: 1; min-width: ${minW}; text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8;">${title}</div>`;
+            pInputsHtml += `<div style="flex: 1; min-width: ${minW}; display: flex; justify-content: center; gap: 5px;">
                                 <input type="number" class="score-input p-score" data-set="${i}" min="0">
                                 ${!isSuperTb ? `<input type="number" class="tb-input p-tb" data-set="${i}" min="0" style="display: none;">` : ''}
                             </div>`;
-            oInputsHtml += `<div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
+            oInputsHtml += `<div style="flex: 1; min-width: ${minW}; display: flex; justify-content: center; gap: 5px;">
                                 <input type="number" class="score-input o-score" data-set="${i}" min="0">
                                 ${!isSuperTb ? `<input type="number" class="tb-input o-tb" data-set="${i}" min="0" style="display: none;">` : ''}
                             </div>`;
