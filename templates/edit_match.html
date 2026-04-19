@@ -68,27 +68,12 @@
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 15px; }
         
         .performance-container { grid-template-columns: 1fr !important; gap: 20px; }
-        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } /* Mantém 2 colunas para os números 0-10 */
         
         .chart-container { margin-top: 10px; padding: 10px; width: 100%; overflow: hidden; box-sizing: border-box; }
         #liveRadarChart { max-width: 100%; height: auto !important; }
-
-        /* FIX PLACAR MOBILE: player-info menor para dar espaço aos inputs de sets */
-        .player-info { flex: 0 0 70px; gap: 6px; }
-        /* Esconde textos secundários ("Jogador 1", "Oponente") — só ícone + nome */
-        .player-info > div:last-child { display: none; }
-        /* Ícones menores */
-        .player-info > div:first-child { width: 28px !important; height: 28px !important; font-size: 13px !important; flex-shrink: 0; }
-        /* Nome do jogador menor */
-        .player-info > div:nth-child(2) > div:first-child { font-size: 12px !important; }
-
-        /* Score area: scroll horizontal quando não couber tudo */
-        #dynamic_score_area { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 12px 8px; }
-        /* Cabeçalho e inputs de cada set mais compactos */
-        #set_headers > div { min-width: 60px !important; }
-        #p_inputs > div, #o_inputs > div { min-width: 60px !important; }
-        .score-input { width: 42px !important; height: 42px !important; font-size: 18px !important; }
-        .tb-input { width: 30px !important; height: 30px !important; font-size: 12px !important; }
+        
+        .player-info { flex: 0 0 100px; } /* Idêntico ao new_match — preserva nomes e dá espaço aos inputs */
         
         .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
     }
@@ -204,14 +189,13 @@
         <div class="grid-2" style="margin-bottom: 20px;">
             <div>
                 <label style="font-size: 13px; font-weight: bold; color: #64748b;">MODELO DE SETS:</label>
-                {# FIX: adicionado name="match_format" — sem ele o formato não era enviado ao backend #}
-                <select id="set_model" name="match_format" class="form-control" onchange="renderScoreInputs()">
+                <select id="set_model" class="form-control" onchange="renderScoreInputs()">
                     <option value="" disabled>Escolha o modelo de sets...</option>
-                    <option value="1 Set" {% if match['match_format'] == '1 Set' %}selected{% endif %}>1 Set</option>
-                    <option value="2 Sets + Super Tiebreak" {% if match['match_format'] == '2 Sets + Super Tiebreak' %}selected{% endif %}>2 Sets + Super Tiebreak</option>
-                    <option value="3 Sets" {% if match['match_format'] == '3 Sets' %}selected{% endif %}>3 Sets Completos</option>
-                    <option value="4 Sets + Super Tiebreak" {% if match['match_format'] == '4 Sets + Super Tiebreak' %}selected{% endif %}>4 Sets + Super Tiebreak</option>
-                    <option value="5 Sets" {% if match['match_format'] == '5 Sets' %}selected{% endif %}>5 Sets (Grand Slam)</option>
+                    <option value="1 Set">1 Set</option>
+                    <option value="2 Sets + Super Tiebreak">2 Sets + Super Tiebreak</option>
+                    <option value="3 Sets">3 Sets Completos</option>
+                    <option value="4 Sets + Super Tiebreak">4 Sets + Super Tiebreak</option>
+                    <option value="5 Sets">5 Sets (Grand Slam)</option>
                 </select>
             </div>
             <div>
@@ -227,10 +211,10 @@
             </div>
         </div>
 
-        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <div id="dynamic_score_area" style="display: none; background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; overflow-x: auto;">
             
             <div style="display: flex; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
-                <div style="flex: 0 0 180px; font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
+                <div class="player-info" style="font-weight: bold; color: #64748b; font-size: 12px; display: flex; align-items: center;">JOGADORES</div>
                 <div id="set_headers" style="display: flex; gap: 20px; flex: 1;"></div>
             </div>
 
@@ -527,19 +511,17 @@
         else if(setModel.includes('5 Sets')) numSets = 5;
 
         let headersHtml = ''; let pInputsHtml = ''; let oInputsHtml = '';
-        const isMobile = window.innerWidth <= 768;
-        const minW = isMobile ? '60px' : '90px';
 
         for(let i=1; i<=numSets; i++) {
             let isSuperTb = setModel.includes('Super Tiebreak') && i === numSets;
             let title = isSuperTb ? 'SUPER TB' : i + 'º SET';
 
-            headersHtml += `<div style="flex: 1; min-width: ${minW}; text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8;">${title}</div>`;
-            pInputsHtml += `<div style="flex: 1; min-width: ${minW}; display: flex; justify-content: center; gap: 5px;">
+            headersHtml += `<div style="flex: 1; min-width: 90px; text-align: center; font-size: 11px; font-weight: bold; color: #94a3b8;">${title}</div>`;
+            pInputsHtml += `<div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
                                 <input type="number" class="score-input p-score" data-set="${i}" min="0">
                                 ${!isSuperTb ? `<input type="number" class="tb-input p-tb" data-set="${i}" min="0" style="display: none;">` : ''}
                             </div>`;
-            oInputsHtml += `<div style="flex: 1; min-width: ${minW}; display: flex; justify-content: center; gap: 5px;">
+            oInputsHtml += `<div style="flex: 1; min-width: 90px; display: flex; justify-content: center; gap: 5px;">
                                 <input type="number" class="score-input o-score" data-set="${i}" min="0">
                                 ${!isSuperTb ? `<input type="number" class="tb-input o-tb" data-set="${i}" min="0" style="display: none;">` : ''}
                             </div>`;
