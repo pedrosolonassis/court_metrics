@@ -1,2 +1,2 @@
-# Ignorar todos os uploads gerados por usuários
 static/uploads/
+database.db

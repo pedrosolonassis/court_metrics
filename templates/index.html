@@ -62,6 +62,17 @@
     .fund-elite { background-color: #ecfeff; border-color: #67e8f9; }
     .fund-elite .fund-nota { color: #0369a1; }
     .fund-elite .fund-status { color: #0891b2; }
+
+    /* IDEIA 4 — STREAK */
+    .streak-card { padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
+    .streak-inactive { background: white; }
+    .streak-active   { background: linear-gradient(135deg, #fef3c7, #fff); border-color: #fde68a; }
+    .streak-hot      { background: linear-gradient(135deg, #ffedd5, #fef3c7); border-color: #fdba74; }
+    .streak-elite    { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border-color: #6ee7b7; }
+    .streak-inactive .streak-num { color: #cbd5e1; }
+    .streak-active   .streak-num { color: #d97706; }
+    .streak-hot      .streak-num { color: #ea580c; }
+    .streak-elite    .streak-num { color: #059669; }
 </style>
 {% endblock %}
 
@@ -127,6 +138,17 @@
                 {% else %} -- {% endif %}
             </h2>
             <span style="font-size: 11px; color: #10b981; font-weight: bold;">🚀 Melhor golpe do último jogo</span>
+        </div>
+
+        {# IDEIA 4 — STREAK: mesma estrutura dos outros 3 KPIs (título → número → mensagem) #}
+        <div class="insight-card streak-card streak-{{ streak.status }}">
+            <span style="font-size: 12px; text-transform: uppercase; font-weight: bold; color: var(--text-slate); letter-spacing: 1px;">
+                {{ streak.emoji }} Sequência de Registros
+            </span>
+            <h2 class="streak-num" style="font-size: 42px; margin: 10px 0;">
+                {{ streak.semanas }}<span style="font-size: 20px; font-weight: 700;"> semana.</span>
+            </h2>
+            <span style="font-size: 11px; font-weight: bold; display: block;">{{ streak.mensagem }}</span>
         </div>
     </div>
 

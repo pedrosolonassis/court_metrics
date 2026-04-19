@@ -281,6 +281,73 @@ def logout():
 
 
 # ==============================================================================
+# --- IDEIA 4: STREAK DE REGISTRO DE PARTIDAS ---
+# Conta quantas semanas seguidas o usuário registrou pelo menos 1 partida.
+# A semana é definida pelo número ISO da semana (seg-dom).
+# ==============================================================================
+def calcular_streak(matches):
+    if not matches:
+        return {"semanas": 0, "mensagem": "Nenhuma partida registrada ainda.", "emoji": "😴", "status": "inactive"}
+
+    # Coleta todas as semanas únicas em que houve registro (formato: "ano-semana")
+    semanas_com_jogo = set()
+    for m in matches:
+        try:
+            data = datetime.strptime(m['match_date'], '%Y-%m-%d').date()
+            ano, semana, _ = data.isocalendar()
+            semanas_com_jogo.add((ano, semana))
+        except:
+            pass
+
+    if not semanas_com_jogo:
+        return {"semanas": 0, "mensagem": "Nenhuma partida registrada ainda.", "emoji": "😴", "status": "inactive"}
+
+    hoje = datetime.today().date()
+    ano_atual, semana_atual, _ = hoje.isocalendar()
+
+    # Conta streak a partir da semana atual (ou da semana passada se a atual ainda não tem jogo)
+    streak = 0
+    ano_check, semana_check = ano_atual, semana_atual
+
+    # Se a semana atual não tem jogo, começa a contar da semana passada
+    if (ano_check, semana_check) not in semanas_com_jogo:
+        # Vai para a semana anterior
+        data_check = hoje - __import__('datetime').timedelta(weeks=1)
+        ano_check, semana_check, _ = data_check.isocalendar()
+
+    # Conta semanas consecutivas para trás
+    while (ano_check, semana_check) in semanas_com_jogo:
+        streak += 1
+        # Vai para a semana anterior
+        import datetime as dt
+        data_ref = dt.date.fromisocalendar(ano_check, semana_check, 1)  # Segunda da semana
+        data_ant = data_ref - dt.timedelta(weeks=1)
+        ano_check, semana_check, _ = data_ant.isocalendar()
+
+    # Define mensagem e emoji conforme o streak
+    if streak == 0:
+        emoji, status = "😴", "inactive"
+        mensagem = "Nenhuma partida esta semana. Bora para a quadra!"
+    elif streak == 1:
+        emoji, status = "🎾", "active"
+        mensagem = "Semana ativa! Continue assim."
+    elif streak == 2:
+        emoji, status = "🔥", "hot"
+        mensagem = "2 semanas seguidas! Você está em ritmo."
+    elif streak <= 4:
+        emoji, status = "⚡", "hot"
+        mensagem = f"{streak} semanas seguidas! Consistência é tudo."
+    elif streak <= 8:
+        emoji, status = "🏆", "elite"
+        mensagem = f"{streak} semanas! Nível de atleta dedicado."
+    else:
+        emoji, status = "👑", "elite"
+        mensagem = f"{streak} semanas seguidas! Isso é comprometimento de campeão."
+
+    return {"semanas": streak, "mensagem": mensagem, "emoji": emoji, "status": status}
+
+
+# ==============================================================================
 # --- ROTAS DO SISTEMA PROTEGIDAS ---
 # ==============================================================================
 
@@ -362,7 +429,8 @@ def home():
                            user_data=user_data, 
                            tempo_joga=tempo_joga, 
                            ultima_partida=ultima_partida,
-                           medias_fundamentos=medias_fundamentos)  # Passando as médias prontas
+                           medias_fundamentos=medias_fundamentos,
+                           streak=calcular_streak(matches))
 
 @app.route("/perfil", methods=["GET", "POST"])
 @login_required
