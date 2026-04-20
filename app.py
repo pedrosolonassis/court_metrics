@@ -11,6 +11,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+
+@app.before_request
+def redirect_to_correct_url():
+    # Se alguém tentar acessar pelo domínio .br ou pelo usuário antigo
+    # a gente empurra para o endereço oficial da conta nova
+    host = request.host
+    if 'courtmetrics.com.br' in host or 'pedrosolonassis' in host:
+        return redirect("https://courtmetrics.pythonanywhere.com" + request.path, code=301)
+
 app.secret_key = "chave_super_secreta_court_metrics" # Necessário para segurança da sessão
 
 # --- CONFIGURAÇÃO DA PASTA DE UPLOADS (FOTOS DE PERFIL E FEEDBACK) ---
