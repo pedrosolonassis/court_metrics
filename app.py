@@ -8,6 +8,7 @@ from flask import Flask, render_template, request, redirect, Response, session, 
 from datetime import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta_court_metrics" # Necessário para segurança da sessão
@@ -281,73 +282,6 @@ def logout():
 
 
 # ==============================================================================
-# --- IDEIA 4: STREAK DE REGISTRO DE PARTIDAS ---
-# Conta quantas semanas seguidas o usuário registrou pelo menos 1 partida.
-# A semana é definida pelo número ISO da semana (seg-dom).
-# ==============================================================================
-def calcular_streak(matches):
-    if not matches:
-        return {"semanas": 0, "mensagem": "Nenhuma partida registrada ainda.", "emoji": "😴", "status": "inactive"}
-
-    # Coleta todas as semanas únicas em que houve registro (formato: "ano-semana")
-    semanas_com_jogo = set()
-    for m in matches:
-        try:
-            data = datetime.strptime(m['match_date'], '%Y-%m-%d').date()
-            ano, semana, _ = data.isocalendar()
-            semanas_com_jogo.add((ano, semana))
-        except:
-            pass
-
-    if not semanas_com_jogo:
-        return {"semanas": 0, "mensagem": "Nenhuma partida registrada ainda.", "emoji": "😴", "status": "inactive"}
-
-    hoje = datetime.today().date()
-    ano_atual, semana_atual, _ = hoje.isocalendar()
-
-    # Conta streak a partir da semana atual (ou da semana passada se a atual ainda não tem jogo)
-    streak = 0
-    ano_check, semana_check = ano_atual, semana_atual
-
-    # Se a semana atual não tem jogo, começa a contar da semana passada
-    if (ano_check, semana_check) not in semanas_com_jogo:
-        # Vai para a semana anterior
-        data_check = hoje - __import__('datetime').timedelta(weeks=1)
-        ano_check, semana_check, _ = data_check.isocalendar()
-
-    # Conta semanas consecutivas para trás
-    while (ano_check, semana_check) in semanas_com_jogo:
-        streak += 1
-        # Vai para a semana anterior
-        import datetime as dt
-        data_ref = dt.date.fromisocalendar(ano_check, semana_check, 1)  # Segunda da semana
-        data_ant = data_ref - dt.timedelta(weeks=1)
-        ano_check, semana_check, _ = data_ant.isocalendar()
-
-    # Define mensagem e emoji conforme o streak
-    if streak == 0:
-        emoji, status = "😴", "inactive"
-        mensagem = "Nenhuma partida esta semana. Bora para a quadra!"
-    elif streak == 1:
-        emoji, status = "🎾", "active"
-        mensagem = "Semana ativa! Continue assim."
-    elif streak == 2:
-        emoji, status = "🔥", "hot"
-        mensagem = "2 semanas seguidas! Você está em ritmo."
-    elif streak <= 4:
-        emoji, status = "⚡", "hot"
-        mensagem = f"{streak} semanas seguidas! Consistência é tudo."
-    elif streak <= 8:
-        emoji, status = "🏆", "elite"
-        mensagem = f"{streak} semanas! Nível de atleta dedicado."
-    else:
-        emoji, status = "👑", "elite"
-        mensagem = f"{streak} semanas seguidas! Isso é comprometimento de campeão."
-
-    return {"semanas": streak, "mensagem": mensagem, "emoji": emoji, "status": status}
-
-
-# ==============================================================================
 # --- ROTAS DO SISTEMA PROTEGIDAS ---
 # ==============================================================================
 
@@ -355,12 +289,11 @@ def calcular_streak(matches):
 @login_required
 def home():
     conn = sqlite3.connect("database.db")
-    conn.row_factory = sqlite3.Row  # Isso permite acessar os campos pelo nome (ex: m['forehand'])
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM matches WHERE user_id = ? ORDER BY match_date DESC, id DESC", (session["user_id"],))
     matches_raw = c.fetchall()
     
-    # Converte as linhas do banco para dicionários para facilitar o uso no Jinja
     matches = [dict(m) for m in matches_raw]
     
     c.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
@@ -394,17 +327,62 @@ def home():
             pass
 
     # ==========================================================
+    # --- CÁLCULO DA SEQUÊNCIA (STREAK DE SEMANAS SEGUIDAS) ----
+    # ==========================================================
+    semanas_jogadas = set()
+    for m in matches:
+        if m.get('match_date'):
+            try:
+                d = datetime.strptime(m['match_date'], '%Y-%m-%d').date()
+                segunda_feira = d - timedelta(days=d.weekday()) # Converte a data para a segunda-feira daquela semana
+                semanas_jogadas.add(segunda_feira)
+            except:
+                pass
+                
+    semanas_jogadas = sorted(list(semanas_jogadas), reverse=True)
+    streak_semanas = 0
+    
+    if semanas_jogadas:
+        hoje = datetime.today().date()
+        segunda_atual = hoje - timedelta(days=hoje.weekday())
+        segunda_passada = segunda_atual - timedelta(days=7)
+        
+        # Para o streak estar ativo, tem que ter jogado nesta semana ou, no máximo, na semana passada
+        if semanas_jogadas[0] == segunda_atual or semanas_jogadas[0] == segunda_passada:
+            streak_semanas = 1
+            semana_referencia = semanas_jogadas[0]
+            
+            # Conta para trás quantas semanas seguidas existem
+            for s in semanas_jogadas[1:]:
+                if s == semana_referencia - timedelta(days=7):
+                    streak_semanas += 1
+                    semana_referencia = s
+                else:
+                    break
+
+    # Monta a variável para a gamificação visual
+    streak = {
+        'semanas': streak_semanas,
+        'status': 'inactive',
+        'emoji': '💤',
+        'mensagem': 'Jogue uma partida esta semana para iniciar a sequência!'
+    }
+    if streak_semanas >= 5:
+        streak['status'] = 'elite'; streak['emoji'] = '🏆'; streak['mensagem'] = 'Modo Máquina! Você não falha uma semana.'
+    elif streak_semanas >= 3:
+        streak['status'] = 'hot'; streak['emoji'] = '🔥'; streak['mensagem'] = 'Pegando Fogo! Ótima consistência.'
+    elif streak_semanas >= 1:
+        streak['status'] = 'active'; streak['emoji'] = '🎾'; streak['mensagem'] = 'Sequência ativa. Continue assim!'
+
+
+    # ==========================================================
     # --- CORREÇÃO DA CENTRAL DE FUNDAMENTOS (MÉDIAS JUSTAS) ---
     # ==========================================================
-    
-    # Lista com o nome exato das colunas de fundamentos no banco de dados
     fundamentos_cols = [
         'forehand', 'backhand', 'serve', 'return_serve', 'slice', 
         'volley', 'smash', 'dropshot', 'footwork', 'strategy'
     ]
     
-    # Dicionário que vai guardar as médias já calculadas para enviar pro HTML
-    # Ex: {'forehand': 7.5, 'smash': 4.2, ...}
     medias_fundamentos = {}
 
     for fund in fundamentos_cols:
@@ -413,12 +391,10 @@ def home():
         
         for m in matches:
             nota = m.get(fund)
-            # Se a nota existe e é maior que zero, ela entra no cálculo da média!
             if nota is not None and nota > 0:
                 soma_notas += nota
                 qtd_avaliacoes += 1
                 
-        # Se ele avaliou pelo menos 1 vez, faz a divisão justa. Senão, é zero.
         if qtd_avaliacoes > 0:
             medias_fundamentos[fund] = round(soma_notas / qtd_avaliacoes, 1)
         else:
@@ -430,7 +406,7 @@ def home():
                            tempo_joga=tempo_joga, 
                            ultima_partida=ultima_partida,
                            medias_fundamentos=medias_fundamentos,
-                           streak=calcular_streak(matches))
+                           streak=streak) # <--- VARIÁVEL STREAK ENVIADA COM SUCESSO!
 
 @app.route("/perfil", methods=["GET", "POST"])
 @login_required
@@ -728,8 +704,8 @@ def match_details(id):
 @login_required
 def export_csv():
     conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row  # acesso por nome de coluna
     c = conn.cursor()
-    # Selecionamos apenas as colunas úteis para análise de dados
     c.execute("""
         SELECT match_date, opponent, categoria, match_type, surface, result, score, 
                match_format, game_format, partner, opp_partner,
@@ -737,34 +713,79 @@ def export_csv():
                slice, volley, smash, dropshot, footwork, strategy, winners, unforced_errors,
                performance_rating, mental_focus, mental_resilience, clutch_bp_saved, clutch_bp_won,
                momentum_lost_streak, mental_tags
-        FROM matches WHERE user_id = ? ORDER BY match_date DESC
+        FROM matches WHERE user_id = ? ORDER BY match_date ASC
     """, (session["user_id"],))
-    matches = c.fetchall()
+    raw = c.fetchall()
     conn.close()
 
-    # Cabeçalhos limpos e formatados
-    headers = [
+    # --- CABEÇALHOS ORIGINAIS ---
+    headers_originais = [
         "Data da Partida", "Adversario", "Categoria", "Tipo de Partida", "Superficie", "Resultado", "Placar",
         "Formato Partida", "Formato Game", "Parceiro", "Parceiro Adversario",
         "Nota Forehand", "Nota Backhand", "Nota Saque", "Nota 1o Saque", "Nota 2o Saque", "Duplas Faltas", "Nota Devolucao",
-        "Nota Slice", "Nota Voleio", "Nota Smash", "Nota Dropshot", "Nota Movimentacao", "Nota Estrategia", 
+        "Nota Slice", "Nota Voleio", "Nota Smash", "Nota Dropshot", "Nota Movimentacao", "Nota Estrategia",
         "Winners", "Erros Nao Forcados", "Rating de Performance",
-        "Foco Mental", "Resiliencia Mental", "BP Salvos", "BP Ganhos", "Momentum Perdido (Streak)", "Tags Mentais"
+        "Foco Mental", "Resiliencia Mental", "BP Salvos", "BP Ganhos", "Momentum Perdido", "Tags Mentais"
+    ]
+
+    # --- COLUNAS DERIVADAS (IDEIA 11) ---
+    # Facilitam análise direta no Excel, Pandas ou qualquer ferramenta de BI
+    headers_derivados = [
+        "resultado_binario",    # 1 = Vitória, 0 = Derrota/Empate  → target para modelos ML
+        "saldo_tatico",         # winners - erros_nao_forcados       → agressividade líquida
+        "fundamento_medio",     # média dos fundamentos técnicos > 0 → nível técnico da partida
+        "mental_medio",         # média de foco + resiliência > 0    → nível mental da partida
+        "semana_ano",           # ex: 2026-W15                       → agrupamento semanal
+        "mes_ano",              # ex: 2026-04                        → agrupamento mensal
     ]
 
     output = io.StringIO()
-    
-    # ---------------------------------------------------------
-    # A LINHA MÁGICA: Força o Excel a reconhecer os acentos
-    output.write('\ufeff')
-    # ---------------------------------------------------------
+    output.write('\ufeff')  # BOM para Excel reconhecer UTF-8
 
-    # Usando vírgula como delimitador
     writer = csv.writer(output, delimiter=',')
-    writer.writerow(headers)
-    writer.writerows(matches)
+    writer.writerow(headers_originais + headers_derivados)
 
-    # Gera o nome do arquivo dinâmico baseado no usuário logado
+    fundamento_cols = [
+        'forehand', 'backhand', 'serve', 'return_serve',
+        'slice', 'volley', 'smash', 'dropshot', 'footwork', 'strategy'
+    ]
+
+    for m in raw:
+        row = list(m)
+
+        # --- CÁLCULO DAS COLUNAS DERIVADAS ---
+
+        # 1. resultado_binario
+        resultado_binario = 1 if m['result'] == 'Vitória' else 0
+
+        # 2. saldo_tatico
+        w = m['winners'] or 0
+        ue = m['unforced_errors'] or 0
+        saldo_tatico = w - ue
+
+        # 3. fundamento_medio — média dos fundamentos avaliados (ignora zeros)
+        notas_fund = [m[col] for col in fundamento_cols if m[col] and m[col] > 0]
+        fundamento_medio = round(sum(notas_fund) / len(notas_fund), 2) if notas_fund else ""
+
+        # 4. mental_medio — média de foco e resiliência (ignora zeros)
+        notas_mental = [v for v in [m['mental_focus'], m['mental_resilience']] if v and v > 0]
+        mental_medio = round(sum(notas_mental) / len(notas_mental), 2) if notas_mental else ""
+
+        # 5. semana_ano e mes_ano — derivados da data da partida
+        semana_ano = ""
+        mes_ano = ""
+        if m['match_date']:
+            try:
+                data = datetime.strptime(m['match_date'], '%Y-%m-%d').date()
+                ano_iso, sem_iso, _ = data.isocalendar()
+                semana_ano = f"{ano_iso}-W{sem_iso:02d}"
+                mes_ano = data.strftime('%Y-%m')
+            except:
+                pass
+
+        row += [resultado_binario, saldo_tatico, fundamento_medio, mental_medio, semana_ano, mes_ano]
+        writer.writerow(row)
+
     username = session.get("username", "usuario").lower().replace(" ", "_")
     filename = f"{username}_courtmetrics.csv"
 
