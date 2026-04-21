@@ -1343,5 +1343,12 @@ def sobre():
 def privacidade():
     return render_template("privacidade.html")
 
+# ==============================================================================
+# --- IDEIA 9: PÁGINA 404 CUSTOMIZADA ---
+# ==============================================================================
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template("404.html"), 404
+
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página não encontrada - Court Metrics</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        :root {
+            --atp-blue: #002855;
+            --tennis-green: #d1ff00;
+            --text-slate: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Bolas de tênis decorativas no fundo */
+        .bg-ball {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #d1ff00, #a8cc00);
+            opacity: 0.04;
+            animation: float 8s ease-in-out infinite;
+        }
+        .bg-ball:nth-child(1) { width: 300px; height: 300px; top: -80px; left: -80px; animation-delay: 0s; }
+        .bg-ball:nth-child(2) { width: 200px; height: 200px; bottom: -60px; right: 10%; animation-delay: 3s; }
+        .bg-ball:nth-child(3) { width: 150px; height: 150px; top: 40%; right: -40px; animation-delay: 1.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50%       { transform: translateY(-20px) rotate(10deg); }
+        }
+
+        /* Card central */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 60px 50px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Bola de tênis animada */
+        .ball-container {
+            position: relative;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .tennis-ball {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #d1ff00, #a3c200);
+            box-shadow: 0 8px 20px rgba(161, 194, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            animation: bounce 1.2s ease-in-out infinite;
+            position: relative;
+        }
+        /* Linhas curvas da bola de tênis */
+        .tennis-ball::before,
+        .tennis-ball::after {
+            content: '';
+            position: absolute;
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            width: 60%;
+            height: 130%;
+        }
+        .tennis-ball::before { transform: rotate(-30deg); }
+        .tennis-ball::after  { transform: rotate(30deg); }
+
+        /* Sombra pulsante embaixo da bola */
+        .ball-shadow {
+            position: absolute;
+            bottom: 0;
+            width: 70px;
+            height: 14px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 50%;
+            animation: shadow-pulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-30px); }
+        }
+        @keyframes shadow-pulse {
+            0%, 100% { transform: scaleX(1);   opacity: 0.3; }
+            50%       { transform: scaleX(0.6); opacity: 0.1; }
+        }
+
+        /* 404 grande */
+        .error-code {
+            font-size: 96px;
+            font-weight: 900;
+            color: var(--atp-blue);
+            line-height: 1;
+            letter-spacing: -4px;
+            margin-bottom: 8px;
+        }
+        .error-code span {
+            color: var(--tennis-green);
+            text-shadow: 0 0 20px rgba(209, 255, 0, 0.4);
+        }
+
+        h1 {
+            font-size: 22px;
+            color: var(--atp-blue);
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+
+        p {
+            color: var(--text-slate);
+            font-size: 15px;
+            line-height: 1.7;
+            margin-bottom: 35px;
+        }
+
+        /* Botões */
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background: var(--atp-blue);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .btn-primary:hover {
+            background: #001d3d;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,40,85,0.25);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-slate);
+            padding: 14px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #e2e8f0;
+            transition: 0.2s;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+        /* Logo no topo do card */
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: var(--atp-blue);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .logo-text {
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--atp-blue);
+            letter-spacing: 0.5px;
+        }
+
+        /* Dica de court no fundo do card */
+        .court-hint {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 12px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 40px 25px; }
+            .error-code { font-size: 72px; }
+            .btn-group { flex-direction: column; }
+            .btn-primary, .btn-secondary { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bolas decorativas de fundo -->
+    <div class="bg-ball"></div>
+    <div class="bg-ball"></div>
+    <div class="bg-ball"></div>
+
+    <div class="card">
+
+        <!-- Logo -->
+        <div class="logo">
+            <div class="logo-icon">🎾</div>
+            <span class="logo-text">Court Metrics</span>
+        </div>
+
+        <!-- Bola de tênis saltando -->
+        <div class="ball-container">
+            <div class="tennis-ball"></div>
+            <div class="ball-shadow"></div>
+        </div>
+
+        <!-- Código de erro -->
+        <div class="error-code">4<span>0</span>4</div>
+
+        <h1>Bola fora da quadra!</h1>
+
+        <p>
+            A página que você procura saiu pela linha de fundo.<br>
+            Pode ter sido movida, renomeada ou simplesmente não existe.
+        </p>
+
+        <!-- Botões de ação -->
+        <div class="btn-group">
+            <a href="/" class="btn-primary">
+                <i class='bx bx-home'></i> Voltar ao Dashboard
+            </a>
+            <a href="javascript:history.back()" class="btn-secondary">
+                <i class='bx bx-arrow-back'></i> Página Anterior
+            </a>
+        </div>
+
+        <div class="court-hint">
+            "Na quadra ou no código — errar faz parte do jogo." 🏆
+        </div>
+
+    </div>
+
+</body>
+</html>
