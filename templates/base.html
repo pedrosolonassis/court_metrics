@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}Court Metrics{% endblock %}</title>
+
+    <!-- IDEIA 10 — FAVICON: bola de tênis com as cores do Court Metrics
+         SVG inline em base64 — sem arquivo externo, funciona em todos os browsers.
+         Aparece na aba do browser, nos favoritos e na tela inicial do celular. -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23d1ff00'/%3E%3Cpath d='M8 26 Q20 32 8 38' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M56 26 Q44 32 56 38' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M26 8 Q32 20 38 8' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Cpath d='M26 56 Q32 44 38 56' stroke='white' stroke-width='3.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='32' r='30' fill='none' stroke='%23002855' stroke-width='3'/%3E%3C/svg%3E">
+    <!-- Fallback para iOS (ícone na tela inicial) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23002855'/%3E%3Ccircle cx='32' cy='32' r='26' fill='%23d1ff00'/%3E%3Cpath d='M10 28 Q22 32 10 36' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M54 28 Q42 32 54 36' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M28 10 Q32 22 36 10' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cpath d='M28 54 Q32 42 36 54' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

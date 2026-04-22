@@ -55,6 +55,25 @@
     
     .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
     .display-tag { padding: 6px 12px; border-radius: 15px; background: #e0f2fe; color: #0284c7; font-size: 12px; font-weight: bold; border: 1px solid #bae6fd; }
+
+    /* IDEIA 2 — BOTÃO EXPORTAR PDF */
+    .btn-pdf { background: #dc2626; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; }
+    .btn-pdf:hover { background: #b91c1c; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+    .btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Overlay de loading durante geração do PDF */
+    .pdf-loading {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(15, 23, 42, 0.75); z-index: 9999;
+        align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+    }
+    .pdf-loading.active { display: flex; }
+    .pdf-loading p { color: white; font-weight: bold; font-size: 16px; }
+    .pdf-spinner { width: 48px; height: 48px; border: 5px solid rgba(255,255,255,0.2); border-top-color: #d1ff00; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Área capturada pelo PDF — sem elementos que não devem aparecer */
+    #pdf-content { background: white; }
 </style>
 {% endblock %}
 
@@ -80,9 +99,21 @@
 
 <div class="container" style="max-width: 1000px; margin: 0 auto; padding-bottom: 50px;">
     
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <a href="/history" style="color: var(--text-slate); text-decoration: none; font-weight: bold; font-size: 14px;">⬅ Voltar para o Meu Histórico</a>
+        <button class="btn-pdf" id="btnExportPdf" onclick="exportarPDF()">
+            <i class='bx bx-file-pdf'></i> Exportar PDF
+        </button>
     </div>
+
+    <!-- Overlay de loading -->
+    <div class="pdf-loading" id="pdfLoading">
+        <div class="pdf-spinner"></div>
+        <p>Gerando relatório PDF...</p>
+    </div>
+
+    <!-- Conteúdo capturado pelo PDF -->
+    <div id="pdf-content">
 
     <div class="header-section">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
@@ -347,11 +378,93 @@
         <div class="notes-text">{% if match[26] %}{{ match[26] }}{% else %}<span style="color: #94a3b8; font-style: italic;">Nenhuma observação detalhada foi registrada para esta partida. Use o botão "Editar Partida" no topo para adicionar notas.</span>{% endif %}</div>
     </div>
 
-</div>
+</div>{# fecha pdf-content #}
+</div>{# fecha container #}
 {% endblock %}
 
 {% block extra_js %}
+<!-- IDEIA 2: Libs para geração de PDF no browser (sem instalar nada no servidor) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+    // ================================================================
+    // IDEIA 2 — EXPORTAR PDF DA PARTIDA
+    // Captura o #pdf-content como imagem e insere no PDF com jsPDF.
+    // Nome do arquivo: vs_Adversario_DD-MM-AAAA.pdf
+    // ================================================================
+    async function exportarPDF() {
+        const btn = document.getElementById('btnExportPdf');
+        const loading = document.getElementById('pdfLoading');
+        const conteudo = document.getElementById('pdf-content');
+
+        // Mostra loading e desabilita botão
+        loading.classList.add('active');
+        btn.disabled = true;
+
+        try {
+            // Captura o conteúdo como canvas em alta resolução
+            const canvas = await html2canvas(conteudo, {
+                scale: 2,              // resolução 2x para ficar nítido
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                // Ignora elementos que não devem ir para o PDF
+                ignoreElements: (el) => el.id === 'pdfLoading'
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+
+            // Calcula dimensões para caber na página A4
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const pageW = pdf.internal.pageSize.getWidth();
+            const pageH = pdf.internal.pageSize.getHeight();
+            const margin = 10;
+            const imgW = pageW - margin * 2;
+            const imgH = (canvas.height * imgW) / canvas.width;
+
+            // Se o conteúdo for maior que uma página, divide em múltiplas páginas
+            let posY = margin;
+            let alturaRestante = imgH;
+
+            while (alturaRestante > 0) {
+                const alturaCorte = Math.min(alturaRestante, pageH - margin * 2);
+                // Calcula a porção da imagem para esta página
+                const srcY = ((imgH - alturaRestante) / imgH) * canvas.height;
+                const srcH = (alturaCorte / imgH) * canvas.height;
+
+                // Cria canvas temporário para a fatia desta página
+                const sliceCanvas = document.createElement('canvas');
+                sliceCanvas.width = canvas.width;
+                sliceCanvas.height = srcH;
+                const sliceCtx = sliceCanvas.getContext('2d');
+                sliceCtx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+                const sliceData = sliceCanvas.toDataURL('image/png');
+                pdf.addImage(sliceData, 'PNG', margin, posY, imgW, alturaCorte);
+
+                alturaRestante -= alturaCorte;
+                if (alturaRestante > 0) {
+                    pdf.addPage();
+                    posY = margin;
+                }
+            }
+
+            // Nome do arquivo: vs_Adversario_DD-MM-AAAA.pdf
+            const adversario = "{{ match[1] }}".replace(/[^a-zA-Z0-9\u00C0-\u00FF ]/g, '').trim().replace(/ /g, '_');
+            const dataParts = "{{ match[27] }}".split('-'); // AAAA-MM-DD
+            const dataFormatada = dataParts.length === 3 ? `${dataParts[2]}-${dataParts[1]}-${dataParts[0]}` : 'partida';
+            pdf.save(`vs_${adversario}_${dataFormatada}.pdf`);
+
+        } catch (err) {
+            console.error('Erro ao gerar PDF:', err);
+            alert('Não foi possível gerar o PDF. Tente novamente.');
+        } finally {
+            loading.classList.remove('active');
+            btn.disabled = false;
+        }
+    }
+
     window.onload = function() {
         Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
 
