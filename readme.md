@@ -20,7 +20,7 @@ Diferente de aplicativos comuns de marcas esportivas, o sistema atua como um eco
 
 ## 📸 Screenshots
  
-### Dashboard Principal — Visão Geral & KPIs
+### Dashboard Principal - Visão Geral & KPIs
 ![Dashboard Principal](screenshots/dashboard.png)
 *KPIs em tempo real, gráfico de evolução de performance e Central de Fundamentos com classificação automática por nível técnico.*
  
@@ -203,7 +203,7 @@ model.fit(X_scaled, y)
 probabilidade_final = prob_logistica + (nivel_usuario - nivel_simulado) * 35.0
 ```
 
-Explainable AI (XAI): O sistema não entrega apenas uma probabilidade fria. Ele implementa inteligência explicativa, decompondo os coeficientes do modelo em bullets de texto claro para o usuário entender o impacto exato do seu saldo tático e da sua projeção mental no resultado predito.
+**Explainable AI (XAI):** O sistema não entrega apenas uma probabilidade fria. Ele implementa inteligência explicativa, decompondo os coeficientes do modelo em bullets de texto claro para o usuário entender o impacto exato do seu saldo tático e da sua projeção mental no resultado predito.
 
 ### 2. Coach IA: Algoritmo de Varredura Tática (Dock Principal)
 O script processa o histórico de dados sob filtros condicionais avançados para gerar uma árvore de tomadas de decisão baseada no perfil estatístico do jogador:
