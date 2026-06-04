@@ -24,15 +24,15 @@ Diferente de aplicativos comuns de marcas esportivas, o sistema atua como um eco
 ![Dashboard Principal](screenshots/dashboard.png)
 *KPIs em tempo real, gráfico de evolução de performance e Central de Fundamentos com classificação automática por nível técnico.*
  
-### Módulo de Estatísticas Avançadas (Advanced Metrics)
+### Módulo de Estatísticas Avançadas
 ![Estatísticas Avançadas](screenshots/stats.png)
 *DNA Técnico (Radar Chart), Assinatura de Risco vs. Recompensa (Scatter Plot), análise de Clutch Time e Stacked Bar Charts por superfície, formato e categoria.*
  
-### Coach IA — Dossiê Tático
+### Coach IA - Dossiê Tático
 ![Coach IA](screenshots/coach_ia.png)
 *Algoritmo de varredura tática que classifica o estilo de jogo do atleta e gera análise de desempenho, pontos fortes, riscos e plano tático para o próximo jogo.*
  
-### Registro de Partida — Coleta de Dados
+### Registro de Partida - Coleta de Dados
 ![Nova Partida](screenshots/nova_partida.png)
 *Formulário de captura com avaliação técnica em 10 fundamentos, Radar Chart interativo em tempo real, saldo tático e métricas mentais de clutch time.*
  
@@ -149,18 +149,18 @@ A rota `/export` executa um processo de extração, transformação e carregamen
 | `saldo_tatico` | Agressividade líquida: `winners - unforced_errors` |
 | `fundamento_medio` | Média aritmética excluindo valores nulos |
 | `mental_medio` | Média dos indicadores mentais válidos |
-| `semana_ano` | Formato ISO `YYYY-Www` — facilita séries temporais em BI |
-| `mes_ano` | Formato `YYYY-MM` — facilita agrupamentos mensais |
+| `semana_ano` | Formato ISO `YYYY-Www` - facilita séries temporais em BI |
+| `mes_ano` | Formato `YYYY-MM` - facilita agrupamentos mensais |
 
 ### 3. Algoritmo de Consistência Temporal (Gamification Streak)
 O sistema conta com um motor estatístico que agrupa os dados de partidas por datas cronológicas, converte qualquer dia inserido para a segunda-feira daquela respectiva semana e calcula iterativamente para trás o streak (sequência) de semanas seguidas em que o usuário manteve-se ativo, gerando classificações substituindo o comportamento comum por alertas visuais ponderados (inactive, active, hot, elite).
 
-## 📊 Engenharia de Dashboards & Data Visualization
+## 📊 Dashboards & Data Visualization
 A camada de front-end do Court Metrics foi desenhada sob os princípios de **Scannability** (Escaneabilidade) e alta densidade de dados, traduzindo matrizes complexas em outputs visuais interativos através da biblioteca **Chart.js**:
 
 ### 1. Gráficos Computados em Tempo de Execução
 
-**DNA Técnico (Radar Chart):** Mapeia de forma tridimensional os 10 eixos de fundamentos contidos nas visões agregadas de vitórias e derrotas. O sistema trata os valores zerados como null no JavaScript (via spanGaps: false), impedindo que partidas onde o tenista não avaliou um golpe gerem distorções ou quedas artificiais na malha do gráfico.
+**DNA Técnico (Radar Chart):** Mapeia os 10 eixos de fundamentos em vitórias vs. derrotas. Valores zerados são convertidos para `null` no JavaScript (`spanGaps: false`), impedindo distorções na malha do gráfico por golpes não-avaliados.
 
 **Assinatura de Risco vs. Recompensa (Scatter Plot):** Plota a distribuição espacial das partidas cruzando o volume de Winners (Eixo Y - Recompensa) com Erros Não Forçados (Eixo X - Risco), permitindo identificar visualmente o quadrante de eficiência tática do jogador.
 
@@ -262,7 +262,7 @@ Para garantir flexibilidade no consumo das informações pelo usuário ou seu tr
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/pedrosolonassis/)
 [![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:solonpedro21@gmail.com)
-[![Deploy](https://img.shields.io/badge/Ver_Projeto_Ao_Vivo-1A73E8?style=for-the-badge)](https://courtmetrics.pythonanywhere.com)
+[![Deploy](https://img.shields.io/badge/Projeto-1A73E8?style=for-the-badge)](https://courtmetrics.pythonanywhere.com)
 
 ## 📁 Estrutura do Repositório
 
