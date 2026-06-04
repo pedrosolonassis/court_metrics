@@ -729,7 +729,7 @@ def export_csv():
     for m in raw:
         row = list(m)
         if row[6] is not None:
-            row[6] = str(row[6])
+            row[6] = f" {row[6]}"
 
         resultado_binario = 1 if m['result'] == 'Vitória' else 0
 
