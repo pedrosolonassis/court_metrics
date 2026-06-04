@@ -48,7 +48,6 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Neutraliza o estilo global do style.css no formulário interno (proteção extra) */
     .sim-container form {
         background-color: transparent;
         padding: 0;
@@ -58,8 +57,6 @@
     }
 
     @media (max-width: 768px) {
-        /* Com base.html corrigido (padding: 15px 12px) e style.css neutralizado,
-           o sim-container apenas remove seu padding lateral próprio */
         .sim-container {
             padding: 20px 0;
             margin: 0;
@@ -92,7 +89,6 @@
             word-break: break-word;
             overflow-wrap: anywhere;
         }
-        /* Garante que todos os elementos inline dentro dos bullets também quebrem */
         .xai-list li * {
             word-break: break-word !important;
             overflow-wrap: anywhere !important;

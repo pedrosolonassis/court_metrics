@@ -37,7 +37,7 @@
     .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
     .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
 
-    /* CSS PLACAR VERTICAL */
+
     .score-input { width: 50px; height: 50px; text-align: center; font-size: 22px; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.2s; background: white;}
     .score-input:focus { border-color: var(--atp-blue); box-shadow: 0 0 0 3px rgba(0,40,85,0.1); }
     .tb-input { width: 36px; height: 36px; text-align: center; font-size: 14px; font-weight: bold; border: 1px solid #f97316; background: white; color: #ea580c; border-radius: 6px; outline: none; transition: 0.2s;}
@@ -401,53 +401,48 @@
 
 {% block extra_js %}
 <script>
-    // === TRAVA DO MOUSE WHEEL (Evita o bug do placar mudar sozinho) ===
+
     document.addEventListener("wheel", function(event){
         if(document.activeElement.type === "number"){
             document.activeElement.blur();
         }
     });
 
-    // ================================================================
-    // IDEIA 7 — AVISO ANTES DE SAIR SEM SALVAR
-    // ================================================================
-    let isDirty = false;  // false = formulário limpo (nada alterado ainda)
+    let isDirty = false;
 
-    // Marca o form como "sujo" na primeira interação do usuário
+
     document.getElementById('newMatchForm').addEventListener('input', () => { isDirty = true; });
     document.getElementById('newMatchForm').addEventListener('change', () => { isDirty = true; });
 
-    // Aviso nativo do browser ao fechar aba / navegar para URL externa
+
     window.addEventListener('beforeunload', function(e) {
         if (isDirty) {
             e.preventDefault();
-            e.returnValue = ''; // necessário para Chrome mostrar o aviso
+            e.returnValue = '';
         }
     });
 
-    // Intercepta o link "⬅ Voltar" (navegação interna) com diálogo customizado
+
     document.querySelectorAll('a[href]').forEach(link => {
         link.addEventListener('click', function(e) {
             if (isDirty) {
                 e.preventDefault();
                 const destino = this.href;
-                // Cria modal de confirmação customizado (mais bonito que o confirm() nativo)
+
                 showLeaveModal(destino);
             }
         });
     });
 
-    // Ao submeter o form: executa calculateTieBreak, marca como limpo e salva
+
     function onFormSubmit(e) {
-        calculateTieBreak();  // lógica original de placar
-        isDirty = false;      // limpa o flag — não bloqueia o POST
+        calculateTieBreak();
+        isDirty = false;
     }
 
-    // ================================================================
-    // MODAL DE CONFIRMAÇÃO CUSTOMIZADO
-    // ================================================================
+
     function showLeaveModal(destino) {
-        // Cria o overlay do modal
+
         const overlay = document.createElement('div');
         overlay.style.cssText = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -485,18 +480,18 @@
         document.getElementById('btnFicar').onclick = () => document.body.removeChild(overlay);
         document.getElementById('btnSair').onclick  = () => { isDirty = false; window.location.href = destino; };
 
-        // Clique fora do modal também fecha (mantém o usuário na página)
+
         overlay.addEventListener('click', function(e) {
             if (e.target === overlay) document.body.removeChild(overlay);
         });
     }
 
-    // Animação do modal
+
     const style = document.createElement('style');
     style.textContent = `@keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }`;
     document.head.appendChild(style);
 
-    // === LÓGICA VERTICAL DO PLACAR LETZPLAY ===
+
     function renderScoreInputs() {
         const setModel = document.getElementById('set_model').value;
         const gameModel = document.getElementById('game_model').value;
@@ -619,7 +614,7 @@
         }
     }
 
-    // === SEQUESTRO DA TECLA "TAB" PARA NAVEGAÇÃO EM Z ===
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             const active = document.activeElement;

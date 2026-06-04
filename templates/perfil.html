@@ -24,7 +24,7 @@
     
     .btn-outline { background: transparent; color: var(--text-slate); padding: 12px 20px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; cursor: pointer;}
     
-    /* --- ESTILOS DA FOTO DE PERFIL E MODAL CROPPER --- */
+
     .profile-photo-container { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
     .current-photo { 
         width: 100px; height: 100px; border-radius: 50%; background-color: var(--atp-blue); color: white; 
@@ -41,7 +41,7 @@
 
     .cropper-modal {
         display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        /* CORREÇÃO 3: fundo mais opaco para contrastar bem com a imagem */
+
         background: rgba(0, 0, 0, 0.92); z-index: 2000; align-items: center; justify-content: center;
     }
     .cropper-modal.active { display: flex; }
@@ -53,35 +53,27 @@
     .cropper-header h3 { margin: 0; font-size: 16px; }
     .btn-close-modal { background: #334155; border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     
-    /* CORREÇÃO 3: fundo preto puro para não deixar a imagem transparente */
+
     .img-container { height: 350px; background-color: #000000; margin-bottom: 20px; border-radius: 8px; overflow: hidden; }
     .img-container img { display: block; max-width: 100%; }
 
-    /* ================================================================
-       FIX DEFINITIVO DO CROPPER.JS — ELIMINA O PADRÃO XADREZ
-       O Cropper injeta várias classes com opacidade e background.
-       Sobrescrevemos TODAS para garantir imagem opaca e escura.
-    ================================================================ */
 
-    /* 1. Remove o padrão xadrez do fundo (injetado via background-image SVG) */
     .cropper-bg {
         background-image: none !important;
         background-color: #000 !important;
     }
 
-    /* 2. O canvas que renderiza a imagem não deve ter opacidade reduzida */
+
     .cropper-canvas,
     .cropper-canvas > img {
         opacity: 1 !important;
     }
 
-    /* 3. A máscara cinza fora da área de corte — deixar bem escura */
     .cropper-modal {
         opacity: 0.85 !important;
         background: #000 !important;
     }
 
-    /* 4. Área de corte (o círculo em si) — borda branca visível */
     .cropper-view-box {
         outline: 2px solid #fff !important;
         outline-color: rgba(255, 255, 255, 0.85) !important;
@@ -93,7 +85,6 @@
         opacity: 1 !important;
     }
 
-    /* 5. Drag-box não deve cobrir a imagem */
     .cropper-drag-box {
         opacity: 0 !important;
         background: transparent !important;
@@ -108,7 +99,6 @@
 
     #realFileInput { display: none; }
 
-    /* ESTILO DA MENSAGEM DE SUCESSO */
     .success-alert {
         background: #dcfce7;
         border: 1px solid #86efac;
@@ -116,7 +106,7 @@
         padding: 20px;
         border-radius: 12px;
         margin-bottom: 25px;
-        display: none; /* Escondido por padrão, o JS vai ativar */
+        display: none;
         align-items: center;
         gap: 15px;
         font-weight: 500;
@@ -311,11 +301,7 @@
 
 {% block extra_js %}
 <script>
-    // ==========================================
-    // LÓGICA DA MENSAGEM DE SUCESSO (UX/UI)
-    // ==========================================
-    
-    // 1. Quando submeter o form, muda o botão e salva um "aviso" no navegador
+
     document.getElementById('profileForm').addEventListener('submit', function() {
         sessionStorage.setItem('profileSaved', 'true');
         
@@ -325,26 +311,19 @@
         btn.style.pointerEvents = "none";
     });
 
-    // 2. Quando a página recarregar, verifica se tem o "aviso" salvo. Se tiver, mostra o Alerta Verde!
     document.addEventListener("DOMContentLoaded", function() {
         if (sessionStorage.getItem('profileSaved') === 'true') {
             const alertBox = document.getElementById('successAlert');
             alertBox.style.display = 'flex';
             
-            // Depois de 5 segundos, a mensagem some suavemente
             setTimeout(() => {
                 alertBox.style.opacity = '0';
                 setTimeout(() => alertBox.style.display = 'none', 500);
             }, 5000);
             
-            // Limpa o aviso para não aparecer de novo se ele der só F5 na página
             sessionStorage.removeItem('profileSaved');
         }
     });
-
-    // ==========================================
-    // RESTANTE DOS SCRIPTS (Data e Cropper)
-    // ==========================================
 
     function updatePlayingSince() {
         const month = document.getElementById('play_month').value;
@@ -380,10 +359,8 @@
                     autoCropArea: 0.8,
                     cropBoxMovable: false,
                     cropBoxResizable: false,
-                    // Garante que o fundo do cropper seja preto, não transparente
                     background: true,
                     ready: function() {
-                        // Força opacidade total no canvas da imagem após o cropper montar
                         const canvas = document.querySelector('.cropper-canvas');
                         const canvasImg = document.querySelector('.cropper-canvas img');
                         if (canvas) canvas.style.opacity = '1';

@@ -11,7 +11,7 @@
     .kpi-val { font-size: 42px; font-weight: 900; color: var(--atp-blue); margin: 0; }
     .tip-box { background: #f8fafc; border-left: 5px solid #f59e0b; padding: 25px; border-radius: 0 12px 12px 0; margin-top: 30px; }
  
-    /* Botões de filtro do gráfico */
+    
     .filter-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .filter-btn {
         padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
@@ -136,7 +136,7 @@
         Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
         const ctx = document.getElementById('fundChart').getContext('2d');
  
-        // Destrói instância anterior antes de criar nova (evita sobreposição de gráficos)
+
         if (fundChart) { fundChart.destroy(); }
  
         fundChart = new Chart(ctx, {
@@ -155,7 +155,7 @@
                     pointBackgroundColor: '#0284c7',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
-                    spanGaps: false  // não conecta pontos onde a nota era 0 (null) — jogo não avaliado
+                    spanGaps: false
                 }]
             },
             options: {
@@ -171,14 +171,14 @@
     }
  
     function filtrar(n, btn) {
-        // Atualiza estado visual dos botões
+
         document.querySelectorAll('#filterGroup .filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
  
         const allData   = window.fundData;
         const allLabels = window.fundLabels;
  
-        // n = 0 significa "Todas"; n > 0 pega os últimos n elementos
+
         const data   = (n > 0) ? allData.slice(-n)   : allData;
         const labels = (n > 0) ? allLabels.slice(-n) : allLabels;
  

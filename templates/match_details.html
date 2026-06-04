@@ -36,7 +36,7 @@
     .atp-set-box { width: 34px; height: 34px; border-radius: 6px; font-size: 20px; font-weight: 900; color: #94a3b8; background: #f1f5f9; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; }
     .atp-set-win { color: #15803d; background: #dcfce7; border-color: #86efac; }
 
-    /* --- NOVOS ESTILOS: MENTAL E CLUTCH --- */
+    /* Estilos */
     .mental-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 25px; margin-top: 15px; }
     @media (max-width: 768px) { .mental-grid { grid-template-columns: 1fr; } }
     
@@ -56,7 +56,7 @@
     .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
     .display-tag { padding: 6px 12px; border-radius: 15px; background: #e0f2fe; color: #0284c7; font-size: 12px; font-weight: bold; border: 1px solid #bae6fd; }
 
-    /* IDEIA 2 — BOTÃO EXPORTAR PDF */
+    /* BOTÃO EXPORTAR PDF */
     .btn-pdf { background: #dc2626; color: white; padding: 10px 20px; border-radius: 8px; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; transition: 0.2s; text-decoration: none; }
     .btn-pdf:hover { background: #b91c1c; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
     .btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -91,7 +91,7 @@
 {% set v_es = match[22]|int if match[22] else 0 %}
 
 {% set golpes = [(v_fh, 'Forehand'), (v_bh, 'Backhand'), (v_sq, 'Saque'), (v_dv, 'Devolução'), (v_sl, 'Slice'), (v_vl, 'Voleio'), (v_sm, 'Smash'), (v_dp, 'Dropshot'), (v_fw, 'Footwork'), (v_es, 'Estratégia')] %}
-{# CORREÇÃO 1: filtra notas 0 antes de ordenar — 0 significa "não avaliado", não nota ruim #}
+
 {% set golpes_validos = golpes | selectattr('0', 'gt', 0) | list %}
 {% set sorted_golpes = golpes_validos | sort(attribute='0', reverse=true) %}
 {% set melhor_golpe = sorted_golpes[0] if sorted_golpes else (0, 'N/A') %}
@@ -383,15 +383,12 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- IDEIA 2: Libs para geração de PDF no browser (sem instalar nada no servidor) -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-    // ================================================================
-    // IDEIA 2 — EXPORTAR PDF DA PARTIDA
-    // Captura o #pdf-content como imagem e insere no PDF com jsPDF.
-    // Nome do arquivo: vs_Adversario_DD-MM-AAAA.pdf
-    // ================================================================
+
+    //  EXPORTAR PDF DA PARTIDA
     async function exportarPDF() {
         const btn = document.getElementById('btnExportPdf');
         const loading = document.getElementById('pdfLoading');
@@ -402,13 +399,13 @@
         btn.disabled = true;
 
         try {
-            // Captura o conteúdo como canvas em alta resolução
+
             const canvas = await html2canvas(conteudo, {
-                scale: 2,              // resolução 2x para ficar nítido
+                scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff',
                 logging: false,
-                // Ignora elementos que não devem ir para o PDF
+
                 ignoreElements: (el) => el.id === 'pdfLoading'
             });
 
@@ -423,17 +420,17 @@
             const imgW = pageW - margin * 2;
             const imgH = (canvas.height * imgW) / canvas.width;
 
-            // Se o conteúdo for maior que uma página, divide em múltiplas páginas
+
             let posY = margin;
             let alturaRestante = imgH;
 
             while (alturaRestante > 0) {
                 const alturaCorte = Math.min(alturaRestante, pageH - margin * 2);
-                // Calcula a porção da imagem para esta página
+
                 const srcY = ((imgH - alturaRestante) / imgH) * canvas.height;
                 const srcH = (alturaCorte / imgH) * canvas.height;
 
-                // Cria canvas temporário para a fatia desta página
+
                 const sliceCanvas = document.createElement('canvas');
                 sliceCanvas.width = canvas.width;
                 sliceCanvas.height = srcH;
@@ -450,9 +447,9 @@
                 }
             }
 
-            // Nome do arquivo: vs_Adversario_DD-MM-AAAA.pdf
+
             const adversario = "{{ match[1] }}".replace(/[^a-zA-Z0-9\u00C0-\u00FF ]/g, '').trim().replace(/ /g, '_');
-            const dataParts = "{{ match[27] }}".split('-'); // AAAA-MM-DD
+            const dataParts = "{{ match[27] }}".split('-');
             const dataFormatada = dataParts.length === 3 ? `${dataParts[2]}-${dataParts[1]}-${dataParts[0]}` : 'partida';
             pdf.save(`vs_${adversario}_${dataFormatada}.pdf`);
 

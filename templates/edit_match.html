@@ -37,7 +37,7 @@
     .slider-err { -webkit-appearance: none; width: 100%; height: 8px; border-radius: 4px; background: #fee2e2; outline: none; margin-top: 15px;}
     .slider-err::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #dc2626; cursor: pointer; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
 
-    /* CSS PLACAR VERTICAL */
+    /* placar vertical */
     .score-input { width: 50px; height: 50px; text-align: center; font-size: 22px; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.2s; background: white;}
     .score-input:focus { border-color: var(--atp-blue); box-shadow: 0 0 0 3px rgba(0,40,85,0.1); }
     .tb-input { width: 36px; height: 36px; text-align: center; font-size: 14px; font-weight: bold; border: 1px solid #f97316; background: white; color: #ea580c; border-radius: 6px; outline: none; transition: 0.2s;}
@@ -61,19 +61,17 @@
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ==============================================================
-       NOVO BLOCO: BLINDAGEM DE RESPONSIVIDADE PARA CELULAR
-       ============================================================== */
+    /* celular */
     @media (max-width: 768px) {
         .grid-2, .grid-3 { grid-template-columns: 1fr !important; gap: 15px; }
         
         .performance-container { grid-template-columns: 1fr !important; gap: 20px; }
-        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; } /* Mantém 2 colunas para os números 0-10 */
+        .rating-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
         
         .chart-container { margin-top: 10px; padding: 10px; width: 100%; overflow: hidden; box-sizing: border-box; }
         #liveRadarChart { max-width: 100%; height: auto !important; }
         
-        .player-info { flex: 0 0 100px; } /* Idêntico ao new_match — preserva nomes e dá espaço aos inputs */
+        .player-info { flex: 0 0 100px; }
         
         .mental-desc { flex-direction: column; text-align: center; gap: 3px; font-size: 10px; }
     }
@@ -414,17 +412,14 @@
 
 {% block extra_js %}
 <script>
-    // === TRAVA DO MOUSE WHEEL (Evita o bug do placar mudar sozinho) ===
+
     document.addEventListener("wheel", function(event){
         if(document.activeElement.type === "number"){
             document.activeElement.blur();
         }
     });
 
-    // ================================================================
-    // IDEIA 7 — AVISO ANTES DE SAIR SEM SALVAR
-    // Mesmo mecanismo do new_match, adaptado para edição
-    // ================================================================
+    // aviso antes de sair com alterações não salvas
     let isDirty = false;
 
     document.getElementById('editMatchForm').addEventListener('input',  () => { isDirty = true; });
@@ -491,7 +486,7 @@
     style.textContent = `@keyframes fadeInModal { from { opacity: 0; } to { opacity: 1; } }`;
     document.head.appendChild(style);
 
-    // === LÓGICA DO PLACAR DINÂMICO E PREENCHIMENTO AUTOMÁTICO ===
+    // placar dinâmico e preenchimento automático
     function renderScoreInputs() {
         const setModel = document.getElementById('set_model').value;
         const gameModel = document.getElementById('game_model').value;
@@ -578,11 +573,11 @@
             } else {
                 if(pTb && pTb.style.display !== 'none' && (pTb.value !== "" || oTb.value !== "")) {
                     let loserTb = Math.min(parseInt(pTb.value) || 0, parseInt(oTb.value) || 0);
-                    // NOVA LÓGICA DO TIE-BREAK AQUI:
+
                     if (p > o) {
-                        setStr = `${p}/${o}(${loserTb})`; // Parênteses no perdedor
+                        setStr = `${p}/${o}(${loserTb})`;
                     } else if (o > p) {
-                        setStr = `(${loserTb})${p}/${o}`; // Parênteses no perdedor
+                        setStr = `(${loserTb})${p}/${o}`;
                     } else {
                         setStr = `${p}/${o}(${loserTb})`; 
                     }
@@ -593,11 +588,9 @@
             finalScoreString += setStr + " ";
         }
 
-        // 1. Atualiza o input escondido com segurança
         const finalScoreInput = document.getElementById('final_score');
         if (finalScoreInput) finalScoreInput.value = finalScoreString.trim();
 
-        // 2. Atualiza a Badge ou o Dropdown sem dar Crash no Javascript
         const badge = document.getElementById('status-badge');
         const resultSelect = document.getElementById('result-select');
         const hiddenInput = document.getElementById('result-hidden');
@@ -650,7 +643,7 @@
                 document.querySelector(`.p-score[data-set="${setNum}"]`).value = pts[0];
                 document.querySelector(`.o-score[data-set="${setNum}"]`).value = pts[1];
             } else {
-                // REGEX PARA SEPARAR O (4) NÃO IMPORTA SE TÁ NO COMEÇO OU NO FIM
+
                 let tb = "";
                 let main = s;
                 if (s.includes('(')) {
@@ -680,7 +673,7 @@
         calculateTieBreak();
     }
 
-    // === SEQUESTRO DA TECLA "TAB" PARA NAVEGAÇÃO EM Z ===
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             const active = document.activeElement;
@@ -718,9 +711,7 @@
         }
     });
 
-    // === LÓGICA DO RESTO DO SEU FORMULÁRIO ===
-
-    // PROBLEMA 6: listas de categorias por formato
+    // listas de categorias por formato
     const CATEGORIAS_SIMPLES = [
         { value: '1ª Classe', label: '1ª Classe' },
         { value: '2ª Classe', label: '2ª Classe' },
@@ -746,11 +737,11 @@
             const el = document.createElement('option');
             el.value = opt.value;
             el.textContent = opt.label;
-            // Seleciona o valor atual se existir na lista, senão seleciona o primeiro
+
             if (opt.value === valorAtual) el.selected = true;
             sel.appendChild(el);
         });
-        // Se o valor atual não existe na lista do formato escolhido, seleciona o primeiro
+
         if (!lista.some(o => o.value === valorAtual)) {
             sel.selectedIndex = 0;
         }
@@ -765,7 +756,7 @@
         const inpDoubleOpp1 = document.getElementById('inp_opp1');
         const isDuplas = format === 'Duplas';
 
-        // Atualiza opções de categoria para o novo formato, sem valor pré-selecionado (usuário escolhe)
+
         updateCategoriaSelect(isDuplas, '');
 
         if (isDuplas) {
@@ -811,8 +802,7 @@
     window.onload = function() {
         toggleServeDetails();
 
-        // PROBLEMA 6: inicializa o select de categoria com as opções corretas
-        // para o formato já salvo no banco, preservando o valor atual
+
         const catSelect = document.getElementById('categoria_select');
         const currentFormat = catSelect.dataset.format;
         const currentCat = catSelect.dataset.current;
@@ -828,7 +818,7 @@
             });
         }
         
-        // Aqui está a mágica: ele pega o score do banco e já preenche o seu formulário visual LetzPlay
+        
         preFillScore(document.getElementById('final_score').value);
 
         const ctx = document.getElementById('liveRadarChart').getContext('2d');

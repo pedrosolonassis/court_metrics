@@ -1,26 +1,28 @@
 /* static/style.css */
 
-/* 1. Paleta de Cores baseada no Dashboard */
+/* Paleta de Cores baseada no Dashboard */
+
 :root {
-    --bg-fundo: #F5F7FA;       /* Fundo cinza bem claro/azulado */
-    --bg-card: #FFFFFF;        /* Fundo branco dos gráficos/cards */
-    --texto-escuro: #333333;   /* Cor do texto principal */
-    --texto-claro: #666666;    /* Cor para subtítulos e notas */
-    --verde-tenis: #8BC34A;    /* O verde das barras do gráfico */
-    --azul-piscina: #26A69A;   /* O azul-esverdeado das barras do gráfico */
-    --borda: #E0E0E0;          /* Linhas de divisão suaves */
+    --bg-fundo: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --texto-escuro: #333333;
+    --texto-claro: #666666;
+    --verde-tenis: #8BC34A;
+    --azul-piscina: #26A69A;
+    --borda: #E0E0E0;
 }
 
-/* 2. Estilo Geral da Página */
+/* Estilo Geral da Página */
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-fundo);
     color: var(--texto-escuro);
     margin: 0;
-    padding: 0; /* CORREÇÃO: era padding: 20px — conflitava com o padding do main-content do base.html */
+    padding: 0;
 }
 
-/* 3. Container Principal (Centraliza o conteúdo na tela) */
+/* Container Principal */
 .container {
     max-width: 900px;
     margin: 0 auto;
@@ -30,7 +32,7 @@ h1, h2, h3 {
     color: var(--texto-escuro);
 }
 
-/* 4. Botões e Links Estilizados */
+/* Botões e Links Estilizados */
 .btn {
     display: inline-block;
     background-color: var(--azul-piscina);
@@ -49,7 +51,7 @@ h1, h2, h3 {
     background-color: var(--verde-tenis);
 }
 
-/* 5. Formulário (Estilo de Dashboard) */
+/* Formulário (Estilo de Dashboard) */
 form {
     background-color: var(--bg-card);
     padding: 25px;
@@ -75,14 +77,8 @@ input[type="text"], select, textarea {
     font-family: inherit;
 }
 
-/* 6. Lista de Jogos (Transformando em Cards) — APENAS para listas dentro de .legacy-list */
-/* CORREÇÃO CRÍTICA: os estilos globais de ul/li estavam sendo aplicados em TODOS os <ul>
-   do site, incluindo o .xai-list do simulador, bullet-list do treinador, etc.
-   O grid com minmax(400px) forçava overflow em telas de ~390px no mobile.
-   Solução: restringir esses estilos apenas a listas dentro de .match-list-container,
-   e resetar ul/li para comportamento padrão fora desse contexto. */
+/* Lista de Jogos (Transformando em Cards) */
 
-/* Reset global — ul/li voltam ao comportamento neutro */
 ul {
     list-style-type: none;
     padding: 0;
@@ -120,7 +116,7 @@ hr {
     margin: 30px 0;
 }
 
-/* 7. Grid de Placar (Estilo LetzPlay) */
+/* Grid de Placar (Estilo LetzPlay) */
 .letzplay-grid {
     background-color: #F9FAFB;
     border: 1px solid var(--borda);
@@ -153,10 +149,10 @@ hr {
     padding: 8px;
     border: 1px solid var(--borda);
     border-radius: 4px;
-    margin: 0; /* Remove a margem padrão para alinhar bonitinho */
+    margin: 0;
 }
 
-/* Esconde as setinhas dentro do input de número para ficar mais limpo */
+/* Esconde as setinhas dentro do input de número */
 .set-inputs input[type=number]::-webkit-inner-spin-button {
     -webkit-appearance: none;
 }

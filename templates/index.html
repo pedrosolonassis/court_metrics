@@ -63,7 +63,7 @@
     .fund-elite .fund-nota { color: #0369a1; }
     .fund-elite .fund-status { color: #0891b2; }
 
-    /* IDEIA 4 — STREAK */
+    
     .streak-card { padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #e2e8f0; }
     .streak-inactive { background: white; }
     .streak-active   { background: linear-gradient(135deg, #fef3c7, #fff); border-color: #fde68a; }
@@ -140,7 +140,7 @@
             <span style="font-size: 11px; color: #10b981; font-weight: bold;">🚀 Melhor golpe do último jogo</span>
         </div>
 
-        {# IDEIA 4 — STREAK: mesma estrutura dos outros 3 KPIs (título → número → mensagem) #}
+        {# streak #}
         <div class="insight-card streak-card streak-{{ streak.status }}">
             <span style="font-size: 12px; text-transform: uppercase; font-weight: bold; color: var(--text-slate); letter-spacing: 1px;">
                 {{ streak.emoji }} Sequência de Registros
@@ -276,11 +276,11 @@
 
 {% block extra_js %}
 <script>
-    // === VARIÁVEIS GLOBAIS ===
+
     const allPerfData = [{% for match in matches[:15]|reverse %}{{ match['performance_rating'] }}{% if not loop.last %},{% endif %}{% endfor %}];
     const allPerfLabels = [{% for match in matches[:15]|reverse %}'{{ match['match_date'][8:10] }}/{{ match['match_date'][5:7] }}'{% if not loop.last %},{% endif %}{% endfor %}];
     
-    // Exportando a matriz de fundamentos (10 índices) de TODOS os jogos
+    // exportando a matriz de fundamentos (10 índices) de todos os jogos
     const allFundData = [
         {% for m in matches %}
             [{{ m['forehand'] }}, {{ m['backhand'] }}, {{ m['serve'] }}, {{ m['return_serve'] }}, {{ m['slice'] }}, {{ m['volley'] }}, {{ m['smash'] }}, {{ m['dropshot'] }}, {{ m['footwork'] }}, {{ m['strategy'] }}]{% if not loop.last %},{% endif %}
@@ -288,7 +288,7 @@
     ];
 
     window.onload = function() {
-        // 1. Inicializa o Gráfico de Evolução
+        // inicializa o Gráfico de Evolução
         const evoCtx = document.getElementById('evolutionChart').getContext('2d');
         window.evoChart = new Chart(evoCtx, {
             type: 'line',
@@ -312,12 +312,12 @@
             }
         });
 
-        // Dispara as funções para ler o filtro selecionado (por padrão 15 no gráfico e 0 na carreira)
+
         updateEvolutionChart(document.getElementById('chartFilter').value);
         updateFundamentals(document.getElementById('fundFilter').value);
     }
 
-    // 2. Função de Filtro Dinâmico do Gráfico
+    // função de Filtro Dinâmico do Gráfico
     window.updateEvolutionChart = function(limitStr) {
         const limit = parseInt(limitStr);
         const slicedData = allPerfData.slice(-limit);
@@ -330,17 +330,17 @@
         }
     };
 
-    // 3. Função de Filtro e Gamificação (Cores) dos Fundamentos
+
     window.updateFundamentals = function(limitStr) {
         let limit = parseInt(limitStr);
         
-        // Se o limite for 0 (Carreira toda) ou maior que os jogos que temos, usa o total
+
         if (limit === 0 || limit > allFundData.length) {
             limit = allFundData.length;
         }
-        if (limit === 0) return; // Evita erro se o banco estiver vazio
+        if (limit === 0) return;
 
-        // Arrays para guardar a SOMA das notas e a QUANTIDADE de vezes que foi avaliado
+
         let sums = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
@@ -349,17 +349,17 @@
             for(let j = 0; j < 10; j++) {
                 let nota = allFundData[i][j];
                 
-                // A MÁGICA ACONTECE AQUI: Só entra na matemática se a nota for maior que 0
+                // só entra na matemática se a nota for maior que 0
                 if (nota > 0) {
                     sums[j] += nota;
-                    counts[j]++; // Regista que este fundamento teve uma avaliação válida neste jogo
+                    counts[j]++;
                 }
             }
         }
 
-        // Calcula a média justa e aplica a gamificação
+        // Calcula a média justa e atualiza os cards de fundamentos
         for(let j = 0; j < 10; j++) {
-            // Se o fundamento teve avaliações, divide pelo número de avaliações. Se não, fica 0.0.
+
             let avg = counts[j] > 0 ? (sums[j] / counts[j]) : 0.0;
             
             let card = document.getElementById('fund-card-' + j);
@@ -368,14 +368,14 @@
 
             valEl.innerText = avg.toFixed(1);
 
-            // Limpa as classes de cor antigas
+
             card.className = "fundamento-card";
             
             let colorClass = "";
             let textLabel = "";
             let icon = "";
 
-            // Lógica de gamificação (as notas 0.0 sem avaliação caem aqui no vermelho ou pode isolar se quiser)
+
             if (avg === 0.0) {
                 colorClass = "fund-neutral"; textLabel = "Sem Avaliação"; icon = "➖ ";
             } else if (avg < 6.0) {
@@ -390,7 +390,7 @@
                 colorClass = "fund-elite"; textLabel = "Espetacular"; icon = "🔥 ";
             }
 
-            // Aplica a nova cor e o texto motivacional
+
             card.classList.add(colorClass);
             labelEl.innerText = icon + textLabel;
         }

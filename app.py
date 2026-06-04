@@ -1,3 +1,4 @@
+
 import sqlite3
 import csv
 import io
@@ -14,15 +15,12 @@ app = Flask(__name__)
 
 @app.before_request
 def redirect_to_correct_url():
-    # Se alguém tentar acessar pelo domínio .br ou pelo usuário antigo
-    # a gente empurra para o endereço oficial da conta nova
     host = request.host
     if 'courtmetrics.com.br' in host or 'pedrosolonassis' in host:
         return redirect("https://courtmetrics.pythonanywhere.com" + request.path, code=301)
 
-app.secret_key = "chave_super_secreta_court_metrics" # Necessário para segurança da sessão
+app.secret_key = "chave_super_secreta_court_metrics"
 
-# --- CONFIGURAÇÃO DA PASTA DE UPLOADS (FOTOS DE PERFIL E FEEDBACK) ---
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads', 'profiles')
@@ -38,7 +36,6 @@ def create_db():
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     
-    # 1. CRIA A TABELA DE USUÁRIOS
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +48,6 @@ def create_db():
     )
     """)
 
-    # 2. TABELA DE PARTIDAS
     c.execute("""
     CREATE TABLE IF NOT EXISTS matches (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,7 +84,6 @@ def create_db():
     )
     """)
 
-    # TABELA DE NOTIFICAÇÕES
     c.execute("""
     CREATE TABLE IF NOT EXISTS notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,7 +96,6 @@ def create_db():
     )
     """)
 
-    # 3. TABELA DE FEEDBACKS
     c.execute("""
     CREATE TABLE IF NOT EXISTS feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -116,7 +110,6 @@ def create_db():
     )
     """)
     
-    # ATUALIZAÇÕES SILENCIOSAS: Adiciona as colunas novas em bancos antigos sem apagar dados
     try:
         c.execute("ALTER TABLE matches ADD COLUMN game_format TEXT DEFAULT 'Padrão'")
     except sqlite3.OperationalError:
@@ -144,7 +137,6 @@ def create_db():
         except sqlite3.OperationalError:
             pass
 
-    # Migração silenciosa para os novos campos de usuário
     novos_campos_usuario = {
         'first_name': 'TEXT', 'last_name': 'TEXT', 'email': 'TEXT', 'birth_date': 'TEXT',
         'gender': 'TEXT', 'phone': 'TEXT', 'playing_since': 'TEXT', 
@@ -163,7 +155,6 @@ def create_db():
 
 create_db()
 
-# --- DECORADOR DE SEGURANÇA (O PORTEIRO) ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -180,14 +171,12 @@ def inject_notifications():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    # Busca apenas as notificações não lidas
     c.execute("SELECT * FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC", (session["user_id"],))
     notifs = c.fetchall()
     conn.close()
     
     return dict(notifications=notifs)
 
-# Rotas de Ação das Notificações
 @app.route("/read_notif/<int:notif_id>")
 @login_required
 def read_notif(notif_id):
@@ -199,7 +188,7 @@ def read_notif(notif_id):
         c.execute("UPDATE notifications SET is_read = 1 WHERE id = ?", (notif_id,))
         conn.commit()
         conn.close()
-        return redirect(notif[0]) # Vai para o link da notificação
+        return redirect(notif[0])
     conn.close()
     return redirect("/")
 
@@ -211,10 +200,9 @@ def read_all_notifs():
     c.execute("UPDATE notifications SET is_read = 1 WHERE user_id = ?", (session["user_id"],))
     conn.commit()
     conn.close()
-    return redirect(request.referrer or "/") # Recarrega a página atual
+    return redirect(request.referrer or "/")
 
 
-# --- ROTAS DE AUTENTICAÇÃO (LOGIN / REGISTRO) ---
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -290,10 +278,6 @@ def logout():
     return redirect("/login")
 
 
-# ==============================================================================
-# --- ROTAS DO SISTEMA PROTEGIDAS ---
-# ==============================================================================
-
 @app.route("/")
 @login_required
 def home():
@@ -310,7 +294,6 @@ def home():
     user_data = dict(user_row) if user_row else {}
     conn.close()
 
-    # --- LÓGICA DE ÚLTIMA PARTIDA E TEMPO DE JOGO ---
     ultima_partida = "Sem registros"
     if matches:
         last_date_str = matches[0]['match_date'] 
@@ -335,15 +318,12 @@ def home():
         except:
             pass
 
-    # ==========================================================
-    # --- CÁLCULO DA SEQUÊNCIA (STREAK DE SEMANAS SEGUIDAS) ----
-    # ==========================================================
     semanas_jogadas = set()
     for m in matches:
         if m.get('match_date'):
             try:
                 d = datetime.strptime(m['match_date'], '%Y-%m-%d').date()
-                segunda_feira = d - timedelta(days=d.weekday()) # Converte a data para a segunda-feira daquela semana
+                segunda_feira = d - timedelta(days=d.weekday())
                 semanas_jogadas.add(segunda_feira)
             except:
                 pass
@@ -356,12 +336,10 @@ def home():
         segunda_atual = hoje - timedelta(days=hoje.weekday())
         segunda_passada = segunda_atual - timedelta(days=7)
         
-        # Para o streak estar ativo, tem que ter jogado nesta semana ou, no máximo, na semana passada
         if semanas_jogadas[0] == segunda_atual or semanas_jogadas[0] == segunda_passada:
             streak_semanas = 1
             semana_referencia = semanas_jogadas[0]
             
-            # Conta para trás quantas semanas seguidas existem
             for s in semanas_jogadas[1:]:
                 if s == semana_referencia - timedelta(days=7):
                     streak_semanas += 1
@@ -369,7 +347,6 @@ def home():
                 else:
                     break
 
-    # Monta a variável para a gamificação visual
     streak = {
         'semanas': streak_semanas,
         'status': 'inactive',
@@ -383,10 +360,6 @@ def home():
     elif streak_semanas >= 1:
         streak['status'] = 'active'; streak['emoji'] = '🎾'; streak['mensagem'] = 'Sequência ativa. Continue assim!'
 
-
-    # ==========================================================
-    # --- CORREÇÃO DA CENTRAL DE FUNDAMENTOS (MÉDIAS JUSTAS) ---
-    # ==========================================================
     fundamentos_cols = [
         'forehand', 'backhand', 'serve', 'return_serve', 'slice', 
         'volley', 'smash', 'dropshot', 'footwork', 'strategy'
@@ -415,7 +388,7 @@ def home():
                            tempo_joga=tempo_joga, 
                            ultima_partida=ultima_partida,
                            medias_fundamentos=medias_fundamentos,
-                           streak=streak) # <--- VARIÁVEL STREAK ENVIADA COM SUCESSO!
+                           streak=streak)
 
 @app.route("/perfil", methods=["GET", "POST"])
 @login_required
@@ -550,8 +523,6 @@ def fundamento(nome):
 @login_required
 def new_match():
     if request.method == "POST":
-        # CORREÇÃO: usar .get() com fallback em todos os campos — evita HTTP 400 (KeyError)
-        # quando o browser mobile envia formulário com campo vazio ou ausente
         opponent = request.form.get("opponent", "").strip()
         categoria = request.form.get("categoria", "Não informado").strip() or "Não informado"
         match_type = request.form.get("match_type", "Amistoso").strip() or "Amistoso"
@@ -619,7 +590,6 @@ def edit_match(id):
     conn = sqlite3.connect("database.db")
     c = conn.cursor()
     if request.method == "POST":
-        # CORREÇÃO: usar .get() com fallback — evita HTTP 400 no mobile
         opponent = request.form.get("opponent", "").strip()
         categoria = request.form.get("categoria", "Não informado").strip() or "Não informado"
         match_type = request.form.get("match_type", "Amistoso").strip() or "Amistoso"
@@ -713,7 +683,7 @@ def match_details(id):
 @login_required
 def export_csv():
     conn = sqlite3.connect("database.db")
-    conn.row_factory = sqlite3.Row  # acesso por nome de coluna
+    conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("""
         SELECT match_date, opponent, categoria, match_type, surface, result, score, 
@@ -727,7 +697,6 @@ def export_csv():
     raw = c.fetchall()
     conn.close()
 
-    # --- CABEÇALHOS ORIGINAIS ---
     headers_originais = [
         "Data da Partida", "Adversario", "Categoria", "Tipo de Partida", "Superficie", "Resultado", "Placar",
         "Formato Partida", "Formato Game", "Parceiro", "Parceiro Adversario",
@@ -737,21 +706,19 @@ def export_csv():
         "Foco Mental", "Resiliencia Mental", "BP Salvos", "BP Ganhos", "Momentum Perdido", "Tags Mentais"
     ]
 
-    # --- COLUNAS DERIVADAS (IDEIA 11) ---
-    # Facilitam análise direta no Excel, Pandas ou qualquer ferramenta de BI
     headers_derivados = [
-        "resultado_binario",    # 1 = Vitória, 0 = Derrota/Empate  → target para modelos ML
-        "saldo_tatico",         # winners - erros_nao_forcados       → agressividade líquida
-        "fundamento_medio",     # média dos fundamentos técnicos > 0 → nível técnico da partida
-        "mental_medio",         # média de foco + resiliência > 0    → nível mental da partida
-        "semana_ano",           # ex: 2026-W15                       → agrupamento semanal
-        "mes_ano",              # ex: 2026-04                        → agrupamento mensal
+        "resultado_binario",
+        "saldo_tatico",
+        "fundamento_medio",
+        "mental_medio",
+        "semana_ano",
+        "mes_ano",
     ]
 
     output = io.StringIO()
-    output.write('\ufeff')  # BOM para Excel reconhecer UTF-8
+    output.write('\ufeff')
 
-    writer = csv.writer(output, delimiter=',')
+    writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
     writer.writerow(headers_originais + headers_derivados)
 
     fundamento_cols = [
@@ -761,26 +728,21 @@ def export_csv():
 
     for m in raw:
         row = list(m)
+        if row[6] is not None:
+            row[6] = str(row[6])
 
-        # --- CÁLCULO DAS COLUNAS DERIVADAS ---
-
-        # 1. resultado_binario
         resultado_binario = 1 if m['result'] == 'Vitória' else 0
 
-        # 2. saldo_tatico
         w = m['winners'] or 0
         ue = m['unforced_errors'] or 0
         saldo_tatico = w - ue
 
-        # 3. fundamento_medio — média dos fundamentos avaliados (ignora zeros)
         notas_fund = [m[col] for col in fundamento_cols if m[col] and m[col] > 0]
         fundamento_medio = round(sum(notas_fund) / len(notas_fund), 2) if notas_fund else ""
 
-        # 4. mental_medio — média de foco e resiliência (ignora zeros)
         notas_mental = [v for v in [m['mental_focus'], m['mental_resilience']] if v and v > 0]
         mental_medio = round(sum(notas_mental) / len(notas_mental), 2) if notas_mental else ""
 
-        # 5. semana_ano e mes_ano — derivados da data da partida
         semana_ano = ""
         mes_ano = ""
         if m['match_date']:
@@ -897,7 +859,6 @@ def insights():
         'surface': {'Quadra Dura': {'v': 0, 'd': 0}, 'Saibro': {'v': 0, 'd': 0}},
         'format': {'Simples': {'v': 0, 'd': 0}, 'Duplas': {'v': 0, 'd': 0}},
         'type': {'Ranking': {'v': 0, 'd': 0}, 'Torneio': {'v': 0, 'd': 0}, 'Amistoso': {'v': 0, 'd': 0}},
-        # ESTATÍSTICAS DE 1º SET
         'first_set': {
             'Ranking': {'won_match_won': 0, 'won_match_lost': 0, 'lost_match_won': 0, 'lost_match_lost': 0},
             'Torneio': {'won_match_won': 0, 'won_match_lost': 0, 'lost_match_won': 0, 'lost_match_lost': 0},
@@ -937,9 +898,7 @@ def insights():
         if m[6]: 
             sets = [s for s in m[6].split() if '/' in s and s.strip() != '/' and s.strip() != '0/0']
             
-            # --- LÓGICA DO 1º SET (Ignora partidas de apenas 1 set) ---
             if len(sets) >= 1 and (m[7] and '1 Set' not in m[7]):
-                # Limpa parênteses/colchetes do 1º set
                 s1_clean = re.sub(r'\(.*?\)', '', sets[0].replace('[', '').replace(']', ''))
                 parts1 = s1_clean.split('/')
                 if len(parts1) == 2:
@@ -953,9 +912,7 @@ def insights():
                             else: stats['first_set'][m_type]['lost_match_lost'] += 1
                     except ValueError: pass
 
-            # --- LÓGICA DE TIE-BREAK E SET DECISIVO ---
             for s in sets:
-                # O regex .sub(r'\(.*?\)', '', s) arranca tudo que tá entre parênteses para olhar só pros games
                 s_clean = re.sub(r'\(.*?\)', '', s.replace('[', '').replace(']', ''))
                 parts = s_clean.split('/')
                 if len(parts) == 2:
@@ -963,7 +920,6 @@ def insights():
                         p1 = int(parts[0])
                         p2 = int(parts[1])
                         
-                        # Tiebreak acontece se: Jogaram 7x6 / 6x7, ou se é SuperTB (>=10), ou se existe o "(" na string
                         if (p1 == 7 and p2 == 6) or (p1 >= 10 and p1 - p2 >= 2) or ('(' in s and p1 > p2):
                             stats['tb_won'] += 1
                         elif (p1 == 6 and p2 == 7) or (p2 >= 10 and p2 - p1 >= 2) or ('(' in s and p2 > p1):
@@ -1008,7 +964,6 @@ def simulador():
         sim_resilience = int(request.form.get("resilience", 3)) 
         sim_classe = request.form.get("classe", "4ª Classe") 
 
-        # Escala matemática de classes para calcular o abismo técnico
         hierarquia_classes = {'Iniciante': 1, '5ª Classe': 2, '4ª Classe': 3, '3ª Classe': 4, '2ª Classe': 5, '1ª Classe': 6}
 
         try:
@@ -1026,7 +981,6 @@ def simulador():
                 foc = m[4] if (m[4] and m[4] > 0) else 3
                 res = m[5] if (m[5] and m[5] > 0) else 3
                 
-                # Descobre quem o usuário costuma enfrentar para achar o "Nível Verdadeiro" dele
                 cat_banco = m[6] if m[6] else '4ª Classe'
                 nivel = hierarquia_classes.get(cat_banco, 3)
                 niveis_jogados.append(nivel)
@@ -1034,7 +988,6 @@ def simulador():
                 X.append([is_saibro, rating, agr, foc, res])
                 y.append(1 if m[7] == 'Vitória' else 0)
 
-            # Média dos níveis enfrentados (Ex: se joga muito com 4ª Classe, a média é 3.0)
             nivel_usuario = sum(niveis_jogados) / len(niveis_jogados) if niveis_jogados else 3
 
             if len(set(y)) < 2: return render_template("simulador.html", erro_dados="O Oráculo precisa de exemplos tanto de Vitórias quanto de Derrotas no seu histórico para aprender a diferença.")
@@ -1049,23 +1002,18 @@ def simulador():
             cenario = np.array([[is_saibro_sim, sim_rating, sim_agressividade, sim_focus, sim_resilience]])
             cenario_scaled = scaler.transform(cenario)
             
-            # 1. Pega a Probabilidade Técnica Pura da IA
             prob_tecnica = model.predict_proba(cenario_scaled)[0][1] * 100
 
-            # 2. O GRANDE AJUSTE: Handicap de Discrepância de Classe
             nivel_simulado = hierarquia_classes.get(sim_classe, 3)
             diferenca_nivel = nivel_usuario - nivel_simulado
             
-            # Cada classe de diferença aplica um peso absurdo de 35% na probabilidade final
             handicap = diferenca_nivel * 35.0 
             
             probabilidade_final = prob_tecnica + handicap
 
-            # 3. Trava a matemática entre 1% (Derrota iminente) e 99% (Passeio na quadra)
             if probabilidade_final > 99.0: probabilidade_final = 99.0
             elif probabilidade_final < 1.0: probabilidade_final = 1.0
 
-            # Gera texto de explicação (XAI) baseado no Handicap
             gap_text = ""
             if diferenca_nivel > 0: gap_text = f"+{round(handicap)}% de vantagem por superioridade técnica de classe"
             elif diferenca_nivel < 0: gap_text = f"{round(handicap)}% de penalidade por inferioridade técnica de classe"
@@ -1091,18 +1039,15 @@ def treinador():
     if len(all_matches) < 3:
         return render_template("treinador.html", erro="Calibração em andamento: Você precisa registrar pelo menos 3 partidas para a IA entender seu padrão global.")
 
-    # --- EXTRAÇÃO DE ADVERSÁRIOS ÚNICOS ---
     opponents_set = set()
     for m in all_matches:
         op_name = f"{m['opponent']} & {m['opp_partner']}" if m['match_format'] and 'Duplas' in str(m['match_format']) else str(m['opponent'])
         opponents_set.add(op_name)
     unique_opponents = sorted(list(opponents_set))
 
-    # --- LEITURA DOS FILTROS ---
     selected_opponent = request.args.get("opponent", "")
     limit = int(request.args.get("limit", 3))
 
-    # --- FILTRAGEM DO CONFRONTO DIRETO ---
     if selected_opponent:
         filtered_matches = []
         for m in all_matches:
@@ -1119,7 +1064,6 @@ def treinador():
         matches = all_matches[:limit]
         total_base = len(all_matches)
 
-    # --- FUNÇÕES DE CÁLCULO ---
     def calc_avg(field, data_set=matches):
         vals = [m[field] for m in data_set if m[field] is not None and m[field] > 0]
         return sum(vals) / len(vals) if vals else 0.0
@@ -1128,7 +1072,6 @@ def treinador():
         vals = [m[field] for m in data_set if m[field] is not None]
         return sum(vals) / len(vals) if vals else 0.0
 
-    # --- MÉTRICAS DO JOGADOR ---
     avg_fh = calc_avg("forehand")
     avg_bh = calc_avg("backhand")
     avg_serve = calc_avg("serve")
@@ -1139,12 +1082,10 @@ def treinador():
     avg_winners = calc_raw_avg("winners")
     avg_ue = calc_raw_avg("unforced_errors")
     
-    # --- ANÁLISE DE DIFICULDADE ---
     hard_matches = sum(1 for m in matches if any(x in str(m["categoria"]).lower() for x in ["1", "2", "3", "a", "pro", "primeira", "segunda", "terceira", "aberta", "especial"]))
     dificuldade_fator = hard_matches / len(matches) if matches else 0
     nivel_adversarios = "Avançado (Classes Superiores)" if dificuldade_fator > 0.5 else "Intermediário / Equilibrado" if dificuldade_fator > 0 else "Padrão (Mesma Classe)"
 
-    # --- DEFINIÇÃO DO ESTILO DE JOGO ---
     estilo_jogo = "All-Court (Jogador Completo)"
     desc_estilo = "Você é um jogador versátil, que busca se adaptar a diferentes situações na quadra e domina transições."
     icone_estilo = "bx-layer"
@@ -1157,13 +1098,11 @@ def treinador():
         estilo_jogo, desc_estilo, icone_estilo = "Contra-Atacador (Counterpuncher)", "Sua defesa é um muro. Você vence pela consistência técnica, movimentação de elite e forçando o colapso adversário.", "bx-shield-alt-2"
     elif avg_fh >= 6.0 and avg_bh >= 6.0 and avg_winners < avg_ue:
         estilo_jogo, desc_estilo, icone_estilo = "Fundo de Quadra Tático", "Você constrói os pontos com paciência do fundo da quadra, usando altura, variação e profundidade.", "bx-cog"
-    # --- O DOCK TÁTICO PRINCIPAL ---
     relatorio = {
         "estilo": estilo_jogo, "desc_estilo": desc_estilo, "icone": icone_estilo, "nivel_adversarios": nivel_adversarios,
         "analise": [], "fortes": [], "evitar": [], "estrategias": [], "super_modulos": []
     }
 
-    # Ajuste de Narrativa se for um Nêmesis (Adversário Específico)
     if selected_opponent:
         relatorio["analise"].append(f"Dossiê Tático Isolado: Esta análise foi gerada cruzando apenas os dados dos seus confrontos diretos contra {selected_opponent}.")
     else:
@@ -1189,9 +1128,6 @@ def treinador():
     
     if dificuldade_fator > 0.5 and not selected_opponent: relatorio["estrategias"].append("Adversários de níveis altos adoram ritmo. Use slices curtos para quebrar as pernas deles e tirar o peso.")
 
-    # ==========================================
-    # 🧠 SUPER CÉREBRO: OS 4 MÓDULOS AVANÇADOS
-    # ==========================================
     import re
 
     avg_bp_saved = calc_avg("clutch_bp_saved")
@@ -1227,7 +1163,6 @@ def treinador():
             "texto": f"Fundamento Crítico: {pior_golpe} (Nota {nota_pior}). {drill_txt}"
         })
 
-    # Inteligência de Superfície (No confronto direto, só compara os jogos contra a pessoa)
     base_superficie = matches if selected_opponent else all_matches
     vitorias_dura = sum(1 for m in base_superficie if m["surface"] == "Quadra Dura" and m["result"] == "Vitória")
     jogos_dura = sum(1 for m in base_superficie if m["surface"] == "Quadra Dura")
@@ -1269,7 +1204,6 @@ def treinador():
             "texto": f"O algoritmo detectou {tie_breaks} Tie-breaks e {decisivos} Sets Decisivos recentes. {txt_op} para maratonas. Economize energia nos games de devolução e foque 100% nos seus saques."
         })
 
-    # Módulo E: TERMÔMETRO DE CIRCUITO (Transição de Classes) - Ideia 3
     if not selected_opponent: 
         cat_stats = {}
         for m in all_matches:
@@ -1278,7 +1212,6 @@ def treinador():
             cat_stats[cat_name]['total'] += 1
             if m["result"] == "Vitória": cat_stats[cat_name]['v'] += 1
 
-        # A IA agora entende a hierarquia: Quanto maior o peso, mais difícil a classe
         def peso_classe(cat_str):
             c = cat_str.lower()
             if "1" in c or "primeira" in c or "pro" in c or "especial" in c: return 6
@@ -1287,7 +1220,7 @@ def treinador():
             if "4" in c or "quarta" in c: return 3
             if "5" in c or "quinta" in c: return 2
             if "iniciante" in c or "principiante" in c: return 1
-            return 0 # Torneios sem classe definida
+            return 0
 
         valid_cats = []
         for cat, data in cat_stats.items():
@@ -1298,26 +1231,21 @@ def treinador():
                     "peso": peso_classe(cat)
                 })
 
-        # Organiza as classes da mais fácil para a mais difícil
         valid_cats.sort(key=lambda x: x["peso"])
 
         if len(valid_cats) >= 2:
             txt_stats = " | ".join([f"{c['nome']}: {c['win_rate']}%" for c in valid_cats])
             
-            # Pega as duas classes mais difíceis que você jogou para comparar
             c_alta = valid_cats[-1] 
             c_baixa = valid_cats[-2] 
 
             if c_alta["peso"] == 0 or c_baixa["peso"] == 0:
                 analise = " Observe os saltos entre as categorias para entender seu teto competitivo atual."
             elif c_alta["win_rate"] < (c_baixa["win_rate"] - 15):
-                # Caso Normal: Bate nos mais fracos, sofre nos mais fortes
                 analise = f" Choque de Realidade: A queda de rendimento ao subir da {c_baixa['nome']} para a {c_alta['nome']} mostra que o peso de bola adversário está cobrando o preço. Foque em profundidade antes de tentar a definição final."
             elif c_baixa["win_rate"] < (c_alta["win_rate"] - 15):
-                # O Seu Caso Especial: A Anomalia Tática (Sofre nos mais fracos)
                 analise = f" Anomalia Tática: Você vence {c_alta['win_rate']}% na {c_alta['nome']}, mas sofre na {c_baixa['nome']} ({c_baixa['win_rate']}%). Diagnóstico: Você joga melhor quando o adversário te dá RITMO. Em classes menores, as bolas vêm lentas e sem peso, forçando você a gerar a própria força e cometer erros. Treine atacar bolas flutuantes!"
             else:
-                # Caso de Equilíbrio
                 analise = f" Consistência: Seu nível está sólido e estabilizado entre a {c_baixa['nome']} e a {c_alta['nome']}."
 
             relatorio["super_modulos"].append({
@@ -1343,9 +1271,6 @@ def sobre():
 def privacidade():
     return render_template("privacidade.html")
 
-# ==============================================================================
-# --- IDEIA 9: PÁGINA 404 CUSTOMIZADA ---
-# ==============================================================================
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404

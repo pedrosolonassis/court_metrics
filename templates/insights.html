@@ -234,9 +234,7 @@
     window.onload = function() {
         Chart.defaults.font.family = "'Segoe UI', 'sans-serif'";
         
-        // =========================================================
-        // 1. LÓGICA DAS BARRAS EMPILHADAS (Cenários)
-        // =========================================================
+
         const createStackedBar = (id, labelsArray, vitData, derData) => {
             const ctx = document.getElementById(id).getContext('2d');
             new Chart(ctx, {
@@ -286,9 +284,7 @@
         createStackedBar('classChart', classLabels, classVit, classDer);
 
 
-        // =========================================================
-        // 2. LÓGICA DA ANÁLISE PROFUNDA (Radar & Scatter)
-        // =========================================================
+
         const vitoriasScatter = [];
         const derrotasScatter = [];
 
@@ -331,7 +327,7 @@
             {% endfor %}
         {% endif %}
 
-        // RENDERIZA O RADAR CHART (DNA TÉCNICO) COM TODOS OS 10 FUNDAMENTOS
+
         let vC = countVit || 1; 
         let dC = countDer || 1;
 
@@ -361,7 +357,7 @@
             type: 'radar',
             data: {
                 labels: ['Forehand', 'Backhand', 'Saque', 'Devolução', 'Slice', 'Voleio', 'Smash', 'Dropshot', 'Footwork', 'Estratégia'],
-                datasets: [datasetVit] // Inicializa apenas com vitórias
+                datasets: [datasetVit]
             },
             options: {
                 responsive: true, 
@@ -372,7 +368,7 @@
                         max: 10, 
                         ticks: { 
                             stepSize: 2,
-                            display: false // Oculta os números 0, 2, 4, 6, 8, 10
+                            display: false
                         } 
                     }
                 },
@@ -387,7 +383,7 @@
             }
         });
 
-        // Lógica do Filtro Dropdown
+
         document.getElementById('radarFilter').addEventListener('change', function(e) {
             const val = e.target.value;
             if (val === 'vit') {
@@ -395,13 +391,13 @@
             } else if (val === 'der') {
                 radarChart.data.datasets = [datasetDer];
             } else {
-                radarChart.data.datasets = [datasetVit, datasetDer]; // Mostra ambos
+                radarChart.data.datasets = [datasetVit, datasetDer];
             }
             radarChart.update();
         });
 
 
-        // RENDERIZA O SCATTER PLOT (RISCO VS RECOMPENSA)
+
         const ctxDispersao = document.getElementById('graficoDispersao').getContext('2d');
         new Chart(ctxDispersao, {
             type: 'scatter',
