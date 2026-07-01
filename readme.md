@@ -8,7 +8,7 @@
 [![Deploy](https://img.shields.io/badge/Deploy-PythonAnywhere-1A73E8?style=for-the-badge)](https://courtmetrics.pythonanywhere.com)
 [![Data Analyst](https://img.shields.io/badge/Role-Data_Analyst-blue?style=for-the-badge)]()
 
-🔗 **Acesse o site:** [courtmetrics.pythonanywhere.com](https://courtmetrics.pythonanywhere.com)
+🔗 **Acesse o site:** [courtmetrics.com.br](courtmetrics.com.br)
 
 ## 📌 Visão Geral da Solução Analítica
 
