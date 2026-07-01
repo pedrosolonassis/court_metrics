@@ -10,6 +10,23 @@
 
 🔗 **Acesse o site:** [courtmetrics.com.br](courtmetrics.com.br)
 
+---
+
+## 🔒 Aviso de Propriedade Intelectual & Disponibilidade de Código
+
+O **Court Metrics** é uma solução de inteligência de produto e dados proprietária de ponta a ponta. Para mitigar riscos de plágio e proteger a propriedade intelectual dos algoritmos preditivos, do modelo de dados e das regras de negócio, **o código-fonte original é mantido em um repositório privado**.
+
+Esta página pública funciona exclusivamente como o **Dossiê Técnico de Portfólio do Projeto**, detalhando minuciosamente as decisões de arquitetura de dados, pipeline de Machine Learning, engenharia de produto e design de métricas. 
+
+### 💼 Nota para Recrutadores e Avaliadores:
+Caso você esteja avaliando este projeto para uma oportunidade profissional e queira auditar a qualidade, os padrões de escrita, a semântica dos códigos, **o acesso temporário como colaborador do repositório privado será liberado imediatamente**.
+
+Por favor, envie uma solicitação com seu usuário do GitHub para:
+* **LinkedIn:** [Pedro Solon Assis](https://www.linkedin.com/in/pedrosolonassis/)
+* **E-mail:** solonpedro21@gmail.com
+
+---
+
 ## 📌 Visão Geral da Solução Analítica
 
 O **Court Metrics** é uma plataforma analítica de dados voltada para o mapeamento, quantificação e diagnóstico preditivo de performance esportiva para tenistas. A solução captura dados brutos de partidas de tênis, trata inconsistências de inputs e os transforma em métricas analíticas e de inteligência artificial avançadas para extração de vantagens competitivas.
