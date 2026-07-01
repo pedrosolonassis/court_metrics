@@ -1,4 +1,4 @@
-# 🎾 Court Metrics — Tennis Performance Analytics Platform
+# 🎾 Court Metrics - Plataforma de análise de desempenho no Tênis
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-1.1+-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
