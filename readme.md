@@ -59,10 +59,10 @@ venv\Scripts\activate
 # No Linux/Mac:
 source venv/bin/activate
 
-# 2. Instale as dependências
+# 3. Instale as dependências
 pip install -r requirements.txt
  
-# 3. Execute a aplicação
+# 4. Execute a aplicação
 python app.py
 ```
  
@@ -314,5 +314,6 @@ COURT_METRICS/
 ├── .gitignore
 ├── app.py                                  # Script master backend (Rotas Flask, pipelines ETL e IA)
 ├── database.db                             # Banco de dados relacional SQLite3 local
-└── readme.md
+└── README.md
+└── LICENSE
 ```
