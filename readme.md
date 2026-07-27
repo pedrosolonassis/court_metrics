@@ -50,6 +50,13 @@ Diferente de aplicativos comuns de marcas esportivas, o sistema atua como um eco
 git clone https://github.com/pedrosolonassis/court-metrics.git
 cd court-metrics
  
+# 2. Crie e ative um ambiente virtual (recomendado)
+python -m venv venv
+# No Windows:
+venv\Scripts\activate
+# No Linux/Mac:
+source venv/bin/activate
+
 # 2. Instale as dependências
 pip install -r requirements.txt
  
