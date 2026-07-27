@@ -1,4 +1,4 @@
-# 🎾 Court Metrics — Tennis Performance Analytics Platform
+# 🎾 Court Metrics - Plataforma de análise de desempenho no Tênis
 
 [![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-1.1+-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -8,7 +8,24 @@
 [![Deploy](https://img.shields.io/badge/Deploy-PythonAnywhere-1A73E8?style=for-the-badge)](https://courtmetrics.pythonanywhere.com)
 [![Data Analyst](https://img.shields.io/badge/Role-Data_Analyst-blue?style=for-the-badge)]()
 
-🔗 **Acesse o site:** [courtmetrics.pythonanywhere.com](https://courtmetrics.pythonanywhere.com)
+🔗 **Acesse o site:** [courtmetrics.com.br](courtmetrics.com.br)
+
+---
+
+## 🔒 Aviso de Propriedade Intelectual & Disponibilidade de Código
+
+O **Court Metrics** é uma solução de inteligência de produto e dados proprietária de ponta a ponta. Para mitigar riscos de plágio e proteger a propriedade intelectual dos algoritmos preditivos, do modelo de dados e das regras de negócio, **o código-fonte original é mantido em um repositório privado**.
+
+Esta página pública funciona exclusivamente como o **Dossiê Técnico de Portfólio do Projeto**, detalhando minuciosamente as decisões de arquitetura de dados, pipeline de Machine Learning, engenharia de produto e design de métricas. 
+
+### 💼 Nota para Recrutadores e Avaliadores:
+Caso você esteja avaliando este projeto para uma oportunidade profissional e queira auditar a qualidade, os padrões de escrita, a semântica dos códigos, **o acesso temporário como colaborador do repositório privado será liberado imediatamente**.
+
+Por favor, envie uma solicitação com seu usuário do GitHub para:
+* **LinkedIn:** [Pedro Solon Assis](https://www.linkedin.com/in/pedrosolonassis/)
+* **E-mail:** solonpedro21@gmail.com
+
+---
 
 ## 📌 Visão Geral da Solução Analítica
 
